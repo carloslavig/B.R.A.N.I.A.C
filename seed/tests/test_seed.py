@@ -62,7 +62,7 @@ def test_chave_curta_ou_recusada_nao_entra(monkeypatch):
 
 def test_catalogo_explica_o_que_cada_chave_melhora():
     assert all(c["melhora"] and c["onde"].startswith("https://") for c in provedores.catalogo())
-    assert provedores.ORDEM[0] == "google" and provedores.ORDEM[1] == "openrouter"
+    assert provedores.ORDEM[0] == "google" and "openrouter" in provedores.ORDEM
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="cofre = Gerenciador de Credenciais do Windows")
@@ -132,7 +132,7 @@ def test_voz_precisa_ser_escolhida():
 def test_progresso_continua_de_onde_parou():
     assert onboarding.etapa_atual() == "boas_vindas"
     onboarding.proxima()
-    assert onboarding.etapa_atual() == "consentimento"
+    assert onboarding.etapa_atual() == "chaves"
 
 
 # ---------- atualizador ----------

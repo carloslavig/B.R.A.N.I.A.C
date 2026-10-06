@@ -6,6 +6,8 @@ from . import cofre, hardware
 
 OPENAI = {   # provedor -> (url, modelo)
     "google": ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "gemini-flash-latest"),
+    "google_b": ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "gemini-flash-latest"),
+    "google_c": ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "gemini-flash-latest"),
     "groq": ("https://api.groq.com/openai/v1/chat/completions", "openai/gpt-oss-120b"),
     "openrouter": ("https://openrouter.ai/api/v1/chat/completions", "nvidia/nemotron-3-ultra-550b-a55b:free"),
     "cerebras": ("https://api.cerebras.ai/v1/chat/completions", "gpt-oss-120b"),

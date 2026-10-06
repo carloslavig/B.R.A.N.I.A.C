@@ -4,7 +4,7 @@ Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam p
 import json, mimetypes, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from . import (autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
+from . import (paths, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -32,21 +32,39 @@ def _rodar(nome, fn):
 
 # ---------- acoes ----------
 
+def _registrar(texto):
+    """Diario da instalacao (so no PC): ajuda a achar o que travou, sem enviar nada para fora."""
+    try:
+        arq = paths.arquivo("instalacao.log")
+        if arq.exists() and arq.stat().st_size > 300_000:
+            arq.write_text("", encoding="utf-8")
+        with arq.open("a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {texto}\n")
+    except OSError:
+        pass
+
+
 def estado_geral():
     p = perfil.carregar()
     chaves = provedores.chaves_validas()
     return {
         "perfil": {k: p[k] for k in ("nome_assistente", "voz", "modo_icone", "integracoes", "consentimento_acesso_pc", "etapa", "concluido", "perfil_ia")
                    if k in p},
-        "etapas": onboarding.ETAPAS, "integracoes": onboarding.INTEGRACOES,
+        "etapas": onboarding.ETAPAS, "opcionais": onboarding.OPCIONAIS, "integracoes": onboarding.INTEGRACOES,
         "permissoes": permissoes.resumo(), "provedores": provedores.catalogo(), "chaves": chaves,
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
-        "jobs": {k: dict(v) for k, v in JOBS.items()}, "remoto": remoto.resumo(), "autostart": autostart.ativo(), "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
+        "jobs": {k: dict(v) for k, v in JOBS.items()}, "remoto": remoto.resumo(), "autostart": autostart.ativo(),
+        "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"),
+                "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
+        "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
     }
 
 
 def acao(caminho, d):
+    if caminho == "/api/log":
+        _registrar(f"[tela] etapa={d.get('etapa')} {str(d.get('msg', ''))[:400]}")
+        return {}
     if caminho == "/api/etapa":
         e = d.get("etapa")
         if e not in onboarding.ETAPAS:
@@ -75,6 +93,16 @@ def acao(caminho, d):
     if caminho == "/api/chave":
         ok, motivo = provedores.cadastrar(d["provedor"], d["chave"])
         return {"ok": ok, "motivo": motivo}
+    if caminho == "/api/voz/config":
+        campos = {}
+        if "nome" in d:
+            campos["voz_nome"] = d["nome"] if d["nome"] in {n for v in voz_nuvem.VOZES.values() for n, _ in v} else None
+        if d.get("estilo") in voz_nuvem.ESTILOS:
+            campos["voz_estilo"] = d["estilo"]
+        if "privada" in d:
+            campos["voz_privada"] = bool(d["privada"])
+        perfil.atualizar(**campos)
+        return {}
     if caminho == "/api/chave/remover":
         cofre.remover(d["provedor"])
         return {}
@@ -196,11 +224,32 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
 
+    def _voz(self, d):
+        """Voz natural (Gemini TTS pela chave da pessoa). Se nao der, 503: a tela usa a voz do sistema. Voz privada: nunca sai texto do PC."""
+        p = perfil.carregar()
+        if p.get("voz_privada"):
+            return self._json({"erro": "voz privada: usando só a voz do sistema"}, 409)
+        try:
+            wav = voz_nuvem.sintetizar(str(d.get("texto", "")), d.get("genero") or p.get("voz") or "feminina", d.get("voz") or p.get("voz_nome"),
+                                       estilo=d.get("estilo") or p.get("voz_estilo") or "calmo")
+        except voz_nuvem.VozErro as e:
+            return self._json({"erro": str(e)}, 503)
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/wav")
+        self.send_header("Content-Length", str(len(wav)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(wav)
+
     def do_GET(self):
         if not self._local():
             return self._json({"erro": "host negado"}, 403)
         if self.path == "/api/estado":
-            return self._json(estado_geral())
+            try:
+                return self._json(estado_geral())
+            except Exception as e:
+                _registrar(f"[erro] GET /api/estado: {e!r}")
+                return self._json({"erro": "não consegui ler o estado: " + str(e)[:200]}, 500)
         nome = "index.html" if self.path in ("/", "") else self.path.lstrip("/").split("?")[0]
         arq = (UI / nome).resolve()
         if UI.resolve() not in arq.parents and arq != UI.resolve() or not arq.is_file():
@@ -222,10 +271,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
             n = int(self.headers.get("Content-Length") or 0)
             d = json.loads(self.rfile.read(n) or b"{}")
+            if self.path == "/api/voz":
+                return self._voz(d)
             return self._json(acao(self.path, d))
         except KeyError:
             return self._json({"erro": "rota desconhecida"}, 404)
         except Exception as e:
+            _registrar(f"[erro] POST {self.path}: {e!r}")
             return self._json({"erro": str(e)[:300]}, 400)
 
 

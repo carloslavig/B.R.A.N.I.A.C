@@ -100,3 +100,12 @@ def test_telegram_pela_api_token_ruim_codigo_e_armar(srv, monkeypatch):
 def test_estado_geral_inclui_remoto_e_nova_etapa(srv):
     st, e = req(srv, "GET", "/api/estado")
     assert "remoto" in e["etapas"] and e["remoto"]["armado"] is False and "autostart" in e
+
+
+def test_whatsapp_e_telegram_vem_cedo_e_sao_opcionais(srv):
+    st, e = req(srv, "GET", "/api/estado")
+    ordem = e["etapas"]
+    assert ordem[1] == "chaves" and ordem.index("remoto") <= 3 and ordem.index("remoto") < ordem.index("hardware")
+    assert "remoto" in e["opcionais"] and "chaves" not in e["opcionais"] and "nome_voz" not in e["opcionais"]
+    # obrigatorios continuam: nada de WhatsApp/Telegram impede concluir
+    assert all("whatsapp" not in f.lower() and "telegram" not in f.lower() for f in e["faltando"])

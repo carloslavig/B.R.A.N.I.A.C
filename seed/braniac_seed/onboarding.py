@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """Roteiro da instalacao (primeiro uso). Cada etapa grava o progresso no perfil local: se fechar no meio, continua de onde parou.
 
-  1 boas_vindas  2 consentimento (acesso ao PC: total / granular / nenhum)  3 hardware  4 chaves de API (>= 1 obrigatoria)
-  5 ias_nuvem (ChatGPT e Gemini: a pessoa entra na propria conta)  6 reuniao das IAs (perfil da pessoa -> banco local)
-  7 nome e voz (obrigatorios)  8 integracoes (e-mail, Spotify...)  9 WhatsApp e Telegram (controle remoto)  10 icone  11 concluido
+  1 boas_vindas (avisa que a voz esta robotica ate conectar uma API; mostra os canais opcionais)
+  2 chaves de API (passo a passo; >= 1 obrigatoria; a voz natural entra aqui)  3 consentimento (acesso ao PC: total / granular / nenhum)
+  4 remoto: WhatsApp e Telegram (OPCIONAL)  5 hardware
+  6 ias_nuvem (ChatGPT e Gemini, opcional)  7 reuniao das IAs (opcional)  8 nome e voz (obrigatorios)  9 integracoes (opcional)  10 icone  11 concluido
 """
 from . import hardware, nomes, perfil, permissoes, provedores
 
-ETAPAS = ["boas_vindas", "consentimento", "hardware", "chaves", "ias_nuvem", "reuniao_inicial", "nome_voz", "integracoes", "remoto", "icone", "concluido"]
+ETAPAS = ["boas_vindas", "chaves", "consentimento", "remoto", "hardware", "ias_nuvem", "reuniao_inicial", "nome_voz", "integracoes", "icone", "concluido"]
+# etapas OPCIONAIS (a tela mostra "pular"): nenhuma delas e obrigatoria. Obrigatorios: acesso (pode ser nenhum), 1 chave de API, nome e voz.
+OPCIONAIS = ["remoto", "ias_nuvem", "reuniao_inicial", "integracoes"]
 INTEGRACOES = ["email", "spotify", "whatsapp", "agenda", "arquivos"]
 
 

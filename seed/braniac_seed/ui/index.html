@@ -46,7 +46,7 @@
 <body>
 <header><b>BRANIAC</b><span>Instalação do seu assistente</span><div id="passos"></div></header>
 <main>
-  <aside id="lado"><canvas id="orbe" width="520" height="520"></canvas><div id="fala"></div><button class="sec" id="bMudo" title="Ligar ou desligar a voz do assistente">🔊 Voz do assistente: ligada</button></aside>
+  <aside id="lado"><canvas id="orbe" width="520" height="520"></canvas><div id="fala"></div><div id="modoVoz" class="mudo" style="text-align:center"></div><button class="sec" id="bMudo" title="Ligar ou desligar a voz do assistente">🔊 Voz do assistente: ligada</button></aside>
   <section id="conteudo"></section>
 </main>
 <footer><button class="sec" id="bVoltar">← Voltar</button><button id="bProximo">Continuar →</button></footer>
@@ -55,6 +55,15 @@
 const $ = s => document.querySelector(s);
 const el = (t, props = {}, ...filhos) => { const e = Object.assign(document.createElement(t), props); filhos.flat().forEach(f => e.append(f)); return e; };
 let S = null, etapa = 'boas_vindas', voz = true, nivelMic = 0, falando = false, poll = null;
+
+function aviso(msg) {
+  let b = document.querySelector('#toast');
+  if (!b) { b = el('div', { id: 'toast', style: 'position:fixed;left:50%;transform:translateX(-50%);bottom:76px;background:#3a1414;border:1px solid var(--verm);color:#ffd6d6;padding:10px 16px;border-radius:10px;max-width:80%;z-index:9;font-size:13.5px' }); document.body.append(b); }
+  b.textContent = '⚠️ ' + msg; b.style.display = 'block'; clearTimeout(b._t); b._t = setTimeout(() => b.style.display = 'none', 10000);
+  fetch('/api/log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ msg: String(msg).slice(0, 400), etapa }) }).catch(() => {});
+}
+window.addEventListener('unhandledrejection', e => aviso('Algo não saiu como esperado: ' + ((e.reason && e.reason.message) || e.reason)));
+window.addEventListener('error', e => aviso('Erro na tela: ' + e.message));
 
 async function api(caminho, corpo) {
   const r = await fetch(caminho, corpo === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
@@ -69,16 +78,35 @@ function escolherVoz() {
   const g = S?.perfil?.voz || window.vozEscolhida;
   return (g === 'masculina' ? vs.find(v => mas.test(v.name)) : g === 'feminina' ? vs.find(v => fem.test(v.name)) : null) || vs[0] || null;
 }
-function falar(texto) {
-  $('#fala').textContent = texto;
-  if (!voz || !('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
+let seq = 0, audioAtual = null;
+function pararVoz() { speechSynthesis.cancel(); if (audioAtual) { audioAtual.pause(); audioAtual = null; } falando = false; }
+function falarRobotico(texto) {
+  if (!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR'; u.rate = 1.02;
   const v = escolherVoz(); if (v) u.voice = v;
   if ((S?.perfil?.voz || window.vozEscolhida) === 'masculina') u.pitch = 0.85;
   u.onstart = () => falando = true; u.onend = u.onerror = () => falando = false;
   speechSynthesis.speak(u);
 }
+const corpoVoz = texto => JSON.stringify({ texto, genero: window.vozEscolhida || S?.perfil?.voz || 'feminina', voz: window.vozNome || S?.voz?.nome || null, estilo: window.vozEstilo || S?.voz?.estilo || 'calmo' });
+async function falar(texto) {
+  const minha = ++seq; $('#fala').textContent = texto; pararVoz();
+  if (!voz) return;
+  if (S?.voz?.nuvem) {                       // voz natural, vinda do servico de IA da pessoa (cache local: falas repetidas nao gastam cota)
+    try {
+      const r = await fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: corpoVoz(texto) });
+      if (minha !== seq) return;
+      if (r.ok && (r.headers.get('content-type') || '').includes('audio')) {
+        const blob = await r.blob(); if (minha !== seq) return;
+        const a = new Audio(URL.createObjectURL(blob)); audioAtual = a; a.onplay = () => falando = true; a.onended = a.onerror = () => falando = false;
+        await a.play(); return;
+      }
+    } catch (e) { /* cai na voz do sistema */ }
+    if (minha !== seq) return;
+  }
+  falarRobotico(texto);
+}
+function prefetch(texto) { if (S?.voz?.nuvem && texto) fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: corpoVoz(texto) }).catch(() => {}); }
 $('#bMudo').onclick = () => { voz = !voz; if (!voz) speechSynthesis.cancel(); $('#bMudo').textContent = '🔊 Voz do assistente: ' + (voz ? 'ligada' : 'desligada'); };
 
 // ---------- orbe ----------
@@ -124,8 +152,15 @@ TELAS.boas_vindas = () => {
   return [el('h1', {}, 'Vamos criar o seu assistente'),
     el('p', {}, 'Em poucos minutos você terá uma IA pessoal que conversa por voz, lembra do que importa e, se você quiser, ajuda no seu PC.'),
     el('div', { className: 'aviso' }, '🔒 Tudo roda e fica no SEU computador. Nenhuma informação sua é enviada para nós nem para ninguém. As atualizações só trazem novas funções, de mão única.'),
+    el('div', { className: 'aviso' }, '🤖 Minha voz está robótica agora porque ainda não conectei nenhuma API de IA. Na próxima etapa eu te ensino, passo a passo, a pegar uma chave gratuita. Assim que ela estiver conectada, minha voz passa a vir do serviço de IA e fica natural. E quanto mais chaves você conectar, melhor.'),
+    el('div', { className: 'linha' }, el('button', { onclick: () => { etapa = 'chaves'; render(); } }, '🔑 Ver como conseguir minha chave (passo a passo)')),
+    el('h2', {}, 'Canais para falar com o seu assistente (opcionais)'),
+    el('p', { className: 'mudo' }, 'Nenhum deles é obrigatório: você pode configurar agora, depois, ou nunca.'),
+    el('div', { className: 'cartoes' },
+      el('div', { className: 'cartao', onclick: () => { etapa = S.perfil.consentimento_acesso_pc ? 'remoto' : 'consentimento'; render(); } }, el('h3', {}, '💬 WhatsApp'), el('p', {}, 'O assistente lê e responde suas mensagens, só com a sua permissão.'), el('p', { className: 'mudo' }, 'Opcional · vem logo depois da escolha de acesso →')),
+      el('div', { className: 'cartao', onclick: () => { etapa = S.perfil.consentimento_acesso_pc ? 'remoto' : 'consentimento'; render(); } }, el('h3', {}, '✈️ Telegram'), el('p', {}, 'Mande comandos para o seu PC de qualquer lugar, falando com o seu próprio bot.'), el('p', { className: 'mudo' }, 'Opcional · vem logo depois da escolha de acesso →'))),
     el('h2', {}, 'O que vamos fazer'),
-    el('p', {}, '1. Você escolhe o que o assistente pode acessar no PC (pode ser nada).  2. Preparamos a IA local.  3. Você coloca ao menos uma chave de IA gratuita.  4. Conecta o ChatGPT e o Gemini (opcional).  5. Dá um nome e uma voz ao assistente.'),
+    el('p', {}, '1. Você pega ao menos uma chave de IA gratuita (eu ensino).  2. Escolhe o que o assistente pode acessar no PC (pode ser nada).  3. WhatsApp e Telegram (opcional).  4. Preparamos a IA local.  5. Conecta o ChatGPT e o Gemini (opcional).  6. Dá um nome e uma voz ao assistente.'),
     el('h2', {}, 'Teste do microfone'),
     el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: e => testarMic(e.target, s) }, '🎙 Testar microfone (5 s)'), s)];
 };
@@ -151,6 +186,8 @@ TELAS.consentimento = () => {
       cart('total', '✅ Acesso total', 'O assistente pode usar tudo que está na lista: arquivos, programas, navegador, e-mail, WhatsApp, Spotify.'),
       cart('granular', '🎚 Escolher item por item', 'Você marca exatamente o que libera. Recomendado.'),
       cart('nenhum', '🚫 Nenhum acesso', 'O assistente só conversa. Não toca em nada no PC. Dá para liberar depois.')),
+    modo ? el('p', { className: 'ok' }, '✔ Você escolheu: ' + ({ total: 'acesso total', granular: 'escolher item por item', nenhum: 'nenhum acesso' }[modo]) + '. Pode continuar (ou mudar a escolha acima).') :
+           el('p', { className: 'erro' }, '👆 Para continuar, clique em UMA das três opções acima (pode ser “Nenhum acesso”).'),
     lista,
     modo ? el('div', { className: 'linha' }, el('button', { className: 'perigo', onclick: async () => { await api('/api/emergencia', {}); await recarregar(); render(); } }, '⛔ Revogar tudo agora')) : ''];
 };
@@ -184,20 +221,40 @@ function acompanhar(job, alvo) {
 }
 
 TELAS.chaves = () => {
-  const lista = el('div');
-  S.provedores.forEach(p => {
-    const ok = S.chaves.includes(p.id), msg = el('span', { className: 'mudo' }), campo = el('input', { type: 'password', placeholder: 'Cole a chave aqui' });
-    lista.append(el('div', { className: 'prov' + (ok ? ' valida' : '') },
+  const tem = S.chaves.length > 0, nv = S.nivel, caixa = el('div');
+  const cartao = p => {
+    const ok = S.chaves.includes(p.id), msg = el('span', { className: 'mudo' }), campo = el('input', { type: 'password', placeholder: 'Cole a chave aqui (' + p.formato + ')' });
+    return el('div', { className: 'prov' + (ok ? ' valida' : '') },
       el('h3', {}, p.titulo + (p.id === 'google' ? '  ⭐ comece por esta' : ''), ok ? el('span', { className: 'ok' }, '  ✔ conectada') : ''),
-      el('p', {}, p.melhora), el('p', { className: 'mudo' }, 'Gratuita. ', el('a', { href: p.onde, target: '_blank' }, 'Onde conseguir a chave')),
-      ok ? el('button', { className: 'sec', onclick: async () => { await api('/api/chave/remover', { provedor: p.id }); await recarregar(); render(); } }, 'Remover')
-         : el('div', { className: 'linha' }, campo, el('button', { onclick: async e => { e.target.disabled = true; msg.textContent = 'Testando…';
-              const r = await api('/api/chave', { provedor: p.id, chave: campo.value }); msg.className = r.ok ? 'ok' : 'erro'; msg.textContent = r.ok ? 'Chave válida!' : r.motivo;
-              await recarregar(); if (r.ok) render(); else e.target.disabled = false; } }, 'Testar e guardar'), msg)));
-  });
+      el('p', {}, p.melhora), el('p', { className: 'mudo' }, 'Gratuita.'),
+      ok ? el('button', { className: 'sec', onclick: async () => { await api('/api/chave/remover', { provedor: p.id }); await recarregar(); render(); } }, 'Remover') : [
+        el('details', { open: p.id === 'google' && !tem }, el('summary', { style: 'cursor:pointer;color:var(--azul);margin:6px 0' }, '📖 Passo a passo para conseguir esta chave'),
+          el('ol', { style: 'margin:8px 0 8px 18px;color:#c7d1e8' }, ...p.passos.map(x => el('li', {}, x))),
+          el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: () => window.open(p.onde, '_blank') }, 'Abrir ' + p.onde.replace('https://', '')), el('span', { className: 'mudo' }, S.aviso_passos))),
+        el('div', { className: 'linha' }, campo, el('button', { onclick: async e => { e.target.disabled = true; msg.className = 'mudo'; msg.textContent = 'Testando…';
+          const r = await api('/api/chave', { provedor: p.id, chave: campo.value }); msg.className = r.ok ? 'ok' : 'erro'; msg.textContent = r.ok ? 'Chave válida!' : r.motivo;
+          if (r.ok) { const antes = S.voz.nuvem; await recarregar(); await render();
+            falar(!antes && S.voz.nuvem ? 'Chave conectada! A partir de agora você já está ouvindo a minha voz natural, vinda do serviço de inteligência artificial. Quanto mais chaves, melhor.' : 'Chave conectada! Quanto mais chaves, mais cota e mais velocidade.'); }
+          else e.target.disabled = false; } }, 'Testar e guardar'), msg)]);
+  };
+  const google = S.provedores.find(p => p.id === 'google');
+  caixa.append(cartao(google));
+  if (tem) {
+    caixa.append(el('h2', {}, 'Quer deixar ainda melhor? (opcional, recomendado)'), el('p', { className: 'mudo' }, 'Cada chave a mais é uma reserva: se uma cota acaba, outra assume. Conecte quantas quiser, uma de cada vez.'),
+      ...S.provedores.filter(p => p.id !== 'google').map(cartao));
+  } else {
+    caixa.append(el('p', { className: 'mudo' }, 'Depois da primeira chave eu mostro as outras opções, uma de cada vez, para não ficar cansativo.'));
+  }
+  const modoVoz = S.voz.nuvem ? el('p', { className: 'ok' }, '✨ Voz natural ativa: o que você está ouvindo agora vem do serviço de IA.') :
+    S.voz.privada ? el('p', { className: 'mudo' }, '🔒 Voz privada: só a voz do sistema, nada é enviado para fora.') :
+    el('p', { className: 'erro' }, tem ? '🤖 Sua chave é de outro serviço: a voz natural vem do Google. Adicione também a chave do Google para ligá-la.' : '🤖 Minha voz está robótica porque ainda não há nenhuma chave de API conectada.');
   return [el('h1', {}, 'Chaves de IA'),
-    el('div', { className: 'aviso' }, 'Pelo menos UMA chave é obrigatória; as outras são opcionais. ' + S.sem_chave + ' As chaves ficam guardadas no cofre do Windows, protegidas, só neste PC.'),
-    lista];
+    el('div', { className: 'aviso' }, 'Pelo menos UMA chave é obrigatória; o resto é opcional. ' + S.sem_chave + ' As chaves ficam guardadas no cofre do Windows, protegidas, só neste PC.'),
+    el('div', { className: 'prov' }, el('h3', {}, 'Seu nível: ' + nv.nome + (nv.n ? ` (${nv.n} chave${nv.n > 1 ? 's' : ''})` : '')), el('div', { className: 'barra' }, el('div', { style: `width:${nv.pct}%` })),
+      el('p', { className: 'mudo' }, nv.proximo), el('p', { className: 'mudo' }, S.por_que_mais), modoVoz,
+      el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: S.voz.privada, onchange: async e => { await api('/api/voz/config', { privada: e.target.checked }); await recarregar(); render(); } }),
+        el('div', {}, el('b', {}, 'Voz privada (só neste PC)'), el('div', { className: 'mudo' }, 'Para gerar a voz natural, só o TEXTO que eu falo (nunca suas conversas ou arquivos) é enviado ao Google. Se preferir tudo no PC, ative: a voz fica robótica, mas nada sai do computador.')))),
+    caixa];
 };
 
 TELAS.ias_nuvem = () => {
@@ -227,20 +284,33 @@ TELAS.reuniao_inicial = () => {
 };
 
 TELAS.nome_voz = () => {
-  let genero = S.perfil.voz || null; const msg = el('p'), chips = el('div', { className: 'chips' }), campo = el('input', { type: 'text', placeholder: 'Ex.: Aurora', maxLength: 16, value: S.perfil.nome_assistente || '' });
-  const gostos = el('textarea', { rows: 2, placeholder: 'Ex.: gosto de rock, jogos e viagens' }), perguntas = el('div');
-  const cart = (id, t, d) => el('div', { className: 'cartao' + (genero === id ? ' sel' : ''), onclick: () => { genero = id; window.vozEscolhida = id; document.querySelectorAll('.gen').forEach(c => c.classList.toggle('sel', c.dataset.id === id)); falar('Esta é a voz ' + id + '. Gostou?'); } }, el('h3', {}, t), el('p', {}, d));
-  const g1 = cart('feminina', '👩 Voz feminina', 'Clique para ouvir'), g2 = cart('masculina', '👨 Voz masculina', 'Clique para ouvir'); [g1, g2].forEach((c, i) => { c.classList.add('gen'); c.dataset.id = ['feminina', 'masculina'][i]; });
+  let genero = S.perfil.voz || null; window.vozNome = S.voz.nome || null; window.vozEstilo = S.voz.estilo || 'calmo';
+  const msg = el('p'), chips = el('div', { className: 'chips' }), campo = el('input', { type: 'text', placeholder: 'Ex.: Aurora', maxLength: 16, value: S.perfil.nome_assistente || '' });
+  const gostos = el('textarea', { rows: 2, placeholder: 'Ex.: gosto de rock, jogos e viagens' }), perguntas = el('div'), opcoes = el('div');
+  const desenharOpcoes = () => {
+    if (!genero) { opcoes.replaceChildren(); return; }
+    const natural = S.voz.nuvem;
+    opcoes.replaceChildren(el('h2', {}, 'Escolha a voz'),
+      el('p', { className: 'mudo' }, natural ? 'Clique para ouvir cada uma (voz natural do serviço de IA).' : 'Prévia só com a voz robótica do sistema. Conecte a chave do Google para ouvir as vozes naturais.'),
+      el('div', { className: 'chips' }, ...S.voz.vozes[genero].map(([n, d]) => el('span', { className: 'chip', style: window.vozNome === n ? 'border-color:var(--ouro)' : '', onclick: () => { window.vozNome = n; desenharOpcoes(); falar('Olá! Esta é a minha voz. Gostou?'); } }, `${n} · ${d}`))),
+      el('h2', {}, 'Jeito de falar'),
+      el('div', { className: 'chips' }, ...Object.entries(S.voz.estilos).map(([k, nome]) => el('span', { className: 'chip', style: window.vozEstilo === k ? 'border-color:var(--ouro)' : '', onclick: () => { window.vozEstilo = k; desenharOpcoes(); falar('Assim eu falo no estilo ' + nome.toLowerCase() + '.'); } }, nome))));
+  };
+  const cart = (id, t, d) => el('div', { className: 'cartao gen' + (genero === id ? ' sel' : ''), 'data-id': id, onclick: () => { if (genero !== id) window.vozNome = null; genero = id; window.vozEscolhida = id;
+      document.querySelectorAll('.gen').forEach(c => c.classList.toggle('sel', c.dataset.id === id)); desenharOpcoes(); falar('Esta é a voz ' + id + '. Gostou?'); } }, el('h3', {}, t), el('p', {}, d));
+  const g1 = cart('feminina', '👩 Voz feminina', 'Clique para ouvir'), g2 = cart('masculina', '👨 Voz masculina', 'Clique para ouvir');
   const sugerir = async () => { if (!genero) { msg.className = 'erro'; msg.textContent = 'Escolha primeiro a voz.'; return; }
     const r = await api('/api/nome/sugerir', { gostos: gostos.value, voz: genero });
     chips.replaceChildren(...r.nomes.map(n => el('span', { className: 'chip', onclick: () => { campo.value = n; } }, n))); };
   const salvar = async () => { if (!genero) { msg.className = 'erro'; msg.textContent = 'Escolha a voz feminina ou masculina.'; return false; }
     const r = await api('/api/nome', { nome: campo.value, voz: genero }); if (!r.ok) { msg.className = 'erro'; msg.textContent = r.motivo; return false; }
+    await api('/api/voz/config', { nome: window.vozNome, estilo: window.vozEstilo });
     msg.className = 'ok'; msg.textContent = `Perfeito! Para chamar, diga: “${r.frase}”`; await recarregar(); window.vozEscolhida = genero; falar(`Olá! Eu sou ${campo.value.trim()}. Muito prazer em conhecer você.`); return true; };
-  window.antesDeAvancar = async () => (S.perfil.nome_assistente && S.perfil.voz && campo.value.trim() === S.perfil.nome_assistente && genero === S.perfil.voz) || await salvar();
+  window.antesDeAvancar = async () => (S.perfil.nome_assistente && S.perfil.voz && campo.value.trim() === S.perfil.nome_assistente && genero === S.perfil.voz && window.vozNome === S.voz.nome && window.vozEstilo === S.voz.estilo) || await salvar();
   perguntas.append(el('h2', {}, 'Não sabe que nome dar? Eu ajudo'), ...S.perguntas_nome.map(p => el('p', { className: 'mudo' }, '• ' + p)), gostos, el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: sugerir }, '✨ Sugerir nomes')), chips);
+  desenharOpcoes();
   return [el('h1', {}, 'Quem vai ser o seu assistente?'), el('p', {}, 'O nome é obrigatório: é com ele que você vai chamar. Primeiro escolha a voz.'),
-    el('div', { className: 'cartoes' }, g1, g2), el('h2', {}, 'Nome do assistente'), campo, el('div', { className: 'linha' }, el('button', { onclick: salvar }, 'Confirmar nome e voz'), msg), perguntas];
+    el('div', { className: 'cartoes' }, g1, g2), opcoes, el('h2', {}, 'Nome do assistente'), campo, el('div', { className: 'linha' }, el('button', { onclick: salvar }, 'Confirmar nome, voz e estilo'), msg), perguntas];
 };
 
 TELAS.integracoes = () => {
@@ -319,10 +389,10 @@ TELAS.concluido = () => {
 };
 
 const FALAS = {
-  boas_vindas: 'Olá! Vou ajudar você a montar o seu assistente pessoal. Tudo fica no seu computador. Vamos começar?',
+  boas_vindas: 'Olá! Minha voz está robótica porque ainda não foi conectada nenhuma API de inteligência artificial. Na próxima etapa eu ensino, passo a passo, como conseguir uma chave gratuita. Depois disso a minha voz fica natural. E quanto mais chaves, melhor. Você também pode conectar o WhatsApp e o Telegram, se quiser.',
   consentimento: 'Agora uma decisão importante: o que eu posso fazer no seu computador? Você escolhe, e pode mudar sempre que quiser.',
   hardware: 'Vou olhar o seu computador para escolher a melhor inteligência local.',
-  chaves: 'Preciso de pelo menos uma chave de inteligência artificial gratuita. Recomendo começar pela do Google.',
+  chaves: 'Vamos pegar a sua primeira chave. Eu explico cada passo. Comece pela do Google: além das respostas, ela liga a minha voz natural.',
   ias_nuvem: 'Agora você pode entrar nas suas contas do ChatGPT e do Gemini. Elas me ajudam a conhecer você.',
   reuniao_inicial: 'Vou reunir as inteligências para elas me contarem o que sabem sobre você.',
   nome_voz: 'Chegou a hora de me dar um nome. Escolha a voz e o nome que mais combinam com você.',
@@ -337,19 +407,30 @@ async function render() {
   if (!S) await recarregar();
   const ord = ORDEM(), i = ord.indexOf(etapa);
   $('#passos').replaceChildren(...ord.map((e, k) => el('i', { className: k < i ? 'feito' : k === i ? 'atual' : '' })));
-  $('#conteudo').replaceChildren(...[].concat(TELAS[etapa]()).filter(Boolean));
-  $('#conteudo').scrollTop = 0;
+  let conteudo;
+  try { conteudo = [].concat(TELAS[etapa]()).filter(Boolean); }
+  catch (e) { aviso('Erro ao montar esta etapa: ' + e.message); conteudo = [el('h1', {}, 'Ops'), el('p', {}, 'Não consegui montar esta etapa (' + e.message + '). Use Voltar ou Continuar para seguir.')]; }
+  const mesma = window._ultimaEtapa === etapa, rolagem = $('#conteudo').scrollTop; window._ultimaEtapa = etapa;
+  $('#conteudo').replaceChildren(...conteudo);
+  $('#conteudo').scrollTop = mesma ? rolagem : 0;     // marcar uma permissao nao joga a tela para o topo
+  $('#modoVoz').textContent = S.voz.nuvem ? '✨ Voz natural (serviço de IA)' : S.voz.privada ? '🔒 Voz do sistema (modo privado)' : '🤖 Voz robótica · conecte uma chave de API';
+  const opc = (S.opcionais || []).includes(etapa), h1 = $('#conteudo h1');
+  if (h1 && opc) h1.append(el('span', { className: 'risco medio', style: 'font-size:12px;margin-left:10px;vertical-align:middle' }, 'opcional'));
+  $('#bProximo').textContent = opc ? 'Pular ou continuar →' : 'Continuar →';
   $('#bVoltar').style.visibility = i > 0 ? 'visible' : 'hidden';
   $('#bProximo').style.display = etapa === 'concluido' ? 'none' : '';
   $('#bProximo').disabled = (etapa === 'chaves' && !S.chaves.length) || (etapa === 'consentimento' && !S.perfil.consentimento_acesso_pc);
   $('#bProximo').title = etapa === 'chaves' && !S.chaves.length ? 'Coloque pelo menos uma chave válida' : etapa === 'consentimento' && !S.perfil.consentimento_acesso_pc ? 'Escolha uma opção (pode ser nenhum acesso)' : '';
   api('/api/etapa', { etapa }).catch(() => {});
   if (FALAS[etapa] && !(etapa === 'nome_voz' && S.perfil.nome_assistente)) falar(FALAS[etapa]);
+  const prox = ord[i + 1]; if (prox && FALAS[prox]) setTimeout(() => prefetch(FALAS[prox]), 6000);   // adianta a proxima fala (fica no cache: zero espera e zero cota repetida)
 }
 async function ir(delta) {
+  try {
   if (delta > 0 && window.antesDeAvancar && !(await window.antesDeAvancar())) return;
   await recarregar(); const ord = ORDEM(), i = ord.indexOf(etapa) + delta;
   etapa = i >= ord.length ? 'concluido' : ord[Math.max(0, i)]; render();
+  } catch (e) { aviso('Não consegui avançar: ' + e.message); }
 }
 $('#bProximo').onclick = () => ir(1); $('#bVoltar').onclick = () => ir(-1);
 speechSynthesis.onvoiceschanged = () => {};
