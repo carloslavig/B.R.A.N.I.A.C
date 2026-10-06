@@ -1,0 +1,15 @@
+# dados e segredos NUNCA vao para o repositorio
+.env
+*.db
+*.log
+data/
+perfil.json
+permissoes.json
+extensoes/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+target/
+dist/
+build/
