@@ -44,3 +44,10 @@ Pronto e testado:
 Os dados da pessoa ficam em `%LOCALAPPDATA%\BRANIAC-dados` (pasta diferente da do programa: desinstalar não apaga nada dela).
 
 Falta: núcleo do Braniac (extração do código atual sem dados pessoais) ligado ao final da instalação, modo jogo/edição, ícone de bandeja/flutuante, assinatura do manifesto de atualização, certificado de assinatura de código, instalador do Ollama embutido no fluxo.
+
+## WhatsApp e controle remoto pelo Telegram (v0.1+)
+
+- **WhatsApp** (`seed/braniac_seed/whatsapp.py`): WhatsApp Web no navegador do assistente; a pessoa lê o QR uma vez. Funções: ver não lidas, ler conversa, enviar. Exige as permissões `whatsapp.ler` / `whatsapp.enviar`; o conteúdo só volta para a própria pessoa (nunca para IA online). *Ainda não inclui atendimento automático (responder sozinho).*
+- **Telegram** (`remoto.py` + `pc_tools.py`): bot da própria pessoa. Travas: (1) desligado de fábrica; (2) pareamento por código de uso único exibido só na tela do PC — só o ID do dono é atendido, em conversa privada; (3) **armado** só pela tela local (por tempo limitado ou "sempre"); pelo Telegram só dá para desarmar (`/parar`); (4) toda ação passa pelas permissões; (5) ações perigosas (apagar, escrever, executar comando, enviar WhatsApp) exigem `SIM <código>` (2 min, uso único); (6) a IA só escolhe a ação a partir da mensagem do dono e **o resultado nunca volta para ela** (nada escondido em arquivo/mensagem manda no PC); (7) 30 comandos/min e auditoria em `remoto.log`.
+- **App na bandeja** (`app/`): fechar a janela só a esconde; "Sair" no ícone encerra tudo; instância única; "Iniciar com o Windows" (opcional, escolha da pessoa) abre escondido com `--background`.
+- Limite assumido: textos e prints enviados ao Telegram passam pelos servidores dele (a tela avisa).

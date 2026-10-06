@@ -81,3 +81,22 @@ def test_reuniao_exige_conta_conectada(srv, monkeypatch):
     monkeypatch.setattr(ias_web, "logado", lambda ia: False)
     st, r = req(srv, "POST", "/api/reuniao", {})
     assert st == 400 and "conta" in r["erro"].lower()
+
+
+def test_telegram_pela_api_token_ruim_codigo_e_armar(srv, monkeypatch):
+    from braniac_seed import cofre, remoto
+    monkeypatch.setattr(cofre, "guardar", lambda p, k: None)
+    st, r = req(srv, "POST", "/api/telegram/token", {"token": "lixo"})
+    assert r["ok"] is False
+    st, r = req(srv, "POST", "/api/remoto/armar", {"minutos": 60})
+    assert r["ok"] is False and "pareie" in r["motivo"]          # nao arma sem dono pareado
+    st, c = req(srv, "POST", "/api/telegram/codigo", {})
+    assert len(c["codigo"]) == 6
+    st, e = req(srv, "POST", "/api/telegram/estado", {})
+    assert e["pareado"] is False and e["armado"] is False and e["codigo"] == c["codigo"]
+    remoto.parar()
+
+
+def test_estado_geral_inclui_remoto_e_nova_etapa(srv):
+    st, e = req(srv, "GET", "/api/estado")
+    assert "remoto" in e["etapas"] and e["remoto"]["armado"] is False and "autostart" in e

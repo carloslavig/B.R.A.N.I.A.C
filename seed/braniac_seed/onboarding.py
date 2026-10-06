@@ -3,11 +3,11 @@
 
   1 boas_vindas  2 consentimento (acesso ao PC: total / granular / nenhum)  3 hardware  4 chaves de API (>= 1 obrigatoria)
   5 ias_nuvem (ChatGPT e Gemini: a pessoa entra na propria conta)  6 reuniao das IAs (perfil da pessoa -> banco local)
-  7 nome e voz (obrigatorios)  8 integracoes (e-mail, Spotify...)  9 icone (bandeja ou flutuante)  10 concluido
+  7 nome e voz (obrigatorios)  8 integracoes (e-mail, Spotify...)  9 WhatsApp e Telegram (controle remoto)  10 icone  11 concluido
 """
 from . import hardware, nomes, perfil, permissoes, provedores
 
-ETAPAS = ["boas_vindas", "consentimento", "hardware", "chaves", "ias_nuvem", "reuniao_inicial", "nome_voz", "integracoes", "icone", "concluido"]
+ETAPAS = ["boas_vindas", "consentimento", "hardware", "chaves", "ias_nuvem", "reuniao_inicial", "nome_voz", "integracoes", "remoto", "icone", "concluido"]
 INTEGRACOES = ["email", "spotify", "whatsapp", "agenda", "arquivos"]
 
 

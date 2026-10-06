@@ -252,6 +252,54 @@ TELAS.integracoes = () => {
     el('div', { className: 'aviso' }, 'Cada conexão também precisa da permissão correspondente na etapa de acesso ao PC. Sem a permissão, o assistente avisa e não faz nada.')];
 };
 
+TELAS.remoto = () => {
+  const wa = el('div'), tg = el('div'), auto = el('div');
+  const permWa = S.permissoes.find(p => p.chave === 'whatsapp.ler')?.liberada;
+  // ---- WhatsApp ----
+  const desenharWa = async () => {
+    let est = null; try { est = (await api('/api/whatsapp/estado', {})).estado; } catch (e) {}
+    const ok = est && est.logado;
+    wa.replaceChildren(el('div', { className: 'prov' + (ok ? ' valida' : '') }, el('h3', {}, '💬 WhatsApp', ok ? el('span', { className: 'ok' }, '  ✔ conectado') : ''),
+      el('p', {}, 'O assistente lê e responde mensagens por você (só o que você liberar). Você lê o QR code UMA vez e a janela some.'),
+      !permWa ? el('p', { className: 'erro' }, 'Você não liberou "WhatsApp" na etapa de acesso ao PC; conectar só funciona depois de liberar.') : '',
+      ok ? el('button', { className: 'sec', onclick: () => api('/api/ia/esconder', {}) }, 'Esconder a janela') :
+        el('button', { onclick: async () => { await api('/api/whatsapp/abrir', {}); } }, est && est.qr ? 'Mostrar o QR code' : 'Conectar o WhatsApp'),
+      ok ? '' : el('p', { className: 'mudo' }, 'No celular: WhatsApp › Aparelhos conectados › Conectar um aparelho.')));
+  };
+  // ---- Telegram ----
+  const desenharTg = async () => {
+    const r = await api('/api/telegram/estado', {});
+    const msg = el('span', { className: 'mudo' }), campo = el('input', { type: 'password', placeholder: 'Cole o token do bot' });
+    const caixa = el('div', { className: 'prov' + (r.pareado ? ' valida' : '') }, el('h3', {}, '✈️ Controle pelo Telegram', r.pareado ? el('span', { className: 'ok' }, '  ✔ pareado') : ''),
+      el('p', {}, 'Mande comandos para o seu PC de qualquer lugar, pelo Telegram, só falando com o SEU bot.'));
+    if (!r.bot) {
+      caixa.append(el('p', { className: 'mudo' }, '1) No Telegram, abra @BotFather e envie /newbot. 2) Escolha um nome e um @usuario para o bot. 3) Copie o token que ele devolver e cole aqui.'),
+        el('div', { className: 'linha' }, campo, el('button', { onclick: async e => { e.target.disabled = true; msg.textContent = 'Validando…';
+          const x = await api('/api/telegram/token', { token: campo.value }); if (x.ok) { await recarregar(); desenharTg(); } else { msg.className = 'erro'; msg.textContent = x.motivo; e.target.disabled = false; } } }, 'Validar e guardar'), msg));
+    } else if (!r.pareado) {
+      const codigo = el('div'), gerar = async () => { const x = await api('/api/telegram/codigo', {}); codigo.replaceChildren(el('div', { style: 'font:700 34px monospace;letter-spacing:.3em;color:var(--ouro);margin:10px 0' }, x.codigo),
+        el('p', {}, `No Telegram, abra @${r.bot} e envie:  /parear ${x.codigo}`), el('p', { className: 'mudo' }, 'O código vale 10 minutos e só funciona uma vez. O primeiro a usá-lo vira o dono.'));
+        clearInterval(poll); poll = setInterval(async () => { const y = await api('/api/telegram/estado', {}); if (y.pareado) { clearInterval(poll); await recarregar(); desenharTg(); } }, 2500); };
+      caixa.append(el('p', {}, `Bot @${r.bot} conectado.`), el('button', { onclick: gerar }, 'Gerar código de pareamento'), codigo);
+    } else {
+      const armarBt = (txt, minutos, cls) => el('button', { className: cls || 'sec', onclick: async () => { const x = await api('/api/remoto/armar', { minutos }); if (!x.ok) alert(x.motivo); await recarregar(); desenharTg(); } }, txt);
+      caixa.append(el('p', {}, `Bot @${r.bot} pareado com o seu Telegram.`),
+        el('p', { className: r.armado ? 'ok' : 'mudo' }, r.armado ? '🔓 Controle do PC ARMADO' + (r.armado_ate === 'sempre' ? ' (sempre)' : '') : '🔒 Controle do PC desarmado: por segurança o bot só conversa até você armar aqui.'),
+        el('div', { className: 'linha' }, armarBt('Armar por 8 horas', 480, 'sec'), armarBt('Armar sempre', 0, 'sec'),
+          r.armado ? el('button', { className: 'perigo', onclick: async () => { await api('/api/remoto/desarmar', {}); await recarregar(); desenharTg(); } }, 'Desarmar') : ''),
+        el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: async () => { const x = await api('/api/telegram/codigo', { reparear: true }); alert('Novo código: ' + x.codigo + '\nEnvie /parear ' + x.codigo + ' ao bot (vale 10 min).'); desenharTg(); } }, 'Trocar de celular/conta'),
+          el('button', { className: 'perigo', onclick: async () => { if (confirm('Remover o Telegram e esquecer o dono?')) { await api('/api/telegram/remover', {}); await recarregar(); desenharTg(); } } }, 'Remover Telegram')));
+    }
+    caixa.append(el('div', { className: 'aviso' }, 'Como funciona a segurança: só o ID do seu Telegram é atendido; o controle do PC só funciona ARMADO (e só você arma, aqui no computador); cada ação respeita as permissões que você liberou; ações perigosas (apagar, escrever, rodar comandos, enviar WhatsApp) pedem um código de confirmação; /parar desarma tudo na hora. Textos e prints passam pelos servidores do Telegram.'));
+    tg.replaceChildren(caixa);
+  };
+  // ---- iniciar com o Windows ----
+  auto.append(el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: S.autostart, onchange: async e => { const x = await api('/api/autostart', { ativo: e.target.checked }); if (!x.ok) { e.target.checked = !e.target.checked; alert(x.motivo); } } }),
+    el('div', {}, el('b', {}, 'Iniciar com o Windows'), el('div', { className: 'mudo' }, 'Abre escondido na bandeja ao ligar o PC, para o Telegram funcionar sempre. Fechar a janela só a esconde: o assistente continua na bandeja (clique com o botão direito no ícone para sair).'))));
+  desenharWa(); desenharTg(); clearInterval(poll); poll = setInterval(desenharWa, 4000);
+  return [el('h1', {}, 'WhatsApp e controle remoto'), el('p', {}, 'Opcional. Conecte o WhatsApp e/ou o seu bot do Telegram para o assistente trabalhar por você mesmo quando você estiver longe do PC.'), wa, tg, auto];
+};
+
 TELAS.icone = () => {
   const cart = (id, t, d, mock) => el('div', { className: 'cartao' + (S.perfil.modo_icone === id ? ' sel' : ''), onclick: async () => { await api('/api/icone', { modo: id }); await recarregar(); render(); } }, el('h3', {}, t), el('p', {}, d), mock);
   return [el('h1', {}, 'Onde fica o ícone do assistente?'), el('p', {}, 'Para chamar, dar um duplo clique ou fazer ele voltar quando você estiver jogando ou editando.'),
@@ -279,6 +327,7 @@ const FALAS = {
   reuniao_inicial: 'Vou reunir as inteligências para elas me contarem o que sabem sobre você.',
   nome_voz: 'Chegou a hora de me dar um nome. Escolha a voz e o nome que mais combinam com você.',
   integracoes: 'Conte como você quer me usar: e-mail, música, mensagens…',
+  remoto: 'Se quiser, conecte o WhatsApp e o Telegram. Com o Telegram você me manda comandos de qualquer lugar, com segurança.',
   icone: 'Onde você prefere me deixar: na bandeja ou flutuando na tela?',
   concluido: 'Está tudo pronto!'
 };

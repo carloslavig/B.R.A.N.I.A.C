@@ -87,6 +87,11 @@ def logado(ia):
 
 
 def perguntar(ia, texto, timeout_s=150, url_conversa=None):
+    with navegador.LOCK:
+        return _perguntar(ia, texto, timeout_s, url_conversa)
+
+
+def _perguntar(ia, texto, timeout_s, url_conversa):
     """Envia `texto` numa conversa NOVA da IA e devolve a resposta. `url_conversa` permite abrir dentro de um projeto especifico."""
     s = ADAPTERS[ia]
     navegador.abrir_aba(s["url"])

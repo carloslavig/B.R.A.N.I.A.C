@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Navegador do ASSISTENTE: Edge (ja vem no Windows) ou Chrome, com perfil PROPRIO (nao mexe no navegador da pessoa), controlado por CDP.
 Aparece so no login das IAs de nuvem; depois fica escondido fora da tela e so o assistente mexe nele. A pessoa so ve se pedir."""
-import http.client, json, os, subprocess, time, urllib.request
+import http.client, json, os, subprocess, threading, time, urllib.request
 from pathlib import Path
 from . import paths
 
 PORTA = 9333
+LOCK = threading.RLock()   # o navegador do assistente tem UMA aba na frente por vez: ChatGPT, Gemini e WhatsApp revezam sob este lock
 CANDIDATOS = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",

@@ -4,7 +4,7 @@ Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam p
 import json, mimetypes, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from . import (banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, reuniao, cofre)
+from . import (autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -42,7 +42,7 @@ def estado_geral():
         "permissoes": permissoes.resumo(), "provedores": provedores.catalogo(), "chaves": chaves,
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
-        "jobs": {k: dict(v) for k, v in JOBS.items()}, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
+        "jobs": {k: dict(v) for k, v in JOBS.items()}, "remoto": remoto.resumo(), "autostart": autostart.ativo(), "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
     }
 
 
@@ -118,6 +118,42 @@ def acao(caminho, d):
             return r
         _rodar("reuniao", tarefa)
         return {}
+    if caminho == "/api/whatsapp/abrir":
+        whatsapp.abrir_login()
+        return {}
+    if caminho == "/api/whatsapp/estado":
+        return {"estado": whatsapp.estado()}
+    if caminho == "/api/telegram/token":
+        try:
+            return {"ok": True, "bot": remoto.cadastrar_token(d["token"])}
+        except remoto.RemotoErro as e:
+            return {"ok": False, "motivo": str(e)}
+    if caminho == "/api/telegram/codigo":
+        cod = remoto.novo_codigo(bool(d.get("reparear")))
+        remoto.iniciar()
+        return {"codigo": cod}
+    if caminho == "/api/telegram/estado":
+        remoto.iniciar()
+        return remoto.resumo()
+    if caminho == "/api/telegram/remover":
+        remoto.parar()
+        remoto.desligar_tudo()
+        return {}
+    if caminho == "/api/remoto/armar":
+        try:
+            remoto.armar(d.get("minutos") or None)
+        except remoto.RemotoErro as e:
+            return {"ok": False, "motivo": str(e)}
+        return {"ok": True}
+    if caminho == "/api/remoto/desarmar":
+        remoto.desarmar()
+        return {}
+    if caminho == "/api/autostart":
+        try:
+            autostart.definir(bool(d.get("ativo")))
+        except Exception as e:
+            return {"ok": False, "motivo": str(e)}
+        return {"ok": True}
     if caminho == "/api/nome/sugerir":
         return {"nomes": nomes.sugerir(d.get("gostos", ""), d["voz"])}
     if caminho == "/api/nome":
@@ -214,6 +250,7 @@ def servir(porta=None, bloquear=True):
 if __name__ == "__main__":
     porta = int(sys.argv[1]) if len(sys.argv) > 1 else None
     srv, porta = servir(porta, bloquear=False)
+    remoto.iniciar()
     print(f"BRANIAC instalação em http://127.0.0.1:{porta}", flush=True)
     while True:
         time.sleep(3600)

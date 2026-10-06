@@ -36,6 +36,8 @@ CATALOGO = {
     "whatsapp.enviar": ("Enviar mensagens", "Enviar mensagens em seu nome.", "alto"),
     "spotify": ("Spotify", "Tocar músicas e controlar o volume.", "baixo"),
     "sistema": ("Sistema", "Volume, janelas, modo jogo e lembretes.", "baixo"),
+    "sistema.tela": ("Ver a tela", "Tirar prints da tela do PC (usado no controle remoto).", "alto"),
+    "sistema.status": ("Ver o estado do PC", "Memória, disco e hora do PC.", "baixo"),
 }
 
 PERFIS = {   # atalhos para a tela de instalacao (a pessoa ainda pode ajustar item por item)
