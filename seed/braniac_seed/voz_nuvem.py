@@ -24,13 +24,16 @@ ESTILOS = {   # id -> (nome para a pessoa, instrucao dada ao modelo)
 }
 ESTILO = ESTILOS["calmo"][1]
 _cooldown = {}          # (modelo, chave) -> ate quando evitar
+_cooldown_motivo = {}   # (modelo, chave) -> 'cota' | 'outro' (para explicar a pessoa por que a voz natural esta fora)
 _lock = threading.Lock()
 ULTIMO = {"motor": ""}
 _EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿️‍]")
 
 
 class VozErro(RuntimeError):
-    pass
+    def __init__(self, msg, motivo="outro"):
+        super().__init__(msg)
+        self.motivo = motivo
 
 
 def disponivel():
@@ -117,8 +120,42 @@ def _cache_arq(texto, voz, estilo_txt):
     return d / (h + ".wav")
 
 
+class _Falha(Exception):
+    def __init__(self, motivo, msg):
+        super().__init__(msg)
+        self.motivo = motivo
+
+
+TIMEOUT_TENTATIVA = 22      # os modelos de voz 'preview' as vezes travam: nao espera mais que isto por tentativa
+HEDGE_S = 6                 # se a tentativa demora, a proxima (outro modelo/chave) ja comeca em paralelo
+
+
+def _tentar(post, modelo, nome_chave, chave, prompt, voz, texto):
+    corpo = {"contents": [{"parts": [{"text": prompt}]}],
+             "generationConfig": {"responseModalities": ["AUDIO"],
+                                  "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voz}}}}}
+    try:
+        _, dados = post(f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent", chave, corpo, timeout=TIMEOUT_TENTATIVA)
+        pcm = base64.b64decode(dados["candidates"][0]["content"]["parts"][0]["inlineData"]["data"])
+    except urllib.error.HTTPError as e:
+        _cooldown[(modelo, nome_chave)] = time.time() + (900 if e.code == 429 else 120)   # sem cota: nao insiste por 15 min
+        _cooldown_motivo[(modelo, nome_chave)] = "cota" if e.code == 429 else "outro"
+        raise _Falha("cota" if e.code == 429 else "outro", f"{modelo}/{nome_chave}: HTTP {e.code}")
+    except (KeyError, IndexError, ValueError):
+        raise _Falha("outro", f"{modelo}/{nome_chave}: resposta vazia")
+    except Exception as e:
+        lento = "timed out" in str(e).lower() or "timeout" in str(e).lower()
+        # travou: NAO fica em descanso (os modelos preview travam por acaso e na proxima costumam responder); quem decide tentar de novo e o chamador
+        raise _Falha("lento" if lento else "rede", f"{modelo}/{nome_chave}: {str(e)[:40]}")
+    if not _plausivel(texto, len(pcm) / 48000):
+        raise _Falha("outro", f"{modelo}: áudio longo demais")
+    return pcm
+
+
 def sintetizar(texto, genero="feminina", voz=None, post=None, chaves=None, usar_cache=True, estilo="calmo"):
-    """Devolve bytes WAV com a voz natural. Levanta VozErro se nao for possivel (a tela cai na voz do sistema)."""
+    """Devolve bytes WAV com a voz natural. Levanta VozErro (com .motivo: cota | lento | rede | outro) se nao for possivel:
+    a tela mostra o motivo e cai na voz do sistema."""
+    import concurrent.futures as cf
     texto = limpar(texto)[:900]
     if not texto:
         raise VozErro("texto vazio")
@@ -139,35 +176,53 @@ def sintetizar(texto, genero="feminina", voz=None, post=None, chaves=None, usar_
             if k:
                 chaves.append((c, k))
     if not chaves:
-        raise VozErro("sem chave do Google: usando a voz do sistema")
+        raise VozErro("sem chave do Google: usando a voz do sistema", "sem_chave")
     prompt = f"{estilo_txt}: {texto}"
-    erros = []
-    for modelo in MODELOS:
-        for nome_chave, chave in chaves:
-            if _cooldown.get((modelo, nome_chave), 0) > time.time():
+    fila = [(m, n, k) for m in MODELOS for n, k in chaves if _cooldown.get((m, n), 0) <= time.time()]
+    if not fila:
+        motivos_cd = {_cooldown_motivo.get((m, n), "cota") for m in MODELOS for n, _ in chaves}
+        raise VozErro("a cota da voz natural acabou por agora (volta em alguns minutos)" if motivos_cd == {"cota"} else "a voz natural está indisponível por alguns minutos",
+                      "cota" if motivos_cd == {"cota"} else "outro")
+    erros, pend, pos, refeitas, duplicadas = [], {}, [0], {}, [0]
+    ex = cf.ThreadPoolExecutor(max_workers=3)
+
+    def lancar():
+        m, n, k = fila[pos[0]]
+        pos[0] += 1
+        pend[ex.submit(_tentar, post, m, n, k, prompt, voz, texto)] = m
+
+    try:
+        lancar()
+        while pend:
+            feitos, _ = cf.wait(list(pend), timeout=HEDGE_S, return_when=cf.FIRST_COMPLETED)
+            if not feitos:
+                if len(pend) < 2:
+                    if pos[0] < len(fila):
+                        lancar()                              # a atual esta lenta: a proxima corre junto
+                    elif duplicadas[0] < 1 and fila:
+                        duplicadas[0] += 1                    # sem mais candidatos: repete o ultimo (os modelos preview as vezes travam e a repeticao responde em ~6 s)
+                        fila.append(fila[pos[0] - 1])
+                        lancar()
                 continue
-            corpo = {"contents": [{"parts": [{"text": prompt}]}],
-                     "generationConfig": {"responseModalities": ["AUDIO"],
-                                          "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voz}}}}}
-            try:
-                _, dados = post(f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent", chave, corpo)
-                pcm = base64.b64decode(dados["candidates"][0]["content"]["parts"][0]["inlineData"]["data"])
-            except urllib.error.HTTPError as e:
-                _cooldown[(modelo, nome_chave)] = time.time() + (900 if e.code == 429 else 120)   # sem cota: nao insiste por 15 min
-                erros.append(f"{modelo}/{nome_chave}: HTTP {e.code}")
-                continue
-            except (KeyError, IndexError, ValueError):
-                erros.append(f"{modelo}/{nome_chave}: resposta vazia")
-                continue
-            except Exception as e:
-                erros.append(f"{modelo}/{nome_chave}: {str(e)[:40]}")
-                continue
-            if not _plausivel(texto, len(pcm) / 48000):
-                erros.append(f"{modelo}: áudio longo demais")
-                continue
-            wav = polir(_para_wav(pcm))
-            ULTIMO["motor"] = f"gemini:{modelo}:{voz}"
-            if usar_cache:
-                arq.write_bytes(wav)
-            return wav
-    raise VozErro("sem voz natural agora (" + "; ".join(erros[:3]) + ")")
+            for f in feitos:
+                modelo = pend.pop(f)
+                try:
+                    pcm = f.result()
+                except _Falha as e:
+                    erros.append(e)
+                    if e.motivo == "lento" and refeitas.get(modelo, 0) < 1:      # travou: tenta de novo o mesmo modelo UMA vez
+                        refeitas[modelo] = refeitas.get(modelo, 0) + 1
+                        fila.insert(pos[0], next(x for x in fila[:pos[0]] if x[0] == modelo))
+                    if pos[0] < len(fila) and not pend:
+                        lancar()
+                    continue
+                wav = polir(_para_wav(pcm))
+                ULTIMO["motor"] = f"gemini:{modelo}:{voz}"
+                if usar_cache:
+                    arq.write_bytes(wav)
+                return wav
+    finally:
+        ex.shutdown(wait=False, cancel_futures=True)
+    motivos = {e.motivo for e in erros}
+    motivo = "cota" if motivos == {"cota"} else "lento" if "lento" in motivos else "rede" if "rede" in motivos else "outro"
+    raise VozErro("sem voz natural agora (" + "; ".join(str(e) for e in erros[:3]) + ")", motivo)

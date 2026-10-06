@@ -7,29 +7,104 @@ from . import paths
 
 PORTA = 9333
 LOCK = threading.RLock()   # o navegador do assistente tem UMA aba na frente por vez: ChatGPT, Gemini e WhatsApp revezam sob este lock
-CANDIDATOS = [
-    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-]
-
-
 class NavegadorErro(RuntimeError):
     pass
 
 
-def executavel():
-    for c in CANDIDATOS:
-        if Path(c).exists():
+def _locais():
+    return [os.environ.get("ProgramFiles", r"C:\Program Files"), os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+            os.environ.get("LOCALAPPDATA", "")]
+
+
+# id -> (nome, caminhos relativos a Program Files / Program Files (x86) / LocalAppData, prefixo do ProgId que o Windows usa para o navegador padrao)
+NAVEGADORES = {
+    "chrome": ("Google Chrome", [r"Google\Chrome\Application\chrome.exe"], "ChromeHTML"),
+    "edge": ("Microsoft Edge", [r"Microsoft\Edge\Application\msedge.exe"], "MSEdgeHTM"),
+    "brave": ("Brave", [r"BraveSoftware\Brave-Browser\Application\brave.exe"], "BraveHTML"),
+    "vivaldi": ("Vivaldi", [r"Vivaldi\Application\vivaldi.exe"], "Vivaldi"),
+    "opera": ("Opera", [r"Programs\Opera\opera.exe", r"Opera\opera.exe"], "Opera"),
+}
+
+
+def instalados():
+    """{id: caminho do .exe} dos navegadores baseados em Chromium (os unicos que o assistente consegue controlar por CDP)."""
+    achados = {}
+    for id_, (_, rels, _) in NAVEGADORES.items():
+        for base in _locais():
+            for rel in rels:
+                p = Path(base) / rel
+                if base and p.exists():
+                    achados.setdefault(id_, str(p))
+    return achados
+
+
+def padrao_do_windows():
+    """id do navegador padrao do Windows (so se for Chromium), ou None (ex.: Firefox nao da para controlar por CDP)."""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice") as k:
+            progid = winreg.QueryValueEx(k, "ProgId")[0]
+    except Exception:
+        return None
+    return next((i for i, (_, _, pref) in NAVEGADORES.items() if progid.startswith(pref)), None)
+
+
+def escolhido(instal=None, padrao="__auto__", preferido=None):
+    """Qual navegador o assistente usa: 1) o que a pessoa escolheu; 2) o PADRAO do Windows (se for Chromium); 3) Chrome; 4) Edge (todo Windows tem)."""
+    instal = instal if instal is not None else instalados()
+    if preferido is None:
+        from . import perfil
+        preferido = perfil.carregar().get("navegador") or "auto"
+    if preferido in instal:
+        return preferido
+    padrao = padrao_do_windows() if padrao == "__auto__" else padrao
+    for c in (padrao, "chrome", "edge", *instal):
+        if c in instal:
             return c
-    raise NavegadorErro("não encontrei o Edge nem o Chrome neste PC")
+    raise NavegadorErro("não encontrei nenhum navegador compatível (Chrome, Edge, Brave, Vivaldi ou Opera) neste PC")
+
+
+def executavel():
+    return instalados()[escolhido()]
+
+
+def info():
+    """Para a tela: lista, o que esta em uso e por que."""
+    instal = instalados()
+    try:
+        usado = escolhido(instal)
+    except NavegadorErro:
+        usado = None
+    from . import perfil
+    return {"instalados": {i: NAVEGADORES[i][0] for i in instal}, "usado": usado, "preferido": perfil.carregar().get("navegador") or "auto",
+            "padrao_windows": padrao_do_windows()}
 
 
 def perfil_dir():
-    d = paths.dados_dir() / "navegador"
+    """Perfil PROPRIO do assistente, separado por navegador (nao mexe nas suas abas, senhas nem historico)."""
+    d = paths.dados_dir() / ("navegador-" + escolhido())
     d.mkdir(exist_ok=True)
     return d
+
+
+def trocar(id_):
+    """Muda o navegador do assistente (fecha o que estiver aberto para o novo assumir)."""
+    from . import perfil
+    if id_ != "auto" and id_ not in instalados():
+        raise NavegadorErro("esse navegador não está instalado")
+    if rodando():
+        try:
+            import websocket
+            ws = websocket.create_connection(_json("/json/version")["webSocketDebuggerUrl"], suppress_origin=True, timeout=5)
+            ws.send(json.dumps({"id": 1, "method": "Browser.close"}))
+            ws.close()
+        except Exception:
+            pass
+        for _ in range(20):
+            if not rodando():
+                break
+            time.sleep(0.25)
+    perfil.atualizar(navegador=id_)
 
 
 def _json(caminho, metodo="GET", timeout=4):

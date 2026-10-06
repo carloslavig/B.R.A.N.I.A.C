@@ -54,14 +54,20 @@ def estado_geral():
         "permissoes": permissoes.resumo(), "provedores": provedores.catalogo(), "chaves": chaves,
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
-        "jobs": {k: dict(v) for k, v in JOBS.items()}, "remoto": remoto.resumo(), "autostart": autostart.ativo(),
-        "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"),
+        "jobs": {k: dict(v) for k, v in JOBS.items()}, "remoto": remoto.resumo(), "autostart": autostart.ativo(), "navegador": navegador.info(),
+        "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"), "reserva": bool(p.get("voz_reserva")),
                 "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
         "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
     }
 
 
 def acao(caminho, d):
+    if caminho == "/api/navegador":
+        try:
+            navegador.trocar(d["id"])
+        except navegador.NavegadorErro as e:
+            return {"ok": False, "motivo": str(e)}
+        return {"ok": True, "navegador": navegador.info()}
     if caminho == "/api/log":
         _registrar(f"[tela] etapa={d.get('etapa')} {str(d.get('msg', ''))[:400]}")
         return {}
@@ -99,6 +105,8 @@ def acao(caminho, d):
             campos["voz_nome"] = d["nome"] if d["nome"] in {n for v in voz_nuvem.VOZES.values() for n, _ in v} else None
         if d.get("estilo") in voz_nuvem.ESTILOS:
             campos["voz_estilo"] = d["estilo"]
+        if "reserva" in d:
+            campos["voz_reserva"] = bool(d["reserva"])
         if "privada" in d:
             campos["voz_privada"] = bool(d["privada"])
         perfil.atualizar(**campos)
@@ -228,12 +236,13 @@ class Handler(BaseHTTPRequestHandler):
         """Voz natural (Gemini TTS pela chave da pessoa). Se nao der, 503: a tela usa a voz do sistema. Voz privada: nunca sai texto do PC."""
         p = perfil.carregar()
         if p.get("voz_privada"):
-            return self._json({"erro": "voz privada: usando só a voz do sistema"}, 409)
+            return self._json({"erro": "voz privada: usando só a voz do sistema", "motivo": "privada"}, 409)
         try:
             wav = voz_nuvem.sintetizar(str(d.get("texto", "")), d.get("genero") or p.get("voz") or "feminina", d.get("voz") or p.get("voz_nome"),
                                        estilo=d.get("estilo") or p.get("voz_estilo") or "calmo")
         except voz_nuvem.VozErro as e:
-            return self._json({"erro": str(e)}, 503)
+            _registrar(f"[voz] {e}")
+            return self._json({"erro": str(e), "motivo": e.motivo}, 503)
         self.send_response(200)
         self.send_header("Content-Type", "audio/wav")
         self.send_header("Content-Length", str(len(wav)))

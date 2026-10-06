@@ -1,6 +1,6 @@
 [package]
 name = "braniac"
-version = "0.2.0"
+version = "0.2.2"
 description = "BRANIAC - assistente de IA pessoal"
 authors = ["Carlos Lavigne"]
 edition = "2021"

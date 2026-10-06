@@ -92,21 +92,36 @@ const corpoVoz = texto => JSON.stringify({ texto, genero: window.vozEscolhida ||
 async function falar(texto) {
   const minha = ++seq; $('#fala').textContent = texto; pararVoz();
   if (!voz) return;
-  if (S?.voz?.nuvem) {                       // voz natural, vinda do servico de IA da pessoa (cache local: falas repetidas nao gastam cota)
+  if (S?.voz?.nuvem && !(window.vozPausadaAte > Date.now())) {   // voz natural, vinda do servico de IA da pessoa (cache local: falas repetidas nao gastam cota)
+    const modo = $('#modoVoz'); modo.textContent = '⏳ Gerando a minha voz natural…';
     try {
       const r = await fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: corpoVoz(texto) });
       if (minha !== seq) return;
       if (r.ok && (r.headers.get('content-type') || '').includes('audio')) {
         const blob = await r.blob(); if (minha !== seq) return;
         const a = new Audio(URL.createObjectURL(blob)); audioAtual = a; a.onplay = () => falando = true; a.onended = a.onerror = () => falando = false;
-        await a.play(); return;
+        try { await a.play(); window.vozMotivo = null; indicarVoz(); return; }
+        catch (e) { window.vozMotivo = 'bloqueada'; indicarVoz(); document.addEventListener('click', () => { if (audioAtual === a) a.play().catch(() => {}); }, { once: true }); return; }
       }
-    } catch (e) { /* cai na voz do sistema */ }
+      const d = await r.json().catch(() => ({})); window.vozMotivo = d.motivo || 'outro';
+      if (d.motivo === 'cota') window.vozPausadaAte = Date.now() + 5 * 60 * 1000;      // sem cota: nao insiste por 5 min
+    } catch (e) { window.vozMotivo = 'rede'; }
+    indicarVoz();
     if (minha !== seq) return;
+    if (!S.voz.reserva) return;      // com a chave conectada nao troca para a voz robotica sem a pessoa pedir: fica o texto e o motivo
   }
   falarRobotico(texto);
 }
-function prefetch(texto) { if (S?.voz?.nuvem && texto) fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: corpoVoz(texto) }).catch(() => {}); }
+function indicarVoz() {
+  const m = window.vozMotivo, e = $('#modoVoz');
+  e.textContent = S.voz.privada ? '🔒 Voz do sistema (modo privado)' :
+    !S.voz.nuvem ? '🤖 Voz robótica · conecte uma chave de API' :
+    m === 'cota' ? '🔇 Voz natural sem cota por alguns minutos (mais chaves = mais voz). ' + (S.voz.reserva ? 'Usando a voz do sistema.' : 'Leia o texto ao lado.') :
+    m === 'lento' ? '🔇 A voz natural demorou demais desta vez. ' + (S.voz.reserva ? 'Usei a voz do sistema.' : 'Leia o texto ao lado.') :
+    m === 'rede' ? '🔇 Sem conexão com a voz natural. ' + (S.voz.reserva ? 'Usei a voz do sistema.' : 'Leia o texto ao lado.') :
+    m === 'bloqueada' ? '🔊 Clique na tela uma vez para ouvir a voz natural' :
+    m ? '🔇 A voz natural falhou agora. ' + (S.voz.reserva ? 'Usei a voz do sistema.' : 'Leia o texto ao lado.') : '✨ Voz natural (serviço de IA)';
+}
 $('#bMudo').onclick = () => { voz = !voz; if (!voz) speechSynthesis.cancel(); $('#bMudo').textContent = '🔊 Voz do assistente: ' + (voz ? 'ligada' : 'desligada'); };
 
 // ---------- orbe ----------
@@ -233,7 +248,7 @@ TELAS.chaves = () => {
           el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: () => window.open(p.onde, '_blank') }, 'Abrir ' + p.onde.replace('https://', '')), el('span', { className: 'mudo' }, S.aviso_passos))),
         el('div', { className: 'linha' }, campo, el('button', { onclick: async e => { e.target.disabled = true; msg.className = 'mudo'; msg.textContent = 'Testando…';
           const r = await api('/api/chave', { provedor: p.id, chave: campo.value }); msg.className = r.ok ? 'ok' : 'erro'; msg.textContent = r.ok ? 'Chave válida!' : r.motivo;
-          if (r.ok) { const antes = S.voz.nuvem; await recarregar(); await render();
+          if (r.ok) { const antes = S.voz.nuvem; await recarregar(); window.pularFala = true; await render();
             falar(!antes && S.voz.nuvem ? 'Chave conectada! A partir de agora você já está ouvindo a minha voz natural, vinda do serviço de inteligência artificial. Quanto mais chaves, melhor.' : 'Chave conectada! Quanto mais chaves, mais cota e mais velocidade.'); }
           else e.target.disabled = false; } }, 'Testar e guardar'), msg)]);
   };
@@ -252,6 +267,8 @@ TELAS.chaves = () => {
     el('div', { className: 'aviso' }, 'Pelo menos UMA chave é obrigatória; o resto é opcional. ' + S.sem_chave + ' As chaves ficam guardadas no cofre do Windows, protegidas, só neste PC.'),
     el('div', { className: 'prov' }, el('h3', {}, 'Seu nível: ' + nv.nome + (nv.n ? ` (${nv.n} chave${nv.n > 1 ? 's' : ''})` : '')), el('div', { className: 'barra' }, el('div', { style: `width:${nv.pct}%` })),
       el('p', { className: 'mudo' }, nv.proximo), el('p', { className: 'mudo' }, S.por_que_mais), modoVoz,
+      el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: S.voz.reserva, onchange: async e => { await api('/api/voz/config', { reserva: e.target.checked }); await recarregar(); render(); } }),
+        el('div', {}, el('b', {}, 'Usar a voz do sistema quando a natural falhar'), el('div', { className: 'mudo' }, 'No plano gratuito o Google limita a voz natural por dia (mais chaves = mais voz). Desligado: se ela falhar, eu só mostro o texto. Ligado: eu falo com a voz robótica do Windows.'))),
       el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: S.voz.privada, onchange: async e => { await api('/api/voz/config', { privada: e.target.checked }); await recarregar(); render(); } }),
         el('div', {}, el('b', {}, 'Voz privada (só neste PC)'), el('div', { className: 'mudo' }, 'Para gerar a voz natural, só o TEXTO que eu falo (nunca suas conversas ou arquivos) é enviado ao Google. Se preferir tudo no PC, ative: a voz fica robótica, mas nada sai do computador.')))),
     caixa];
@@ -265,7 +282,13 @@ TELAS.ias_nuvem = () => {
       st[id] ? '' : el('button', { onclick: () => api('/api/ia/abrir', { ia: id }) }, 'Entrar no ' + ia.titulo))));
   const atualizar = async () => { Object.assign(st, await api('/api/ia/estado', {})); desenhar(); };
   clearInterval(poll); poll = setInterval(atualizar, 3500); atualizar();
-  return [el('h1', {}, 'Conectar suas IAs na nuvem'), el('p', {}, 'Opcional, mas recomendado: com o ChatGPT e o Gemini conectados, seu assistente consulta essas IAs e já nasce conhecendo você.'),
+  const nav = S.navegador, sel = el('select', { style: 'background:#0a0f1c;color:var(--texto);border:1px solid var(--linha);border-radius:8px;padding:6px 10px', onchange: async e => { const r = await api('/api/navegador', { id: e.target.value }); if (!r.ok) aviso(r.motivo); await recarregar(); render(); } },
+    el('option', { value: 'auto', selected: nav.preferido === 'auto' }, 'Automático' + (nav.padrao_windows && nav.instalados[nav.padrao_windows] ? ' (o seu padrão: ' + nav.instalados[nav.padrao_windows] + ')' : '')),
+    ...Object.entries(nav.instalados).map(([id, nome]) => el('option', { value: id, selected: nav.preferido === id }, nome)));
+  const caixaNav = el('div', { className: 'prov' }, el('h3', {}, 'Navegador do assistente: ' + (nav.usado ? nav.instalados[nav.usado] : 'nenhum encontrado')),
+    el('p', { className: 'mudo' }, 'O assistente abre as suas contas numa janela PRÓPRIA do navegador, com um perfil separado (não mexe nas suas abas, senhas nem histórico). Precisa ser um navegador baseado em Chromium para ele conseguir controlar depois; o Firefox não dá. Usei o seu navegador padrão quando possível; se ele não serve, uso o Chrome ou o Edge, que vem no Windows.'),
+    el('div', { className: 'linha' }, el('span', { className: 'mudo' }, 'Trocar:'), sel));
+  return [el('h1', {}, 'Conectar suas IAs na nuvem'), caixaNav, el('p', {}, 'Opcional, mas recomendado: com o ChatGPT e o Gemini conectados, seu assistente consulta essas IAs e já nasce conhecendo você.'),
     el('div', { className: 'aviso' }, 'Você entra na SUA conta, numa janela normal. O assistente nunca vê nem guarda sua senha. Usar contas pela automação pode ser limitado pelos termos de cada serviço; é por sua conta e você pode pular esta etapa.'), caixa,
     el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: async () => { await api('/api/ia/esconder', {}); } }, 'Já entrei: esconder a janela'))];
 };
@@ -413,7 +436,7 @@ async function render() {
   const mesma = window._ultimaEtapa === etapa, rolagem = $('#conteudo').scrollTop; window._ultimaEtapa = etapa;
   $('#conteudo').replaceChildren(...conteudo);
   $('#conteudo').scrollTop = mesma ? rolagem : 0;     // marcar uma permissao nao joga a tela para o topo
-  $('#modoVoz').textContent = S.voz.nuvem ? '✨ Voz natural (serviço de IA)' : S.voz.privada ? '🔒 Voz do sistema (modo privado)' : '🤖 Voz robótica · conecte uma chave de API';
+  indicarVoz();
   const opc = (S.opcionais || []).includes(etapa), h1 = $('#conteudo h1');
   if (h1 && opc) h1.append(el('span', { className: 'risco medio', style: 'font-size:12px;margin-left:10px;vertical-align:middle' }, 'opcional'));
   $('#bProximo').textContent = opc ? 'Pular ou continuar →' : 'Continuar →';
@@ -422,8 +445,8 @@ async function render() {
   $('#bProximo').disabled = (etapa === 'chaves' && !S.chaves.length) || (etapa === 'consentimento' && !S.perfil.consentimento_acesso_pc);
   $('#bProximo').title = etapa === 'chaves' && !S.chaves.length ? 'Coloque pelo menos uma chave válida' : etapa === 'consentimento' && !S.perfil.consentimento_acesso_pc ? 'Escolha uma opção (pode ser nenhum acesso)' : '';
   api('/api/etapa', { etapa }).catch(() => {});
-  if (FALAS[etapa] && !(etapa === 'nome_voz' && S.perfil.nome_assistente)) falar(FALAS[etapa]);
-  const prox = ord[i + 1]; if (prox && FALAS[prox]) setTimeout(() => prefetch(FALAS[prox]), 6000);   // adianta a proxima fala (fica no cache: zero espera e zero cota repetida)
+  const pular = window.pularFala; window.pularFala = false;      // depois de conectar a chave eu falo UMA frase propria (nao gasta cota com a fala padrao da etapa)
+  if (FALAS[etapa] && !pular && !(etapa === 'nome_voz' && S.perfil.nome_assistente)) falar(FALAS[etapa]);
 }
 async function ir(delta) {
   try {
