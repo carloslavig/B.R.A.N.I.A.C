@@ -4,7 +4,7 @@ perfil, banco, permissoes, extensoes baixadas. Pode ser trocado com a variavel B
 import os
 from pathlib import Path
 
-APP = "BRANIAC"
+APP = "BRANIAC-dados"   # pasta DIFERENTE da do programa (%LOCALAPPDATA%\BRANIAC): desinstalar o app nunca apaga os dados da pessoa
 
 
 def dados_dir():

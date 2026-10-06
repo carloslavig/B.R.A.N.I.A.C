@@ -13,3 +13,7 @@ node_modules/
 target/
 dist/
 build/
+
+app/src-tauri/binaries/*.exe
+app/src-tauri/gen/
+*.spec

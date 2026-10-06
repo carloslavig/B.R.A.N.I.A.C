@@ -35,6 +35,12 @@ Assistente de IA pessoal para Windows. Primeiro para amigos do Carlos, depois pa
 - Automação de ChatGPT/Gemini pelo navegador pode ferir os termos de uso e quebrar com mudanças de layout → tratada como camada opcional/substituível. Gemini também funciona por chave de API, sem aba.
 - LGPD ao vender: consentimento, ver/exportar/apagar memória, telemetria só se a pessoa aceitar.
 
-## Estado atual (`seed/`)
-Feito e testado: permissões, cofre de chaves, validação de chaves, hardware/perfis, nome e voz (com sugestões), roteiro da instalação, atualizador com hash + rollback.
-Falta: casca Tauri, empacotamento do sidecar Python, tela de instalação (UI), adapters ChatGPT/Gemini, núcleo do Braniac (extração do código atual sem dados pessoais), modo jogo, ícone flutuante/bandeja.
+## Estado atual (v0.1)
+Pronto e testado:
+- `seed/braniac_seed`: permissões, cofre de chaves (+ validação), hardware/perfis, dependências da IA local (Ollama), nome e voz com sugestões, roteiro da instalação, **tela da instalação** (voz, orbe, microfone), navegador do assistente (Edge/Chrome, perfil próprio), adapters ChatGPT/Gemini, **primeira reunião das IAs** (grava a ficha no banco local), banco local em duas camadas, atualizador com hash + rollback, servidor local com proteção Host/Origin.
+- `app/`: casca **Tauri** (uma janela) que sobe o backend empacotado (`braniac-core.exe`, PyInstaller) escondido, espera ele responder e mostra a tela; ao fechar encerra o backend.
+- `scripts/build.ps1` gera `BRANIAC_x.y.z_x64-setup.exe` (NSIS, instalação por usuário, sem pedir administrador).
+
+Os dados da pessoa ficam em `%LOCALAPPDATA%\BRANIAC-dados` (pasta diferente da do programa: desinstalar não apaga nada dela).
+
+Falta: núcleo do Braniac (extração do código atual sem dados pessoais) ligado ao final da instalação, modo jogo/edição, ícone de bandeja/flutuante, assinatura do manifesto de atualização, certificado de assinatura de código, instalador do Ollama embutido no fluxo.

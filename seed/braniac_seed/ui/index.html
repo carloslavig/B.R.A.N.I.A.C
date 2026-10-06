@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BRANIAC · Instalação</title>
+<style>
+  :root{--bg:#05070d;--painel:#0d1322;--linha:#1d2740;--texto:#e9eef9;--mudo:#8c9ab8;--ouro:#f0c75e;--azul:#4cc3ff;--verde:#3ddc97;--verm:#ff6b6b}
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{background:radial-gradient(1200px 700px at 20% 0%,#0c1630 0%,var(--bg) 60%);color:var(--texto);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--linha)}
+  header b{letter-spacing:.2em;color:var(--ouro)} header span{color:var(--mudo);font-size:13px}
+  #passos{display:flex;gap:6px;margin-left:auto}
+  #passos i{width:26px;height:5px;border-radius:3px;background:var(--linha)} #passos i.feito{background:var(--azul)} #passos i.atual{background:var(--ouro)}
+  main{flex:1;display:grid;grid-template-columns:340px 1fr;min-height:0}
+  #lado{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;border-right:1px solid var(--linha);padding:20px}
+  canvas{width:260px;height:260px}
+  #fala{min-height:64px;text-align:center;color:var(--mudo);font-size:14px;max-width:290px}
+  #conteudo{overflow:auto;padding:30px 44px}
+  h1{margin:0 0 6px;font-size:26px} h2{margin:22px 0 8px;font-size:16px;color:var(--ouro)} p{margin:6px 0;color:#c7d1e8}
+  .mudo{color:var(--mudo);font-size:13px}
+  .cartoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0}
+  .cartao{background:var(--painel);border:1px solid var(--linha);border-radius:14px;padding:16px;cursor:pointer;transition:.15s}
+  .cartao:hover{border-color:var(--azul)} .cartao.sel{border-color:var(--ouro);box-shadow:0 0 0 1px var(--ouro) inset}
+  .cartao h3{margin:0 0 6px;font-size:16px} .cartao p{font-size:13px;margin:0}
+  .linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  button{background:var(--azul);color:#04101c;border:0;border-radius:10px;padding:10px 18px;font:600 14px inherit;cursor:pointer}
+  button.sec{background:transparent;color:var(--texto);border:1px solid var(--linha)} button:disabled{opacity:.4;cursor:not-allowed}
+  button.perigo{background:var(--verm);color:#2a0606}
+  input[type=text],input[type=password],textarea{width:100%;background:#0a0f1c;border:1px solid var(--linha);color:var(--texto);border-radius:10px;padding:10px 12px;font:inherit}
+  .ok{color:var(--verde)} .erro{color:var(--verm)} .aviso{background:#241d08;border:1px solid #5a4a14;color:#f3dc8a;border-radius:12px;padding:12px 14px;font-size:13.5px;margin:12px 0}
+  .perm{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--linha)} .perm.filho{margin-left:30px}
+  .perm input{margin-top:5px} .risco{font-size:11px;border-radius:6px;padding:1px 7px;margin-left:6px}
+  .risco.baixo{background:#0f3a2a;color:var(--verde)} .risco.medio{background:#3a3210;color:var(--ouro)} .risco.alto{background:#3a1414;color:var(--verm)}
+  .barra{height:10px;border-radius:6px;background:var(--linha);overflow:hidden;margin:10px 0} .barra div{height:100%;background:linear-gradient(90deg,var(--azul),var(--verde));width:0;transition:.3s}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0} .chip{border:1px solid var(--linha);background:var(--painel);padding:6px 14px;border-radius:999px;cursor:pointer}
+  .chip:hover{border-color:var(--ouro)}
+  .bandeja{display:flex;gap:10px;align-items:center;background:#111a2e;border:1px solid var(--linha);border-radius:8px;padding:8px 12px;margin-top:10px;width:max-content}
+  .bandeja i{display:block;width:16px;height:16px;border-radius:4px;background:var(--linha)} .bandeja i.eu{background:var(--ouro);border-radius:50%}
+  footer{display:flex;justify-content:space-between;padding:14px 44px;border-top:1px solid var(--linha)}
+  .prov{background:var(--painel);border:1px solid var(--linha);border-radius:14px;padding:14px;margin:10px 0}
+  .prov.valida{border-color:var(--verde)} .prov h3{margin:0;font-size:15px} .prov a{color:var(--azul)}
+  pre{white-space:pre-wrap;background:#0a0f1c;border:1px solid var(--linha);border-radius:10px;padding:12px;font:13px/1.5 inherit;max-height:230px;overflow:auto}
+</style>
+</head>
+<body>
+<header><b>BRANIAC</b><span>Instalação do seu assistente</span><div id="passos"></div></header>
+<main>
+  <aside id="lado"><canvas id="orbe" width="520" height="520"></canvas><div id="fala"></div><button class="sec" id="bMudo" title="Ligar ou desligar a voz do assistente">🔊 Voz do assistente: ligada</button></aside>
+  <section id="conteudo"></section>
+</main>
+<footer><button class="sec" id="bVoltar">← Voltar</button><button id="bProximo">Continuar →</button></footer>
+
+<script>
+const $ = s => document.querySelector(s);
+const el = (t, props = {}, ...filhos) => { const e = Object.assign(document.createElement(t), props); filhos.flat().forEach(f => e.append(f)); return e; };
+let S = null, etapa = 'boas_vindas', voz = true, nivelMic = 0, falando = false, poll = null;
+
+async function api(caminho, corpo) {
+  const r = await fetch(caminho, corpo === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+  const d = await r.json(); if (d.erro) throw new Error(d.erro); return d;
+}
+async function recarregar() { S = await api('/api/estado'); return S; }
+
+// ---------- voz do assistente (sintese do navegador, 100% local) ----------
+function escolherVoz() {
+  const vs = speechSynthesis.getVoices().filter(v => /pt[-_]BR/i.test(v.lang));
+  const fem = /francisca|maria|luciana|vit[oó]ria|thalita|female|feminina/i, mas = /antonio|ant[oô]nio|daniel|felipe|male|masculin/i;
+  const g = S?.perfil?.voz || window.vozEscolhida;
+  return (g === 'masculina' ? vs.find(v => mas.test(v.name)) : g === 'feminina' ? vs.find(v => fem.test(v.name)) : null) || vs[0] || null;
+}
+function falar(texto) {
+  $('#fala').textContent = texto;
+  if (!voz || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR'; u.rate = 1.02;
+  const v = escolherVoz(); if (v) u.voice = v;
+  if ((S?.perfil?.voz || window.vozEscolhida) === 'masculina') u.pitch = 0.85;
+  u.onstart = () => falando = true; u.onend = u.onerror = () => falando = false;
+  speechSynthesis.speak(u);
+}
+$('#bMudo').onclick = () => { voz = !voz; if (!voz) speechSynthesis.cancel(); $('#bMudo').textContent = '🔊 Voz do assistente: ' + (voz ? 'ligada' : 'desligada'); };
+
+// ---------- orbe ----------
+const cv = $('#orbe'), cx = cv.getContext('2d'); let t = 0;
+function orbe() {
+  t += 0.03; const w = 520, h = 520, c = w / 2, e = falando ? 0.55 + 0.35 * Math.sin(t * 9) : Math.min(1, nivelMic * 6);
+  cx.clearRect(0, 0, w, h);
+  for (let i = 0; i < 4; i++) {
+    cx.beginPath();
+    for (let a = 0; a <= 6.3; a += 0.06) {
+      const r = 120 + i * 14 + (8 + e * 26) * Math.sin(a * (3 + i) + t * (1.5 + i * .4)) + 4 * Math.sin(a * 7 - t * 2);
+      cx[a ? 'lineTo' : 'moveTo'](c + r * Math.cos(a), c + r * Math.sin(a));
+    }
+    cx.closePath(); cx.strokeStyle = `rgba(${i % 2 ? '240,199,94' : '76,195,255'},${.75 - i * .15})`; cx.lineWidth = 2.2; cx.stroke();
+  }
+  const g = cx.createRadialGradient(c, c, 5, c, c, 120); g.addColorStop(0, `rgba(240,199,94,${.35 + e * .4})`); g.addColorStop(1, 'rgba(76,195,255,0)');
+  cx.fillStyle = g; cx.beginPath(); cx.arc(c, c, 120, 0, 6.3); cx.fill();
+  requestAnimationFrame(orbe);
+}
+orbe();
+
+// ---------- microfone (so mede o nivel para o teste; nada e gravado) ----------
+async function testarMic(botao, saida) {
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const ac = new AudioContext(), an = ac.createAnalyser(), buf = new Uint8Array(an.fftSize); ac.createMediaStreamSource(st).connect(an);
+    let pico = 0; const fim = Date.now() + 5000;
+    const iv = setInterval(() => {
+      an.getByteTimeDomainData(buf); let m = 0; for (const b of buf) m = Math.max(m, Math.abs(b - 128) / 128); nivelMic = m; pico = Math.max(pico, m);
+      saida.textContent = `Fale algo… nível: ${'█'.repeat(Math.round(m * 30))}`;
+      if (Date.now() > fim) { clearInterval(iv); st.getTracks().forEach(x => x.stop()); nivelMic = 0;
+        saida.className = pico > 0.04 ? 'ok' : 'erro'; saida.textContent = pico > 0.04 ? 'Microfone funcionando. Ouvi você bem.' : 'Quase não ouvi nada. Aproxime-se do microfone ou escolha outro nas configurações do Windows.'; }
+    }, 80);
+  } catch (e) { saida.className = 'erro'; saida.textContent = 'Não consegui usar o microfone: autorize o acesso quando o Windows perguntar.'; }
+}
+
+// ---------- telas ----------
+const TELAS = {};
+const ORDEM = () => S.etapas.filter(e => e !== 'concluido');
+
+TELAS.boas_vindas = () => {
+  const s = el('span', { className: 'mudo' });
+  return [el('h1', {}, 'Vamos criar o seu assistente'),
+    el('p', {}, 'Em poucos minutos você terá uma IA pessoal que conversa por voz, lembra do que importa e, se você quiser, ajuda no seu PC.'),
+    el('div', { className: 'aviso' }, '🔒 Tudo roda e fica no SEU computador. Nenhuma informação sua é enviada para nós nem para ninguém. As atualizações só trazem novas funções, de mão única.'),
+    el('h2', {}, 'O que vamos fazer'),
+    el('p', {}, '1. Você escolhe o que o assistente pode acessar no PC (pode ser nada).  2. Preparamos a IA local.  3. Você coloca ao menos uma chave de IA gratuita.  4. Conecta o ChatGPT e o Gemini (opcional).  5. Dá um nome e uma voz ao assistente.'),
+    el('h2', {}, 'Teste do microfone'),
+    el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: e => testarMic(e.target, s) }, '🎙 Testar microfone (5 s)'), s)];
+};
+
+TELAS.consentimento = () => {
+  const modo = S.perfil.consentimento_acesso_pc;
+  const cart = (id, tit, txt) => el('div', { className: 'cartao' + (modo === id ? ' sel' : ''), onclick: async () => {
+      if (id === 'granular') { await api('/api/consentimento', { modo: 'granular' }); } else { await api('/api/consentimento', { modo: id }); }
+      await recarregar(); render(); } }, el('h3', {}, tit), el('p', {}, txt));
+  const lista = el('div');
+  if (modo === 'granular') {
+    lista.append(el('h2', {}, 'Escolha item por item'), el('p', { className: 'mudo' }, 'Liberar uma permissão libera só ela. Desmarcar uma categoria desmarca tudo que está dentro dela.'));
+    S.permissoes.forEach(p => {
+      const filho = p.chave.includes('.');
+      lista.append(el('label', { className: 'perm' + (filho ? ' filho' : '') },
+        el('input', { type: 'checkbox', checked: p.liberada, onchange: async e => { await api('/api/permissao', { chave: p.chave, ativo: e.target.checked }); await recarregar(); render(); } }),
+        el('div', {}, el('b', {}, p.titulo), el('span', { className: 'risco ' + p.risco }, 'risco ' + p.risco), el('div', { className: 'mudo' }, p.descricao))));
+    });
+  }
+  return [el('h1', {}, 'O que o assistente pode fazer no seu PC?'),
+    el('div', { className: 'aviso' }, 'Para ajudar de verdade (abrir programas, ler arquivos, usar e-mail, WhatsApp, Spotify…), o assistente precisa de permissão no seu computador. Você decide agora e pode mudar quando quiser, até por voz. Cada permissão é separada e revogável, e existe um botão de emergência que desliga tudo.'),
+    el('div', { className: 'cartoes' },
+      cart('total', '✅ Acesso total', 'O assistente pode usar tudo que está na lista: arquivos, programas, navegador, e-mail, WhatsApp, Spotify.'),
+      cart('granular', '🎚 Escolher item por item', 'Você marca exatamente o que libera. Recomendado.'),
+      cart('nenhum', '🚫 Nenhum acesso', 'O assistente só conversa. Não toca em nada no PC. Dá para liberar depois.')),
+    lista,
+    modo ? el('div', { className: 'linha' }, el('button', { className: 'perigo', onclick: async () => { await api('/api/emergencia', {}); await recarregar(); render(); } }, '⛔ Revogar tudo agora')) : ''];
+};
+
+TELAS.hardware = () => {
+  const out = el('div'), prog = el('div');
+  const mostrar = async () => {
+    const h = await api('/api/hardware', {}); await recarregar();
+    out.replaceChildren(el('p', {}, `Seu PC: ${h.info.ram_gb} GB de memória, ${h.info.cpus} núcleos, ${h.info.gpu ? 'placa de vídeo ' + h.info.gpu.nome + ' (' + h.info.gpu.vram_gb + ' GB)' : 'sem placa de vídeo dedicada'}, ${h.info.disco_livre_gb} GB livres.`),
+      el('p', { className: 'ok' }, `Recomendado: ${h.detalhe.titulo} — ${h.motivo}.`),
+      el('div', { className: 'cartoes' }, ...Object.entries(S.perfis_ia).map(([id, p]) => el('div', { className: 'cartao' + (S.perfil.perfil_ia === id ? ' sel' : ''), onclick: async () => { await api('/api/perfil-ia', { perfil: id }); await recarregar(); render(); } },
+        el('h3', {}, p.titulo), el('p', {}, p.descricao), el('p', { className: 'mudo' }, `Modelo ${p.ollama} · baixa ≈ ${p.download_gb} GB`)))));
+    const d = await api('/api/dependencias', {});
+    const info = el('p', { className: d.modelo_pronto ? 'ok' : 'mudo' }, d.modelo_pronto ? '✔ IA local já está pronta neste PC.' :
+      !d.ollama_instalado ? 'O Ollama (motor da IA local) ainda não está instalado. Instale em ollama.com/download e volte aqui; você também pode pular e usar só as chaves de IA.' : 'A IA local ainda não foi baixada.');
+    out.append(info);
+    if (d.ollama_instalado && !d.modelo_pronto) out.append(el('button', { onclick: async e => { e.target.disabled = true; await api('/api/dependencias/instalar', {}); acompanhar('dependencias', prog); } }, 'Baixar a IA local agora'));
+    out.append(prog);
+  };
+  mostrar();
+  return [el('h1', {}, 'Preparando a IA local'), el('p', {}, 'Tudo começa funcionando só no seu computador. Escolhi o perfil pelo seu hardware; os modelos são baixados agora, não vêm no instalador.'), out];
+};
+
+function acompanhar(job, alvo) {
+  clearInterval(poll);
+  poll = setInterval(async () => {
+    await recarregar(); const j = S.jobs[job]; if (!j) return;
+    alvo.replaceChildren(el('div', { className: 'barra' }, el('div', { style: `width:${j.pct}%` })), el('p', { className: j.estado === 'erro' ? 'erro' : 'mudo' }, (j.estado === 'ok' ? '✔ Pronto.' : j.texto || '')));
+    if (j.estado !== 'rodando') clearInterval(poll);
+  }, 1200);
+}
+
+TELAS.chaves = () => {
+  const lista = el('div');
+  S.provedores.forEach(p => {
+    const ok = S.chaves.includes(p.id), msg = el('span', { className: 'mudo' }), campo = el('input', { type: 'password', placeholder: 'Cole a chave aqui' });
+    lista.append(el('div', { className: 'prov' + (ok ? ' valida' : '') },
+      el('h3', {}, p.titulo + (p.id === 'google' ? '  ⭐ comece por esta' : ''), ok ? el('span', { className: 'ok' }, '  ✔ conectada') : ''),
+      el('p', {}, p.melhora), el('p', { className: 'mudo' }, 'Gratuita. ', el('a', { href: p.onde, target: '_blank' }, 'Onde conseguir a chave')),
+      ok ? el('button', { className: 'sec', onclick: async () => { await api('/api/chave/remover', { provedor: p.id }); await recarregar(); render(); } }, 'Remover')
+         : el('div', { className: 'linha' }, campo, el('button', { onclick: async e => { e.target.disabled = true; msg.textContent = 'Testando…';
+              const r = await api('/api/chave', { provedor: p.id, chave: campo.value }); msg.className = r.ok ? 'ok' : 'erro'; msg.textContent = r.ok ? 'Chave válida!' : r.motivo;
+              await recarregar(); if (r.ok) render(); else e.target.disabled = false; } }, 'Testar e guardar'), msg)));
+  });
+  return [el('h1', {}, 'Chaves de IA'),
+    el('div', { className: 'aviso' }, 'Pelo menos UMA chave é obrigatória; as outras são opcionais. ' + S.sem_chave + ' As chaves ficam guardadas no cofre do Windows, protegidas, só neste PC.'),
+    lista];
+};
+
+TELAS.ias_nuvem = () => {
+  const st = {}, caixa = el('div');
+  const desenhar = () => caixa.replaceChildren(...Object.entries(S.ias).map(([id, ia]) =>
+    el('div', { className: 'prov' + (st[id] ? ' valida' : '') }, el('h3', {}, ia.titulo, st[id] ? el('span', { className: 'ok' }, '  ✔ conta conectada') : ''),
+      el('p', { className: 'mudo' }, st[id] ? 'Tudo certo.' : 'Entre na sua conta na janela que vai abrir. Depois ela some e só o assistente a usa.'),
+      st[id] ? '' : el('button', { onclick: () => api('/api/ia/abrir', { ia: id }) }, 'Entrar no ' + ia.titulo))));
+  const atualizar = async () => { Object.assign(st, await api('/api/ia/estado', {})); desenhar(); };
+  clearInterval(poll); poll = setInterval(atualizar, 3500); atualizar();
+  return [el('h1', {}, 'Conectar suas IAs na nuvem'), el('p', {}, 'Opcional, mas recomendado: com o ChatGPT e o Gemini conectados, seu assistente consulta essas IAs e já nasce conhecendo você.'),
+    el('div', { className: 'aviso' }, 'Você entra na SUA conta, numa janela normal. O assistente nunca vê nem guarda sua senha. Usar contas pela automação pode ser limitado pelos termos de cada serviço; é por sua conta e você pode pular esta etapa.'), caixa,
+    el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: async () => { await api('/api/ia/esconder', {}); } }, 'Já entrei: esconder a janela'))];
+};
+
+TELAS.reuniao_inicial = () => {
+  const alvo = el('div'), res = el('div');
+  const ir = async e => { e.target.disabled = true; try { await api('/api/reuniao', {}); } catch (x) { res.replaceChildren(el('p', { className: 'erro' }, x.message)); e.target.disabled = false; return; }
+    clearInterval(poll); poll = setInterval(async () => { await recarregar(); const j = S.jobs.reuniao; if (!j) return;
+      alvo.replaceChildren(el('div', { className: 'barra' }, el('div', { style: `width:${j.estado === 'ok' ? 100 : 40}%` })), el('p', { className: 'mudo' }, j.texto || ''));
+      if (j.estado === 'ok') { clearInterval(poll); const d = j.dados; res.replaceChildren(el('h2', {}, 'Ficha reunida pelas IAs'), el('pre', {}, d.sintese || Object.values(d.respostas).join('\n\n') || 'Nenhuma IA respondeu.'),
+        Object.keys(d.falhas || {}).length ? el('p', { className: 'erro' }, 'Falhou: ' + Object.entries(d.falhas).map(([k, v]) => k + ' (' + v + ')').join('; ')) : '', el('p', { className: 'ok' }, '✔ Guardado no banco local do seu PC.')); }
+      if (j.estado === 'erro') { clearInterval(poll); res.replaceChildren(el('p', { className: 'erro' }, j.texto)); } }, 2000); };
+  return [el('h1', {}, 'Primeira reunião das IAs'), el('p', {}, 'O assistente vai perguntar ao ChatGPT e ao Gemini o que eles já sabem sobre você, juntar as respostas numa ficha e guardar no banco do seu PC. Essa ficha vira o ponto de partida do seu assistente.'),
+    el('div', { className: 'aviso' }, 'Só vão para essas IAs perguntas gerais sobre o seu perfil. A ficha resultante fica SOMENTE neste computador. Se você não conectou nenhuma conta, pode pular.'),
+    el('div', { className: 'linha' }, el('button', { onclick: ir }, '🏛 Fazer a reunião agora')), alvo, res];
+};
+
+TELAS.nome_voz = () => {
+  let genero = S.perfil.voz || null; const msg = el('p'), chips = el('div', { className: 'chips' }), campo = el('input', { type: 'text', placeholder: 'Ex.: Aurora', maxLength: 16, value: S.perfil.nome_assistente || '' });
+  const gostos = el('textarea', { rows: 2, placeholder: 'Ex.: gosto de rock, jogos e viagens' }), perguntas = el('div');
+  const cart = (id, t, d) => el('div', { className: 'cartao' + (genero === id ? ' sel' : ''), onclick: () => { genero = id; window.vozEscolhida = id; document.querySelectorAll('.gen').forEach(c => c.classList.toggle('sel', c.dataset.id === id)); falar('Esta é a voz ' + id + '. Gostou?'); } }, el('h3', {}, t), el('p', {}, d));
+  const g1 = cart('feminina', '👩 Voz feminina', 'Clique para ouvir'), g2 = cart('masculina', '👨 Voz masculina', 'Clique para ouvir'); [g1, g2].forEach((c, i) => { c.classList.add('gen'); c.dataset.id = ['feminina', 'masculina'][i]; });
+  const sugerir = async () => { if (!genero) { msg.className = 'erro'; msg.textContent = 'Escolha primeiro a voz.'; return; }
+    const r = await api('/api/nome/sugerir', { gostos: gostos.value, voz: genero });
+    chips.replaceChildren(...r.nomes.map(n => el('span', { className: 'chip', onclick: () => { campo.value = n; } }, n))); };
+  const salvar = async () => { if (!genero) { msg.className = 'erro'; msg.textContent = 'Escolha a voz feminina ou masculina.'; return false; }
+    const r = await api('/api/nome', { nome: campo.value, voz: genero }); if (!r.ok) { msg.className = 'erro'; msg.textContent = r.motivo; return false; }
+    msg.className = 'ok'; msg.textContent = `Perfeito! Para chamar, diga: “${r.frase}”`; await recarregar(); window.vozEscolhida = genero; falar(`Olá! Eu sou ${campo.value.trim()}. Muito prazer em conhecer você.`); return true; };
+  window.antesDeAvancar = async () => (S.perfil.nome_assistente && S.perfil.voz && campo.value.trim() === S.perfil.nome_assistente && genero === S.perfil.voz) || await salvar();
+  perguntas.append(el('h2', {}, 'Não sabe que nome dar? Eu ajudo'), ...S.perguntas_nome.map(p => el('p', { className: 'mudo' }, '• ' + p)), gostos, el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: sugerir }, '✨ Sugerir nomes')), chips);
+  return [el('h1', {}, 'Quem vai ser o seu assistente?'), el('p', {}, 'O nome é obrigatório: é com ele que você vai chamar. Primeiro escolha a voz.'),
+    el('div', { className: 'cartoes' }, g1, g2), el('h2', {}, 'Nome do assistente'), campo, el('div', { className: 'linha' }, el('button', { onclick: salvar }, 'Confirmar nome e voz'), msg), perguntas];
+};
+
+TELAS.integracoes = () => {
+  const rot = { email: 'E-mail', spotify: 'Spotify (tocar músicas e volume)', whatsapp: 'WhatsApp (ler e responder mensagens)', agenda: 'Agenda e lembretes', arquivos: 'Arquivos do PC' };
+  const marc = new Set(S.perfil.integracoes || []);
+  window.antesDeAvancar = async () => { await api('/api/integracoes', { lista: [...marc] }); return true; };
+  return [el('h1', {}, `Como você quer usar ${S.perfil.nome_assistente || 'o assistente'}?`), el('p', {}, 'Marque o que você gostaria que ele conectasse. Você faz o login de cada um depois, quando precisar.'),
+    ...S.integracoes.map(i => el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: marc.has(i), onchange: e => e.target.checked ? marc.add(i) : marc.delete(i) }), el('div', {}, el('b', {}, rot[i] || i)))),
+    el('div', { className: 'aviso' }, 'Cada conexão também precisa da permissão correspondente na etapa de acesso ao PC. Sem a permissão, o assistente avisa e não faz nada.')];
+};
+
+TELAS.icone = () => {
+  const cart = (id, t, d, mock) => el('div', { className: 'cartao' + (S.perfil.modo_icone === id ? ' sel' : ''), onclick: async () => { await api('/api/icone', { modo: id }); await recarregar(); render(); } }, el('h3', {}, t), el('p', {}, d), mock);
+  return [el('h1', {}, 'Onde fica o ícone do assistente?'), el('p', {}, 'Para chamar, dar um duplo clique ou fazer ele voltar quando você estiver jogando ou editando.'),
+    el('div', { className: 'cartoes' },
+      cart('bandeja', '📌 Na bandeja do Windows', 'Junto dos outros ícones perto do relógio. Discreto.', el('div', { className: 'bandeja' }, el('i'), el('i'), el('i', { className: 'eu' }), el('i'), el('span', { className: 'mudo' }, '14:32'))),
+      cart('flutuante', '🔮 Flutuante na tela', 'Uma bolinha que você arrasta para onde quiser.', el('div', { className: 'bandeja' }, el('i', { className: 'eu' }), el('span', { className: 'mudo' }, 'arrastável')))),
+    el('div', { className: 'aviso' }, 'Modo jogo e edição: ao abrir um jogo ou editor pesado, o assistente se suspende sozinho e avisa por voz. Para reativar, dê dois cliques no ícone.')];
+};
+
+TELAS.concluido = () => {
+  const p = S.perfil, msg = el('p');
+  const falta = S.faltando;
+  return [el('h1', {}, falta.length ? 'Quase lá' : `${p.nome_assistente} está pronto`),
+    el('p', {}, falta.length ? 'Ainda falta: ' + falta.join('; ') + '.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? 'na bandeja' : 'flutuante'}.`),
+    falta.length ? '' : el('div', { className: 'aviso' }, `Para acordar, diga: “${p.nome_assistente}, tá acordado?”. Dormir: “pode descansar”. A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
+    el('div', { className: 'linha' }, el('button', { disabled: !!falta.length, onclick: async () => { const r = await api('/api/concluir', {}); if (r.ok) { msg.className = 'ok'; msg.textContent = 'Instalação concluída! Pode fechar esta janela.'; falar(`Tudo pronto. Me chame quando precisar: ${p.nome_assistente}, tá acordado?`); } else { msg.className = 'erro'; msg.textContent = r.motivo; } } }, '🚀 Concluir e começar'), msg)];
+};
+
+const FALAS = {
+  boas_vindas: 'Olá! Vou ajudar você a montar o seu assistente pessoal. Tudo fica no seu computador. Vamos começar?',
+  consentimento: 'Agora uma decisão importante: o que eu posso fazer no seu computador? Você escolhe, e pode mudar sempre que quiser.',
+  hardware: 'Vou olhar o seu computador para escolher a melhor inteligência local.',
+  chaves: 'Preciso de pelo menos uma chave de inteligência artificial gratuita. Recomendo começar pela do Google.',
+  ias_nuvem: 'Agora você pode entrar nas suas contas do ChatGPT e do Gemini. Elas me ajudam a conhecer você.',
+  reuniao_inicial: 'Vou reunir as inteligências para elas me contarem o que sabem sobre você.',
+  nome_voz: 'Chegou a hora de me dar um nome. Escolha a voz e o nome que mais combinam com você.',
+  integracoes: 'Conte como você quer me usar: e-mail, música, mensagens…',
+  icone: 'Onde você prefere me deixar: na bandeja ou flutuando na tela?',
+  concluido: 'Está tudo pronto!'
+};
+
+async function render() {
+  clearInterval(poll); window.antesDeAvancar = null;
+  if (!S) await recarregar();
+  const ord = ORDEM(), i = ord.indexOf(etapa);
+  $('#passos').replaceChildren(...ord.map((e, k) => el('i', { className: k < i ? 'feito' : k === i ? 'atual' : '' })));
+  $('#conteudo').replaceChildren(...[].concat(TELAS[etapa]()).filter(Boolean));
+  $('#conteudo').scrollTop = 0;
+  $('#bVoltar').style.visibility = i > 0 ? 'visible' : 'hidden';
+  $('#bProximo').style.display = etapa === 'concluido' ? 'none' : '';
+  $('#bProximo').disabled = (etapa === 'chaves' && !S.chaves.length) || (etapa === 'consentimento' && !S.perfil.consentimento_acesso_pc);
+  $('#bProximo').title = etapa === 'chaves' && !S.chaves.length ? 'Coloque pelo menos uma chave válida' : etapa === 'consentimento' && !S.perfil.consentimento_acesso_pc ? 'Escolha uma opção (pode ser nenhum acesso)' : '';
+  api('/api/etapa', { etapa }).catch(() => {});
+  if (FALAS[etapa] && !(etapa === 'nome_voz' && S.perfil.nome_assistente)) falar(FALAS[etapa]);
+}
+async function ir(delta) {
+  if (delta > 0 && window.antesDeAvancar && !(await window.antesDeAvancar())) return;
+  await recarregar(); const ord = ORDEM(), i = ord.indexOf(etapa) + delta;
+  etapa = i >= ord.length ? 'concluido' : ord[Math.max(0, i)]; render();
+}
+$('#bProximo').onclick = () => ir(1); $('#bVoltar').onclick = () => ir(-1);
+speechSynthesis.onvoiceschanged = () => {};
+(async () => { await recarregar(); etapa = S.perfil.concluido ? 'concluido' : (S.perfil.etapa || 'boas_vindas'); if (!S.etapas.includes(etapa)) etapa = 'boas_vindas'; render(); })();
+</script>
+</body>
+</html>

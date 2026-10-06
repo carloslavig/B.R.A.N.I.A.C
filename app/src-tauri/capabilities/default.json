@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "A janela principal so mostra a tela local do BRANIAC; nenhuma API do sistema e exposta a paginas externas.",
+  "windows": ["main"],
+  "permissions": []
+}
