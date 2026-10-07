@@ -14,7 +14,7 @@ Travas (todas ativas):
 Aviso mostrado na tela: textos e prints enviados passam pelos servidores do Telegram.
 """
 import json, random, re, string, threading, time, urllib.parse, urllib.request
-from . import cofre, llm, paths, permissoes, pc_tools
+from . import cofre, llm, paths, perfil, permissoes, pc_tools
 
 API = "https://api.telegram.org/bot{token}/{metodo}"
 LIMITE_POR_MIN = 30
@@ -150,6 +150,10 @@ def _conversar_padrao(texto):
 
 # ---------- tratamento de mensagens ----------
 
+def cmd_basico(texto):
+    return (texto or "").lower().split()[0] if (texto or "").strip() else ""
+
+
 class Bot:
     def __init__(self, token=None, http=None, planejar=None, conversar=None):
         self.token, self.http = token, http or _http
@@ -208,6 +212,8 @@ class Bot:
         if not self._limite():
             return self.dizer(chat["id"], "Muitos comandos seguidos. Espere um minuto.")
         _log(f"dono: {texto[:200]}")
+        if perfil.carregar().get("suspenso") and cmd_basico(texto) not in ("/parar", "/desarmar", "/stop"):
+            return self.dizer(chat["id"], "Estou suspenso (modo jogo/edição) e não vou executar nada agora. Quando você voltar ao PC, é só retomar.")
         cmd = texto.lower().split()[0]
         if cmd in ("/parar", "/desarmar", "/stop"):
             desarmar()

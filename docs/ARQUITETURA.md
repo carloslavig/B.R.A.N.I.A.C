@@ -59,3 +59,12 @@ Falta: núcleo do Braniac (extração do código atual sem dados pessoais) ligad
 - **Quanto mais chaves, melhor** (explicado como redundância + capacidade): cota gratuita diária por serviço, troca automática quando uma acaba, resposta mais rápida, voz natural o dia todo. A tela mostra o nível (Nenhuma / Básico / Bom / Excelente) e só revela as outras chaves depois da primeira (assistente guiado, uma de cada vez).
 - Sugestões do conselho de IAs aplicadas: assistente gradual, indicador de nível, cache, fallback sempre, aviso de privacidade e modo privado. Ficaram para depois: TTS local offline (Piper) como base e outros serviços de voz.
 - A tela nunca falha em silêncio: erros viram aviso visível e entram em `instalacao.log` (só no PC).
+
+## O assistente depois da instalação (v0.3)
+
+- **Tela inicial** (`ui/app.html`, abre em `/` quando `concluido`; o instalador/configurações ficam em `/instalacao` e `/configuracoes`): orbe, conversa, microfone e botão **Modo jogo**.
+- **Núcleo** (`assistente.py`): a IA (cadeia do `llm.py`: chaves → Ollama local) devolve `{"acao","args","resposta"}`; só enxerga as ferramentas que a pessoa liberou (`pc_tools.catalogo_para_ia`). Ação perigosa vira cartão **Confirmar/Cancelar** (id aleatório, vale 5 min, uso único, revalida a permissão ao confirmar). O **resultado das ferramentas vai só para a pessoa**, nunca de volta para a IA (nada escondido em arquivo/mensagem dá ordem ao assistente).
+- **Voz → texto** (`transcricao.py`): o microfone grava no navegador do app, detecta o fim da fala, e o áudio WAV vai **só ao Google, pela chave da própria pessoa**, só quando ela fala, sem guardar nada. Voz privada ligada nunca envia; sem chave do Google a tela tenta o reconhecimento do próprio navegador ou fica só no texto.
+- **Modo jogo** (`perfil.suspenso`): o assistente não responde nem age, nem pelo Telegram (exceto `/parar` e `/desarmar`), até dois cliques no orbe. Falar “modo jogo”/“vou jogar” faz o mesmo e a janela vai para a bandeja. “Pode descansar” só esconde a janela.
+- **IA local:** o passo de hardware baixa o instalador oficial do Ollama e o abre; quem confirma é a própria pessoa.
+- Ainda não existe: chamar pelo nome por voz, ícone flutuante, detecção automática de jogo, atendimento automático do WhatsApp, e-mail.

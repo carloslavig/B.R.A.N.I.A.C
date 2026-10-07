@@ -217,8 +217,11 @@ TELAS.hardware = () => {
         el('h3', {}, p.titulo), el('p', {}, p.descricao), el('p', { className: 'mudo' }, `Modelo ${p.ollama} · baixa ≈ ${p.download_gb} GB`)))));
     const d = await api('/api/dependencias', {});
     const info = el('p', { className: d.modelo_pronto ? 'ok' : 'mudo' }, d.modelo_pronto ? '✔ IA local já está pronta neste PC.' :
-      !d.ollama_instalado ? 'O Ollama (motor da IA local) ainda não está instalado. Instale em ollama.com/download e volte aqui; você também pode pular e usar só as chaves de IA.' : 'A IA local ainda não foi baixada.');
+      !d.ollama_instalado ? 'O Ollama (motor da IA local) ainda não está instalado. Baixe o instalador oficial pelo botão abaixo (você confirma a instalação), depois volte aqui e toque em “Verificar de novo”. Você também pode pular e usar só as chaves de IA.' : 'A IA local ainda não foi baixada.');
     out.append(info);
+    if (!d.ollama_instalado) out.append(el('div', { className: 'linha' },
+      el('button', { onclick: async e => { e.target.disabled = true; await api('/api/ollama/instalar', {}); acompanhar('ollama_instalador', prog); } }, '⬇ Baixar e abrir o instalador do Ollama'),
+      el('button', { className: 'sec', onclick: () => { out.replaceChildren(); mostrar(); } }, 'Verificar de novo')));
     if (d.ollama_instalado && !d.modelo_pronto) out.append(el('button', { onclick: async e => { e.target.disabled = true; await api('/api/dependencias/instalar', {}); acompanhar('dependencias', prog); } }, 'Baixar a IA local agora'));
     out.append(prog);
   };
@@ -398,8 +401,8 @@ TELAS.icone = () => {
   return [el('h1', {}, 'Onde fica o ícone do assistente?'), el('p', {}, 'Para chamar, dar um duplo clique ou fazer ele voltar quando você estiver jogando ou editando.'),
     el('div', { className: 'cartoes' },
       cart('bandeja', '📌 Na bandeja do Windows', 'Junto dos outros ícones perto do relógio. Discreto.', el('div', { className: 'bandeja' }, el('i'), el('i'), el('i', { className: 'eu' }), el('i'), el('span', { className: 'mudo' }, '14:32'))),
-      cart('flutuante', '🔮 Flutuante na tela', 'Uma bolinha que você arrasta para onde quiser.', el('div', { className: 'bandeja' }, el('i', { className: 'eu' }), el('span', { className: 'mudo' }, 'arrastável')))),
-    el('div', { className: 'aviso' }, 'Modo jogo e edição: ao abrir um jogo ou editor pesado, o assistente se suspende sozinho e avisa por voz. Para reativar, dê dois cliques no ícone.')];
+      el('div', { className: 'cartao', style: 'opacity:.5;cursor:not-allowed' }, el('h3', {}, '🔮 Flutuante na tela (em breve)'), el('p', {}, 'Uma bolinha que você arrasta para onde quiser. Ainda não está disponível nesta versão.'))),
+    el('div', { className: 'aviso' }, 'Modo jogo e edição: clique em “🎮 Modo jogo” na tela do assistente (ou diga “modo jogo”) e ele se suspende e se esconde na bandeja, sem responder nem agir. Para reativar, clique no ícone da bandeja e dê dois cliques no orbe. (Detectar jogos sozinho: em breve.)')];
 };
 
 TELAS.concluido = () => {
@@ -407,8 +410,9 @@ TELAS.concluido = () => {
   const falta = S.faltando;
   return [el('h1', {}, falta.length ? 'Quase lá' : `${p.nome_assistente} está pronto`),
     el('p', {}, falta.length ? 'Ainda falta: ' + falta.join('; ') + '.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? 'na bandeja' : 'flutuante'}.`),
-    falta.length ? '' : el('div', { className: 'aviso' }, `Para acordar, diga: “${p.nome_assistente}, tá acordado?”. Dormir: “pode descansar”. A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
-    el('div', { className: 'linha' }, el('button', { disabled: !!falta.length, onclick: async () => { const r = await api('/api/concluir', {}); if (r.ok) { msg.className = 'ok'; msg.textContent = 'Instalação concluída! Pode fechar esta janela.'; falar(`Tudo pronto. Me chame quando precisar: ${p.nome_assistente}, tá acordado?`); } else { msg.className = 'erro'; msg.textContent = r.motivo; } } }, '🚀 Concluir e começar'), msg)];
+    falta.length ? '' : el('div', { className: 'aviso' }, `Para falar com ${p.nome_assistente}: abra o ícone da bandeja (junto do relógio) e use o microfone ou escreva. “Pode descansar” esconde a janela; “modo jogo” suspende o assistente. (Chamar só falando “${p.nome_assistente}, tá acordado?” ainda não está disponível.) A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
+    S.perfil.concluido ? el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: () => location.replace('/') }, '← Voltar ao assistente')) : '',
+    el('div', { className: 'linha' }, el('button', { disabled: !!falta.length, onclick: async () => { const r = await api('/api/concluir', {}); if (r.ok) { msg.className = 'ok'; msg.textContent = 'Instalação concluída! Abrindo o seu assistente…'; falar(`Tudo pronto. Eu sou ${p.nome_assistente}. Vamos conversar!`); setTimeout(() => location.replace('/'), 3200); } else { msg.className = 'erro'; msg.textContent = r.motivo; } } }, '🚀 Concluir e começar'), msg)];
 };
 
 const FALAS = {

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BRANIAC</title>
+<style>
+  :root{--bg:#05070d;--painel:#0d1322;--linha:#1d2740;--texto:#e9eef9;--mudo:#8c9ab8;--ouro:#f0c75e;--azul:#4cc3ff;--verde:#3ddc97;--verm:#ff6b6b}
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{background:radial-gradient(1100px 600px at 15% 0%,#0c1630 0%,var(--bg) 60%);color:var(--texto);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--linha)}
+  header canvas{width:54px;height:54px;cursor:pointer} header h1{font-size:18px;margin:0} header .sub{color:var(--mudo);font-size:12.5px}
+  header .acoes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  button{background:var(--azul);color:#04101c;border:0;border-radius:10px;padding:9px 16px;font:600 14px inherit;cursor:pointer}
+  button.sec{background:transparent;color:var(--texto);border:1px solid var(--linha)} button:disabled{opacity:.4;cursor:not-allowed}
+  button.perigo{background:var(--verm);color:#2a0606}
+  #chat{flex:1;overflow:auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:78%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}
+  .msg.eu{align-self:flex-end;background:#12335a;border:1px solid #1d4f86} .msg.ia{align-self:flex-start;background:var(--painel);border:1px solid var(--linha)}
+  .msg.sis{align-self:center;color:var(--mudo);font-size:13px;background:transparent}
+  .msg img{max-width:100%;border-radius:8px;margin-top:8px;display:block}
+  .cartao{align-self:flex-start;background:#241d08;border:1px solid #5a4a14;border-radius:14px;padding:12px 14px;max-width:78%}
+  .cartao code{display:block;margin:6px 0;color:#f3dc8a;white-space:pre-wrap;word-break:break-all}
+  footer{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--linha);align-items:flex-end}
+  textarea{flex:1;background:#0a0f1c;border:1px solid var(--linha);color:var(--texto);border-radius:12px;padding:10px 12px;font:inherit;resize:none;max-height:120px}
+  #mic.gravando{background:var(--verm);color:#fff;animation:pulsa 1s infinite} @keyframes pulsa{50%{opacity:.6}}
+  #nivel{height:4px;background:var(--linha);margin:0 20px} #nivel div{height:100%;width:0;background:linear-gradient(90deg,var(--azul),var(--verde))}
+  #suspenso{position:fixed;inset:0;background:rgba(5,7,13,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;text-align:center;padding:30px}
+  #suspenso canvas{width:200px;height:200px;cursor:pointer;opacity:.8}
+  #modoVoz{font-size:12px;color:var(--mudo)}
+</style>
+</head>
+<body>
+<header>
+  <canvas id="orbe" width="108" height="108" title="Dois cliques: retomar quando suspenso"></canvas>
+  <div><h1 id="nome">…</h1><div class="sub" id="sub"></div><div id="modoVoz"></div></div>
+  <div class="acoes">
+    <button class="sec" id="bJogo" title="Suspende o assistente (e o Telegram) para você jogar ou editar sem interrupções">🎮 Modo jogo</button>
+    <button class="sec" id="bFala" title="Liga ou desliga a voz do assistente">🔊 Voz: ligada</button>
+    <button class="sec" onclick="location.href='/configuracoes'">⚙ Configurações</button>
+  </div>
+</header>
+<div id="nivel"><div></div></div>
+<div id="chat"></div>
+<footer>
+  <button class="sec" id="mic" title="Falar (clique de novo para parar)">🎙</button>
+  <textarea id="texto" rows="1" placeholder="Escreva ou toque no microfone…"></textarea>
+  <button id="enviar">Enviar</button>
+</footer>
+<div id="suspenso">
+  <canvas id="orbe2" width="400" height="400"></canvas>
+  <h2 id="tSusp">Suspenso</h2>
+  <p class="mudo" style="color:var(--mudo);max-width:420px">Modo jogo/edição: não estou respondendo nem agindo (nem pelo Telegram). Dê <b>dois cliques no orbe</b> para me chamar de volta.</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const el = (t, props = {}, ...filhos) => { const e = Object.assign(document.createElement(t), props); filhos.flat().forEach(f => e.append(f)); return e; };
+let S = null, voz = true, falando = false, nivelMic = 0, seq = 0, audioAtual = null;
+
+async function api(caminho, corpo) {
+  const r = await fetch(caminho, corpo === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+  const d = await r.json(); if (d.erro) throw new Error(d.erro); return d;
+}
+async function recarregar() { S = await api('/api/estado'); return S; }
+function aviso(msg) { add('sis', '⚠️ ' + msg); fetch('/api/log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ msg: String(msg).slice(0, 300), etapa: 'app' }) }).catch(() => {}); }
+window.addEventListener('unhandledrejection', e => aviso('Algo não saiu como esperado: ' + ((e.reason && e.reason.message) || e.reason)));
+
+// ---------- conversa ----------
+function add(tipo, texto, imagem) {
+  const m = el('div', { className: 'msg ' + tipo }, texto);
+  if (imagem) m.append(el('img', { src: 'data:image/png;base64,' + imagem }));
+  $('#chat').append(m); $('#chat').scrollTop = 1e9; return m;
+}
+async function enviar(texto) {
+  texto = (texto || $('#texto').value).trim(); if (!texto) return;
+  $('#texto').value = ''; add('eu', texto);
+  const espera = add('sis', '…');
+  try {
+    const r = await api('/api/chat', { texto });
+    espera.remove(); tratar(r);
+  } catch (e) { espera.remove(); aviso(e.message); }
+}
+function tratar(r) {
+  if (r.resposta) { add('ia', r.resposta, r.imagem); falar(r.resposta); }
+  if (r.confirmar) {
+    const c = r.confirmar, cartao = el('div', { className: 'cartao' }, el('b', {}, '⚠️ Confirma esta ação?'), el('code', {}, c.descricao),
+      el('div', { style: 'display:flex;gap:8px;margin-top:6px' },
+        el('button', { onclick: async () => { cartao.remove(); try { tratar(await api('/api/chat/confirmar', { id: c.id, sim: true })); } catch (e) { aviso(e.message); } } }, 'Confirmar'),
+        el('button', { className: 'sec', onclick: async () => { cartao.remove(); try { tratar(await api('/api/chat/confirmar', { id: c.id, sim: false })); } catch (e) { aviso(e.message); } } }, 'Cancelar')));
+    $('#chat').append(cartao); $('#chat').scrollTop = 1e9;
+  }
+  if (r.ui === 'suspender') { mostrarSuspenso(true); setTimeout(() => window.close(), 7000); }
+  if (r.ui === 'ocultar') setTimeout(() => window.close(), 3500);
+}
+$('#enviar').onclick = () => enviar();
+$('#texto').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } });
+
+// ---------- voz do assistente (natural pela API; sistema se nao houver chave) ----------
+function pararVoz() { speechSynthesis.cancel(); if (audioAtual) { audioAtual.pause(); audioAtual = null; } falando = false; }
+function falarSistema(texto) {
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR';
+  const vs = speechSynthesis.getVoices().filter(v => /pt[-_]BR/i.test(v.lang));
+  const fem = /francisca|maria|luciana|female/i, mas = /antonio|daniel|felipe|male/i;
+  const v = (S.perfil.voz === 'masculina' ? vs.find(x => mas.test(x.name)) : vs.find(x => fem.test(x.name))) || vs[0]; if (v) u.voice = v;
+  u.onstart = () => falando = true; u.onend = u.onerror = () => falando = false; speechSynthesis.speak(u);
+}
+async function falar(texto) {
+  const minha = ++seq; pararVoz(); if (!voz || S.suspenso) return;
+  if (S.voz.nuvem && !(window.pausaVoz > Date.now())) {
+    $('#modoVoz').textContent = '⏳ gerando a voz…';
+    try {
+      const r = await fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: texto.slice(0, 600), genero: S.perfil.voz || 'feminina', voz: S.voz.nome, estilo: S.voz.estilo }) });
+      if (minha !== seq) return;
+      if (r.ok && (r.headers.get('content-type') || '').includes('audio')) {
+        const a = new Audio(URL.createObjectURL(await r.blob())); audioAtual = a; a.onplay = () => falando = true; a.onended = a.onerror = () => falando = false;
+        await a.play(); indicar(); return;
+      }
+      const d = await r.json().catch(() => ({})); if (d.motivo === 'cota') window.pausaVoz = Date.now() + 5 * 60 * 1000; window.motivoVoz = d.motivo || 'outro';
+    } catch (e) { window.motivoVoz = 'rede'; }
+    indicar(); if (minha !== seq || !S.voz.reserva) return;
+  } else if (S.voz.nuvem && !S.voz.reserva) return;
+  falarSistema(texto);
+}
+function indicar() {
+  const m = window.motivoVoz;
+  $('#modoVoz').textContent = S.voz.privada ? '🔒 voz do sistema (modo privado)' : !S.voz.nuvem ? '🤖 voz do sistema · conecte uma chave do Google para a voz natural' :
+    m ? '🔇 voz natural indisponível agora (' + ({ cota: 'sem cota', lento: 'demorou', rede: 'sem conexão' }[m] || 'falhou') + '): leia o texto' : '✨ voz natural';
+}
+$('#bFala').onclick = () => { voz = !voz; if (!voz) pararVoz(); $('#bFala').textContent = '🔊 Voz: ' + (voz ? 'ligada' : 'desligada'); };
+
+// ---------- microfone: grava, detecta o fim da fala e transcreve (Google, pela chave da pessoa) ----------
+let gr = null;
+function wav16k(blocos, taxa) {
+  let n = 0; blocos.forEach(b => n += b.length);
+  const todo = new Float32Array(n); let o = 0; blocos.forEach(b => { todo.set(b, o); o += b.length; });
+  const r = taxa / 16000, m = Math.floor(n / r), pcm = new Int16Array(m);
+  for (let i = 0; i < m; i++) { let soma = 0, c = 0; for (let j = Math.floor(i * r); j < Math.min(n, Math.floor((i + 1) * r)); j++) { soma += todo[j]; c++; } pcm[i] = Math.max(-1, Math.min(1, soma / (c || 1))) * 32767; }
+  const buf = new ArrayBuffer(44 + m * 2), v = new DataView(buf), w = (p, s) => [...s].forEach((ch, i) => v.setUint8(p + i, ch.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + m * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, m * 2, true);
+  new Int16Array(buf, 44).set(pcm);
+  let bin = ''; const u8 = new Uint8Array(buf); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+async function microfone() {
+  if (gr) { parar(true); return; }
+  pararVoz();
+  if (!S.stt) {   // sem chave do Google (ou voz privada): tenta o reconhecimento do proprio navegador
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { add('sis', '🎙 Para falar comigo conecte a chave do Google em Configurações (ou escreva aqui).'); return; }
+    const rec = new SR(); rec.lang = 'pt-BR'; rec.onresult = e => enviar(e.results[0][0].transcript); rec.onerror = () => add('sis', 'Não consegui ouvir. Tente de novo ou escreva.'); rec.start(); return;
+  }
+  let st; try { st = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { add('sis', 'Autorize o microfone quando o Windows perguntar.'); return; }
+  const ctx = new AudioContext(), fonte = ctx.createMediaStreamSource(st), proc = ctx.createScriptProcessor(4096, 1, 1);
+  gr = { st, ctx, fonte, proc, blocos: [], falou: false, silencio: 0, ini: Date.now() };
+  proc.onaudioprocess = e => {
+    if (!gr) return; const x = new Float32Array(e.inputBuffer.getChannelData(0)); gr.blocos.push(x);
+    let s = 0; for (const a of x) s += a * a; const rms = Math.sqrt(s / x.length); nivelMic = Math.min(1, rms * 8); $('#nivel div').style.width = (nivelMic * 100) + '%';
+    const dt = x.length / ctx.sampleRate;
+    if (rms > 0.02) { gr.falou = true; gr.silencio = 0; } else if (gr.falou) gr.silencio += dt;
+    if ((gr.falou && gr.silencio > 1.4) || (!gr.falou && Date.now() - gr.ini > 7000) || Date.now() - gr.ini > 30000) parar(gr.falou);
+  };
+  fonte.connect(proc); proc.connect(ctx.destination); $('#mic').classList.add('gravando'); $('#mic').textContent = '⏹';
+}
+async function parar(enviarAudio) {
+  const g = gr; if (!g) return; gr = null; nivelMic = 0; $('#nivel div').style.width = '0';
+  g.proc.disconnect(); g.fonte.disconnect(); g.st.getTracks().forEach(t => t.stop()); const taxa = g.ctx.sampleRate; g.ctx.close();
+  $('#mic').classList.remove('gravando'); $('#mic').textContent = '🎙';
+  if (!enviarAudio) { if (!g.falou) add('sis', 'Não ouvi nada. Tente de novo.'); return; }
+  const espera = add('sis', '🎙 ouvindo…');
+  try { const r = await api('/api/transcrever', { audio: wav16k(g.blocos, taxa) }); espera.remove();
+    if (r.texto) enviar(r.texto); else add('sis', r.erro ? '🎙 ' + r.erro : 'Não entendi o áudio. Tente de novo ou escreva.'); }
+  catch (e) { espera.remove(); aviso(e.message); }
+}
+$('#mic').onclick = microfone;
+
+// ---------- orbe ----------
+function desenhar(cv, esc) {
+  const cx = cv.getContext('2d'), w = cv.width, c = w / 2, t = performance.now() / 1000, e = falando ? 0.5 + 0.35 * Math.sin(t * 9) : nivelMic;
+  cx.clearRect(0, 0, w, w);
+  for (let i = 0; i < 4; i++) { cx.beginPath(); for (let a = 0; a <= 6.3; a += 0.08) { const r = (0.23 + i * 0.027) * w + ((0.015 + e * 0.05) * w) * Math.sin(a * (3 + i) + t * (1.5 + i * .4)); cx[a ? 'lineTo' : 'moveTo'](c + r * Math.cos(a), c + r * Math.sin(a)); }
+    cx.closePath(); cx.strokeStyle = `rgba(${i % 2 ? '240,199,94' : '76,195,255'},${.8 - i * .15})`; cx.lineWidth = 1.6 * esc; cx.stroke(); }
+  const g = cx.createRadialGradient(c, c, 2, c, c, w * .23); g.addColorStop(0, `rgba(240,199,94,${.35 + e * .4})`); g.addColorStop(1, 'rgba(76,195,255,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(c, c, w * .23, 0, 6.3); cx.fill();
+}
+(function laco() { desenhar($('#orbe'), 1); if ($('#suspenso').style.display === 'flex') desenhar($('#orbe2'), 2); requestAnimationFrame(laco); })();
+
+// ---------- modo jogo ----------
+function mostrarSuspenso(ligado) { S.suspenso = ligado; $('#suspenso').style.display = ligado ? 'flex' : 'none'; $('#tSusp').textContent = (S.perfil.nome_assistente || 'Assistente') + ' está suspenso'; }
+$('#bJogo').onclick = async () => {
+  await api('/api/modo-jogo', { ligado: true }); const nome = S.perfil.nome_assistente || 'O assistente';
+  mostrarSuspenso(true); falar(`${nome} está suspenso para você jogar ou editar. Para me chamar de volta, dê dois cliques no meu orbe.`); setTimeout(() => window.close(), 9000);
+};
+$('#orbe').ondblclick = $('#orbe2').ondblclick = async () => { if (!S.suspenso) return; await api('/api/modo-jogo', { ligado: false }); mostrarSuspenso(false); S.suspenso = false; add('ia', 'Voltei! Em que posso ajudar?'); falar('Voltei! Em que posso ajudar?'); };
+
+// ---------- partida ----------
+(async () => {
+  await recarregar();
+  if (!S.concluido) { location.replace('/instalacao'); return; }
+  const nome = S.perfil.nome_assistente || 'Assistente'; document.title = nome; $('#nome').textContent = nome;
+  $('#sub').textContent = 'Acesso ao PC: ' + ({ total: 'total', granular: 'por item', nenhum: 'nenhum (só conversa)' }[S.perfil.consentimento_acesso_pc] || '—') + (S.remoto && S.remoto.armado ? ' · 🔓 controle remoto armado' : '');
+  indicar(); speechSynthesis.onvoiceschanged = () => {};
+  if (S.suspenso) mostrarSuspenso(true);
+  else if (!sessionStorage.getItem('saudou')) { sessionStorage.setItem('saudou', '1'); const g = `Olá! Eu sou ${nome}. Como posso ajudar?`; add('ia', g); falar(g); }
+  else add('ia', `Olá! Eu sou ${nome}. Como posso ajudar?`);
+  setInterval(async () => { try { const e = await api('/api/estado'); if (e.suspenso !== S.suspenso) { S = e; mostrarSuspenso(e.suspenso); } else { S = e; } } catch (x) {} }, 5000);
+})();
+</script>
+</body>
+</html>

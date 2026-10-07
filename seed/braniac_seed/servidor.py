@@ -4,7 +4,7 @@ Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam p
 import json, mimetypes, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from . import (paths, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
+from . import (paths, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -54,7 +54,7 @@ def estado_geral():
         "permissoes": permissoes.resumo(), "provedores": provedores.catalogo(), "chaves": chaves,
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
-        "jobs": {k: dict(v) for k, v in JOBS.items()}, "remoto": remoto.resumo(), "autostart": autostart.ativo(), "navegador": navegador.info(),
+        "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "autostart": autostart.ativo(), "navegador": navegador.info(),
         "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"), "reserva": bool(p.get("voz_reserva")),
                 "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
         "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
@@ -68,6 +68,26 @@ def acao(caminho, d):
         except navegador.NavegadorErro as e:
             return {"ok": False, "motivo": str(e)}
         return {"ok": True, "navegador": navegador.info()}
+    if caminho == "/api/chat":
+        return assistente.conversar(d.get("texto", ""))
+    if caminho == "/api/chat/confirmar":
+        return assistente.confirmar(d.get("id", ""), bool(d.get("sim")))
+    if caminho == "/api/modo-jogo":
+        return {"suspenso": assistente.definir_suspenso(bool(d.get("ligado")))}
+    if caminho == "/api/transcrever":
+        try:
+            return {"texto": transcricao.transcrever(d.get("audio", ""))}
+        except transcricao.TranscricaoErro as e:
+            return {"texto": "", "erro": str(e)}
+    if caminho == "/api/ollama/instalar":
+        def tarefa(prog):
+            import os, tempfile
+            destino = os.path.join(tempfile.gettempdir(), "OllamaSetup.exe")
+            dependencias.baixar_instalador_ollama(destino, lambda p, t: prog(p, t))
+            os.startfile(destino)          # o instalador oficial abre; quem confirma e a propria pessoa
+            prog(100, "Instalador do Ollama aberto: conclua a instalação e volte aqui.")
+        _rodar("ollama_instalador", tarefa)
+        return {}
     if caminho == "/api/log":
         _registrar(f"[tela] etapa={d.get('etapa')} {str(d.get('msg', ''))[:400]}")
         return {}
@@ -259,7 +279,13 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 _registrar(f"[erro] GET /api/estado: {e!r}")
                 return self._json({"erro": "não consegui ler o estado: " + str(e)[:200]}, 500)
-        nome = "index.html" if self.path in ("/", "") else self.path.lstrip("/").split("?")[0]
+        caminho = self.path.split("?")[0]
+        if caminho in ("/", ""):
+            nome = "app.html" if perfil.carregar().get("concluido") else "index.html"      # instalacao concluida: abre o assistente
+        elif caminho in ("/instalacao", "/configuracoes"):
+            nome = "index.html"
+        else:
+            nome = caminho.lstrip("/")
         arq = (UI / nome).resolve()
         if UI.resolve() not in arq.parents and arq != UI.resolve() or not arq.is_file():
             return self._json({"erro": "não encontrado"}, 404)

@@ -15,6 +15,7 @@ PADRAO = {
     "navegador": "auto",             # navegador do assistente: auto (padrao do Windows se for Chromium) | chrome | edge | brave | vivaldi | opera
     "voz_nome": None,                # voz escolhida do Gemini (ex.: Kore, Achird)
     "voz_estilo": "calmo",           # calmo | profissional | animado
+    "suspenso": False,               # modo jogo/edicao: o assistente nao responde nem age ate a pessoa retomar
     "voz_reserva": False,            # True = se a voz natural falhar, fala com a voz robotica do sistema (padrao: fica so o texto na tela)
     "voz_privada": False,            # True = nunca manda texto para gerar voz na nuvem (usa so a voz do sistema)
     "etapa": "boas_vindas",
