@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Servidor LOCAL da instalacao (127.0.0.1): serve a tela e a API que conduz o roteiro. A janela (Tauri) so abre esta pagina.
 Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam para a tela."""
-import json, mimetypes, socket, sys, threading, time
+import html, urllib.parse, json, mimetypes, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from . import (paths, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
+from . import (paths, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -54,7 +54,7 @@ def estado_geral():
         "permissoes": permissoes.resumo(), "provedores": provedores.catalogo(), "chaves": chaves,
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
-        "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "autostart": autostart.ativo(), "navegador": navegador.info(),
+        "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "email_diario": email_diario.estado(), "autostart": autostart.ativo(), "navegador": navegador.info(),
         "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"), "reserva": bool(p.get("voz_reserva")),
                 "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
         "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
@@ -68,6 +68,23 @@ def acao(caminho, d):
         except navegador.NavegadorErro as e:
             return {"ok": False, "motivo": str(e)}
         return {"ok": True, "navegador": navegador.info()}
+    if caminho == "/api/email/config":
+        try:
+            return {"ok": True, "email": email_diario.configurar(d.get("client_id"), d.get("client_secret"), d.get("hora_resumo"), d.get("avisos_trabalho"),
+                                                                   d.get("resumo_ativo"))}
+        except (email_diario.EmailErro, ValueError) as e:
+            return {"ok": False, "motivo": str(e)}
+    if caminho == "/api/email/login":
+        redirect = str(d.get("redirect", ""))
+        if not redirect.startswith("http://127.0.0.1:") or not redirect.endswith("/email/callback"):
+            return {"ok": False, "motivo": "redirecionamento inválido"}
+        try:
+            return {"ok": True, "url": email_diario.url_login(redirect)}
+        except email_diario.EmailErro as e:
+            return {"ok": False, "motivo": str(e)}
+    if caminho == "/api/email/desconectar":
+        email_diario.desconectar()
+        return {"ok": True}
     if caminho == "/api/chat":
         return assistente.conversar(d.get("texto", ""))
     if caminho == "/api/chat/confirmar":
@@ -280,6 +297,22 @@ class Handler(BaseHTTPRequestHandler):
                 _registrar(f"[erro] GET /api/estado: {e!r}")
                 return self._json({"erro": "não consegui ler o estado: " + str(e)[:200]}, 500)
         caminho = self.path.split("?")[0]
+        if caminho == "/email/callback":      # volta do login do Google (so leitura): guarda o token e leva de volta as configuracoes
+            q = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+            try:
+                if q.get("error"):
+                    raise email_diario.EmailErro("Você cancelou o login no Google.")
+                email_diario.concluir_login((q.get("code") or [""])[0], (q.get("state") or [""])[0])
+                msg = "E-mail conectado! Pode fechar esta aba e voltar ao BRANIAC."
+            except (email_diario.EmailErro, cofre.CofreErro) as e:
+                msg = f"Não deu certo: {e}"
+            corpo = f"<!doctype html><meta charset=utf-8><body style='font-family:sans-serif;background:#05070d;color:#e9eef9;padding:40px'><h2>{html.escape(msg)}</h2>".encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(corpo)))
+            self.end_headers()
+            self.wfile.write(corpo)
+            return
         if caminho in ("/", ""):
             nome = "app.html" if perfil.carregar().get("concluido") else "index.html"      # instalacao concluida: abre o assistente
         elif caminho in ("/instalacao", "/configuracoes"):

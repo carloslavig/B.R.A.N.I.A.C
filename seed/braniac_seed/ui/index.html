@@ -339,12 +339,35 @@ TELAS.nome_voz = () => {
     el('div', { className: 'cartoes' }, g1, g2), opcoes, el('h2', {}, 'Nome do assistente'), campo, el('div', { className: 'linha' }, el('button', { onclick: salvar }, 'Confirmar nome, voz e estilo'), msg), perguntas];
 };
 
+// Resumo diario do e-mail DA PESSOA (opcional): ela cria o proprio acesso no Google; leitura apenas; nada vai para IA; o resumo so chega a ela.
+function emailCard() {
+  const e = S.email_diario || {}, msg = el('p', { className: 'mudo' });
+  const id = el('input', { type: 'text', placeholder: 'ID do cliente (termina em .apps.googleusercontent.com)', style: 'width:100%' });
+  const seg = el('input', { type: 'password', placeholder: 'Segredo do cliente', style: 'width:100%' });
+  const hora = el('input', { type: 'number', min: 0, max: 23, value: e.hora_resumo ?? 7, style: 'width:70px' });
+  const salvar = async () => { const r = await api('/api/email/config', { client_id: id.value, client_secret: seg.value || undefined, hora_resumo: +hora.value }); msg.className = r.ok ? 'ok' : 'erro'; msg.textContent = r.ok ? 'Salvo.' : r.motivo; await recarregar(); return r.ok; };
+  const conectar = async () => { if (!(await salvar())) return; const r = await api('/api/email/login', { redirect: location.origin + '/email/callback' }); if (r.ok) window.open(r.url, '_blank'); else { msg.className = 'erro'; msg.textContent = r.motivo; } };
+  const passos = el('details', {}, el('summary', {}, 'Como criar o acesso (5 min, grátis)'), el('ol', {},
+    el('li', {}, 'Abra console.cloud.google.com, crie um projeto e ative a “Gmail API”.'),
+    el('li', {}, 'Em “Tela de permissão OAuth”, tipo Externo, modo Teste; adicione o SEU e-mail em “Usuários de teste”.'),
+    el('li', {}, 'Em “Credenciais” > “Criar credenciais” > “ID do cliente OAuth” > tipo “App para computador”.'),
+    el('li', {}, 'Cole aqui o ID e o segredo e clique em Conectar. Você aprova uma vez (só leitura).')));
+  return el('div', { className: 'cartao', style: 'cursor:default' }, el('h3', {}, '📧 Resumo diário do seu e-mail (opcional)'),
+    el('p', {}, e.logado ? '✔ Gmail conectado. Todo dia no horário abaixo você recebe um resumo no seu Telegram (se conectado) e aqui na tela. Avisos de vagas e propostas de trabalho com prazo também chegam só para você.' :
+      'O assistente lê só os assuntos e remetentes (nunca envia, apaga ou altera nada), tudo no seu PC e sem mandar o conteúdo para nenhuma IA.'),
+    passos, ...(e.logado ? [] : [id, seg]),
+    el('div', { className: 'linha' }, el('label', {}, 'Resumo às '), hora, el('span', {}, ' h '),
+      e.logado ? el('button', { className: 'sec', onclick: salvar }, 'Salvar horário') : el('button', { onclick: conectar }, 'Salvar e conectar'),
+      e.logado ? el('button', { className: 'perigo', onclick: async () => { await api('/api/email/desconectar', {}); await recarregar(); render(); } }, 'Desconectar') : ''), msg);
+}
+
 TELAS.integracoes = () => {
   const rot = { email: 'E-mail', spotify: 'Spotify (tocar músicas e volume)', whatsapp: 'WhatsApp (ler e responder mensagens)', agenda: 'Agenda e lembretes', arquivos: 'Arquivos do PC' };
   const marc = new Set(S.perfil.integracoes || []);
   window.antesDeAvancar = async () => { await api('/api/integracoes', { lista: [...marc] }); return true; };
   return [el('h1', {}, `Como você quer usar ${S.perfil.nome_assistente || 'o assistente'}?`), el('p', {}, 'Marque o que você gostaria que ele conectasse. Você faz o login de cada um depois, quando precisar.'),
     ...S.integracoes.map(i => el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: marc.has(i), onchange: e => e.target.checked ? marc.add(i) : marc.delete(i) }), el('div', {}, el('b', {}, rot[i] || i)))),
+    emailCard(),
     el('div', { className: 'aviso' }, 'Cada conexão também precisa da permissão correspondente na etapa de acesso ao PC. Sem a permissão, o assistente avisa e não faz nada.')];
 };
 

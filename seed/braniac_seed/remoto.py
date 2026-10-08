@@ -107,6 +107,21 @@ def armado():
     return a == "sempre" or (isinstance(a, (int, float)) and time.time() < a)
 
 
+def avisar_dono(texto):
+    """Manda um aviso ao DONO pareado pelo Telegram dele (resumo de e-mail etc.). Sem bot pareado, nao faz nada. Devolve True se enviou."""
+    e = _estado()
+    if not (e.get("dono_id") and e.get("ativo")):
+        return False
+    try:
+        token = cofre.ler("telegram")
+    except cofre.CofreErro:
+        return False
+    if not token:
+        return False
+    _http("sendMessage", token, {"chat_id": e["dono_id"], "text": texto[:4000]})
+    return True
+
+
 def resumo():
     e = _estado()
     a = e.get("armado_ate")
