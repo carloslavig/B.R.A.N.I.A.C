@@ -68,3 +68,10 @@ Falta: núcleo do Braniac (extração do código atual sem dados pessoais) ligad
 - **Modo jogo** (`perfil.suspenso`): o assistente não responde nem age, nem pelo Telegram (exceto `/parar` e `/desarmar`), até dois cliques no orbe. Falar “modo jogo”/“vou jogar” faz o mesmo e a janela vai para a bandeja. “Pode descansar” só esconde a janela.
 - **IA local:** o passo de hardware baixa o instalador oficial do Ollama e o abre; quem confirma é a própria pessoa.
 - Ainda não existe: chamar pelo nome por voz, ícone flutuante, detecção automática de jogo, atendimento automático do WhatsApp, e-mail.
+
+## Funções da v0.4
+
+- **Pesquisa e abas** (`pesquisa.py`, permissão `navegador.ler`): abas próprias no navegador do assistente, só leitura; consulta sensível é recusada; abas privadas (WhatsApp, e-mail, bancos) só entregam texto à própria pessoa; o resumo é feito por IA **sem ferramentas** e o texto da página nunca volta para a IA que escolhe ações (página maliciosa não dá ordens).
+- **WhatsApp** (`whatsapp.py`): escolhe o contato que mais combina com o que foi dito (sem ficar perguntando), procura na agenda inteira e envia arquivos (seletor interceptado por CDP; executáveis vão em .zip; bloqueia chaves, cookies, pastas do sistema e os dados do próprio BRANIAC). Enviar arquivo exige `whatsapp.enviar` + `arquivos.ler` e pede Confirmar.
+- **Guarda de segurança** (`guarda.py`, permissão `sistema.seguranca`, opt-in): observa e avisa; nunca altera firewall nem fecha portas. Não é antivírus.
+- **Desinstalação limpa** (`installer-hooks.nsh`): pergunta se apaga também `%LOCALAPPDATA%\BRANIAC-dados`, os dados do WebView, o início automático e as chaves do Cofre do Windows. Atualização preserva tudo.

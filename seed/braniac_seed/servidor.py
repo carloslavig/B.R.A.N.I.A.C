@@ -4,7 +4,7 @@ Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam p
 import html, urllib.parse, json, mimetypes, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from . import (paths, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
+from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -54,7 +54,7 @@ def estado_geral():
         "permissoes": permissoes.resumo(), "provedores": provedores.catalogo(), "chaves": chaves,
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
-        "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "email_diario": email_diario.estado(), "autostart": autostart.ativo(), "navegador": navegador.info(),
+        "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "email_diario": email_diario.estado(), "guarda": {"ativa": guarda.ativa(), "ligada": bool(p.get("guarda_ativa")), "permitida": permissoes.permitido("sistema.seguranca"), "resumo": guarda.resumo()}, "autostart": autostart.ativo(), "navegador": navegador.info(),
         "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"), "reserva": bool(p.get("voz_reserva")),
                 "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
         "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
@@ -85,6 +85,12 @@ def acao(caminho, d):
     if caminho == "/api/email/desconectar":
         email_diario.desconectar()
         return {"ok": True}
+    if caminho == "/api/guarda":
+        try:
+            guarda.ligar(bool(d.get("ligado")))
+        except permissoes.PermissaoNegada as e:
+            return {"ok": False, "motivo": str(e)}
+        return {"ok": True, "guarda": {"ativa": guarda.ativa(), "resumo": guarda.resumo()}}
     if caminho == "/api/chat":
         return assistente.conversar(d.get("texto", ""))
     if caminho == "/api/chat/confirmar":

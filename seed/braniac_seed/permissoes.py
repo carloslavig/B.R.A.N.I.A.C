@@ -37,6 +37,7 @@ CATALOGO = {
     "spotify": ("Spotify", "Tocar músicas e controlar o volume.", "baixo"),
     "sistema": ("Sistema", "Volume, janelas, modo jogo e lembretes.", "baixo"),
     "sistema.tela": ("Ver a tela", "Tirar prints da tela do PC (usado no controle remoto).", "alto"),
+    "sistema.seguranca": ("Vigiar a segurança do PC", "Avisar se o IP mudar, se firewall/antivírus forem desligados, se houver portas abertas para a rede ou tentativas de login suspeitas. Só observa e avisa.", "baixo"),
     "sistema.status": ("Ver o estado do PC", "Memória, disco e hora do PC.", "baixo"),
 }
 

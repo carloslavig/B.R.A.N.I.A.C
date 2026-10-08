@@ -361,6 +361,17 @@ function emailCard() {
       e.logado ? el('button', { className: 'perigo', onclick: async () => { await api('/api/email/desconectar', {}); await recarregar(); render(); } }, 'Desconectar') : ''), msg);
 }
 
+function guardaCard() {
+  const g = S.guarda || {}, msg = el('p', { className: 'mudo' }, g.ativa ? g.resumo : '');
+  const cx = el('input', { type: 'checkbox', checked: !!g.ativa, onchange: async e => {
+    if (e.target.checked) await api('/api/permissao', { chave: 'sistema.seguranca', ativo: true });
+    const r = await api('/api/guarda', { ligado: e.target.checked }); await recarregar();
+    if (!r.ok) { e.target.checked = false; msg.className = 'erro'; msg.textContent = r.motivo; } else { msg.className = 'mudo'; msg.textContent = e.target.checked ? 'Ligada. Primeira leitura em instantes.' : 'Desligada.'; } } });
+  return el('div', { className: 'cartao', style: 'cursor:default' }, el('h3', {}, '🛡 Guarda de segurança (opcional)'),
+    el('p', {}, 'De 10 em 10 minutos o assistente confere o seu IP, o firewall, o antivírus, as portas abertas para a rede e tentativas de login. Só observa e avisa você (Telegram e tela); não muda nada sozinho. Não é antivírus.'),
+    el('label', { className: 'perm' }, cx, el('div', {}, el('b', {}, 'Ligar a guarda de segurança'))), msg);
+}
+
 TELAS.integracoes = () => {
   const rot = { email: 'E-mail', spotify: 'Spotify (tocar músicas e volume)', whatsapp: 'WhatsApp (ler e responder mensagens)', agenda: 'Agenda e lembretes', arquivos: 'Arquivos do PC' };
   const marc = new Set(S.perfil.integracoes || []);
@@ -368,6 +379,7 @@ TELAS.integracoes = () => {
   return [el('h1', {}, `Como você quer usar ${S.perfil.nome_assistente || 'o assistente'}?`), el('p', {}, 'Marque o que você gostaria que ele conectasse. Você faz o login de cada um depois, quando precisar.'),
     ...S.integracoes.map(i => el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: marc.has(i), onchange: e => e.target.checked ? marc.add(i) : marc.delete(i) }), el('div', {}, el('b', {}, rot[i] || i)))),
     emailCard(),
+    guardaCard(),
     el('div', { className: 'aviso' }, 'Cada conexão também precisa da permissão correspondente na etapa de acesso ao PC. Sem a permissão, o assistente avisa e não faz nada.')];
 };
 
