@@ -109,3 +109,14 @@ def test_whatsapp_e_telegram_vem_cedo_e_sao_opcionais(srv):
     assert "remoto" in e["opcionais"] and "chaves" not in e["opcionais"] and "nome_voz" not in e["opcionais"]
     # obrigatorios continuam: nada de WhatsApp/Telegram impede concluir
     assert all("whatsapp" not in f.lower() and "telegram" not in f.lower() for f in e["faltando"])
+
+
+def test_etapa_concluido_nao_e_gravada_com_pendencia(srv):
+    req(srv, "POST", "/api/etapa", {"etapa": "hardware"})
+    req(srv, "POST", "/api/etapa", {"etapa": "concluido"})          # falta consentimento, chave e nome: nao pode ficar presa na tela final
+    assert perfil.carregar()["etapa"] == "hardware"
+
+
+def test_tela_final_tem_saida_para_cada_pendencia():
+    html = (Path(__file__).resolve().parents[1] / "braniac_seed" / "ui" / "index.html").read_text(encoding="utf-8")
+    assert "etapa === 'concluido' ? ord.length" in html and "passoQueFalta" in html and "S.faltando.length) etapa = passoQueFalta" in html

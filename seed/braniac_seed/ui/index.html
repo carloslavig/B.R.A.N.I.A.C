@@ -428,11 +428,15 @@ TELAS.icone = () => {
     el('div', { className: 'aviso' }, 'Modo jogo e edição: clique em “🎮 Modo jogo” na tela do assistente (ou diga “modo jogo”) e ele se suspende e se esconde na bandeja, sem responder nem agir. Para reativar, clique no ícone da bandeja e dê dois cliques no orbe. (Detectar jogos sozinho: em breve.)')];
 };
 
+// leva ao passo certo para cada pendencia (antes a pessoa ficava presa na tela final, sem botao e sem Voltar)
+function passoQueFalta(texto) { return /acesso ao PC/i.test(texto) ? 'consentimento' : /chave/i.test(texto) ? 'chaves' : /nome|voz/i.test(texto) ? 'nome_voz' : 'boas_vindas'; }
+
 TELAS.concluido = () => {
   const p = S.perfil, msg = el('p');
   const falta = S.faltando;
   return [el('h1', {}, falta.length ? 'Quase lá' : `${p.nome_assistente} está pronto`),
-    el('p', {}, falta.length ? 'Ainda falta: ' + falta.join('; ') + '.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? 'na bandeja' : 'flutuante'}.`),
+    ...(falta.length ? [el('div', { className: 'linha', style: 'flex-direction:column;align-items:flex-start;gap:8px' }, ...falta.map(f => el('button', { className: 'sec', onclick: () => { etapa = passoQueFalta(f); render(); } }, '→ ' + f.charAt(0).toUpperCase() + f.slice(1))))] : []),
+    el('p', {}, falta.length ? 'Clique em uma das opções acima para resolver. Depois volte aqui e conclua.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? 'na bandeja' : 'flutuante'}.`),
     falta.length ? '' : el('div', { className: 'aviso' }, `Para falar com ${p.nome_assistente}: abra o ícone da bandeja (junto do relógio) e use o microfone ou escreva. “Pode descansar” esconde a janela; “modo jogo” suspende o assistente. (Chamar só falando “${p.nome_assistente}, tá acordado?” ainda não está disponível.) A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
     S.perfil.concluido ? el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: () => location.replace('/') }, '← Voltar ao assistente')) : '',
     el('div', { className: 'linha' }, el('button', { disabled: !!falta.length, onclick: async () => { const r = await api('/api/concluir', {}); if (r.ok) { msg.className = 'ok'; msg.textContent = 'Instalação concluída! Abrindo o seu assistente…'; falar(`Tudo pronto. Eu sou ${p.nome_assistente}. Vamos conversar!`); setTimeout(() => location.replace('/'), 3200); } else { msg.className = 'erro'; msg.textContent = r.motivo; } } }, '🚀 Concluir e começar'), msg)];
@@ -455,7 +459,7 @@ const FALAS = {
 async function render() {
   clearInterval(poll); window.antesDeAvancar = null;
   if (!S) await recarregar();
-  const ord = ORDEM(), i = ord.indexOf(etapa);
+  const ord = ORDEM(), i = etapa === 'concluido' ? ord.length : ord.indexOf(etapa);
   $('#passos').replaceChildren(...ord.map((e, k) => el('i', { className: k < i ? 'feito' : k === i ? 'atual' : '' })));
   let conteudo;
   try { conteudo = [].concat(TELAS[etapa]()).filter(Boolean); }
@@ -478,13 +482,14 @@ async function render() {
 async function ir(delta) {
   try {
   if (delta > 0 && window.antesDeAvancar && !(await window.antesDeAvancar())) return;
-  await recarregar(); const ord = ORDEM(), i = ord.indexOf(etapa) + delta;
+  await recarregar(); const ord = ORDEM(), i = (etapa === 'concluido' ? ord.length : ord.indexOf(etapa)) + delta;
   etapa = i >= ord.length ? 'concluido' : ord[Math.max(0, i)]; render();
   } catch (e) { aviso('Não consegui avançar: ' + e.message); }
 }
 $('#bProximo').onclick = () => ir(1); $('#bVoltar').onclick = () => ir(-1);
 speechSynthesis.onvoiceschanged = () => {};
-(async () => { await recarregar(); etapa = S.perfil.concluido ? 'concluido' : (S.perfil.etapa || 'boas_vindas'); if (!S.etapas.includes(etapa)) etapa = 'boas_vindas'; render(); })();
+(async () => { await recarregar(); etapa = S.perfil.concluido ? 'concluido' : (S.perfil.etapa || 'boas_vindas'); if (!S.etapas.includes(etapa)) etapa = 'boas_vindas';
+  if (etapa === 'concluido' && !S.perfil.concluido && S.faltando.length) etapa = passoQueFalta(S.faltando[0]); render(); })();
 </script>
 </body>
 </html>

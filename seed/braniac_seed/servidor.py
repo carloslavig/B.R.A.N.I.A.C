@@ -112,6 +112,8 @@ def acao(caminho, d):
         e = d.get("etapa")
         if e not in onboarding.ETAPAS:
             raise ValueError("etapa inválida")
+        if e == "concluido" and onboarding.faltando(provedores.chaves_validas()):
+            return {}                      # nunca grava 'concluido' com pendencia: na proxima abertura a pessoa volta para onde parou, e nao para a tela final sem saida
         perfil.atualizar(etapa=e)
         return {}
     if caminho == "/api/consentimento":
