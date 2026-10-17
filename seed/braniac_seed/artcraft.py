@@ -76,6 +76,83 @@ def vetor_cartaz(texto, arquivo="cartaz.png", fundo="#1f1f3d", cor_texto="#fffff
     return _resultado("Cartaz criado.", out)
 
 
+# ---------- desenho livre (a IA descreve a imagem como formas) ----------
+DESENHO_AJUDA = ('Imagem 612x792 (x para a direita, y para BAIXO). "formas" = lista JSON, de baixo para cima (a primeira fica no fundo). Cada forma: '
+                 '{"t":"rect","x":0,"y":0,"w":612,"h":792,"cor":"#112233","raio":10} | {"t":"elipse","x","y","w","h","cor"} | {"t":"poligono","cx","cy","r","lados":6,"cor"} | '
+                 '{"t":"estrela","cx","cy","r1","r2","pontas":5,"cor"} | {"t":"linha","x1","y1","x2","y2","borda":"#000000","largura":3} | '
+                 '{"t":"caminho","d":"M10 10 L50 80 Q90 10 120 80 Z","cor","borda","largura"} (d = caminho SVG) | {"t":"texto","x","y","texto","tam":40,"cor"}. '
+                 'Cores #rrggbb; "borda" (contorno) e "largura" opcionais; sem "cor" a forma fica sem preenchimento.')
+_COR = re.compile(r"^#[0-9a-fA-F]{6}$")
+_SVG_D = re.compile(r"^[MmLlHhVvCcSsQqTtAaZz0-9\s,.\-eE+]{1,4000}$")
+
+
+def _passos_desenho(formas):
+    if isinstance(formas, str):
+        try:
+            formas = json.loads(formas)
+        except ValueError:
+            raise ArtCraftErro("A lista de formas não é um JSON válido.")
+    if isinstance(formas, dict):
+        formas = formas.get("formas") or [formas]
+    if not isinstance(formas, list) or not formas or len(formas) > 200:
+        raise ArtCraftErro("Mande de 1 a 200 formas numa lista.")
+
+    def cor(f, k="cor"):
+        v = f.get(k)
+        if v in (None, "", "nenhuma"):
+            return None
+        if not isinstance(v, str) or not _COR.match(v):
+            raise ArtCraftErro(f"Cor inválida '{v}': use #rrggbb.")
+        return v
+
+    def num(f, k, padrao=None):
+        try:
+            return float(f[k]) if k in f else float(padrao)
+        except (TypeError, ValueError):
+            raise ArtCraftErro(f"Número inválido em '{k}'.")
+
+    passos = []
+    for f in formas:
+        t = (f.get("t") or "").lower() if isinstance(f, dict) else ""
+        if t == "rect":
+            passos.append(("shape.rectangle", {"x": num(f, "x"), "y": num(f, "y"), "width": num(f, "w"), "height": num(f, "h"), "radius": num(f, "raio", 0)}))
+        elif t in ("elipse", "circulo"):
+            passos.append(("shape.ellipse", {"x": num(f, "x"), "y": num(f, "y"), "width": num(f, "w"), "height": num(f, "h", f.get("w"))}))
+        elif t == "poligono":
+            passos.append(("shape.polygon", {"cx": num(f, "cx"), "cy": num(f, "cy"), "radius": num(f, "r"), "sides": int(num(f, "lados", 6))}))
+        elif t == "estrela":
+            passos.append(("shape.star", {"cx": num(f, "cx"), "cy": num(f, "cy"), "radius1": num(f, "r1"), "radius2": num(f, "r2"), "points": int(num(f, "pontas", 5))}))
+        elif t == "linha":
+            passos.append(("shape.line", {"x1": num(f, "x1"), "y1": num(f, "y1"), "x2": num(f, "x2"), "y2": num(f, "y2")}))
+            f = {**f, "borda": f.get("borda") or f.get("cor") or "#000000", "cor": None}
+        elif t == "caminho":
+            if not isinstance(f.get("d"), str) or not _SVG_D.match(f["d"]):
+                raise ArtCraftErro("Caminho 'd' inválido (só comandos SVG M L H V C S Q T A Z e números).")
+            passos.append(("path.create", {"d": f["d"]}))
+        elif t == "texto":
+            if not str(f.get("texto", "")).strip():
+                raise ArtCraftErro("Texto vazio.")
+            passos.append(("text.create", {"x": num(f, "x"), "y": num(f, "y"), "text": str(f["texto"])[:300], "size": num(f, "tam", 40), "color": cor(f) or "#000000"}))
+            continue
+        else:
+            raise ArtCraftErro(f"Forma desconhecida '{t}'. Use rect, elipse, poligono, estrela, linha, caminho ou texto.")
+        c, b = cor(f), cor(f, "borda")
+        passos.append(("paint.setFill", {"color": c} if c else {"none": True}))
+        passos.append(("paint.setStroke", {"color": b} if b else {"none": True}))
+        if b:
+            passos.append(("stroke.set", {"weight": num(f, "largura", 2)}))
+    return passos
+
+
+def vetor_desenhar(formas, arquivo="desenho.png"):
+    out = _saida(arquivo, ".png")
+    args = ["run"]
+    for cmd, par in _passos_desenho(formas):
+        args += ["--cmd", cmd, "--params", json.dumps(par)]
+    _rodar("vectorcraft", args + ["--export", out, "--scale", 2])
+    return _resultado("Desenho criado.", out)
+
+
 def vetor_converter(entrada, saida):
     out = _saida(saida, ".png")
     _rodar("vectorcraft", ["convert", _entrada(entrada), out])

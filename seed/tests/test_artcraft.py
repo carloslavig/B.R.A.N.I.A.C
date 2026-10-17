@@ -88,3 +88,23 @@ def test_json_de_texto_puro_do_navegador_nao_quebra():
     finally:
         navegador.PORTA = antes
         srv.shutdown()
+
+
+def test_desenho_livre_valida_entrada():
+    with pytest.raises(artcraft.ArtCraftErro, match="Cor inválida"):
+        artcraft._passos_desenho([{"t": "rect", "x": 0, "y": 0, "w": 5, "h": 5, "cor": "vermelho"}])
+    with pytest.raises(artcraft.ArtCraftErro, match="inválido"):
+        artcraft._passos_desenho([{"t": "caminho", "d": "M0 0 L1 1; rm -rf"}])
+    with pytest.raises(artcraft.ArtCraftErro, match="desconhecida"):
+        artcraft._passos_desenho([{"t": "foguete"}])
+    with pytest.raises(artcraft.ArtCraftErro, match="JSON"):
+        artcraft._passos_desenho("não é json")
+
+
+@pytest.mark.skipif(not _tem("vectorcraft"), reason="ArtCraft nao instalado")
+def test_desenho_livre_real():
+    formas = [{"t": "rect", "x": 0, "y": 0, "w": 612, "h": 792, "cor": "#87ceeb"}, {"t": "elipse", "x": 200, "y": 200, "w": 200, "h": 200, "cor": "#ffd700", "borda": "#ff8800", "largura": 6},
+              {"t": "caminho", "d": "M100 700 L300 500 L500 700 Z", "cor": "#228b22"}, {"t": "linha", "x1": 0, "y1": 700, "x2": 612, "y2": 700, "borda": "#000000"},
+              {"t": "estrela", "cx": 100, "cy": 100, "r1": 50, "r2": 20, "cor": "#ffffff"}, {"t": "texto", "x": 150, "y": 740, "texto": "Oi", "tam": 30, "cor": "#000000"}]
+    texto, img = artcraft.vetor_desenhar(formas, "d.png")
+    assert img and len(img) > 2000
