@@ -108,3 +108,12 @@ def test_desenho_livre_real():
               {"t": "estrela", "cx": 100, "cy": 100, "r1": 50, "r2": 20, "cor": "#ffffff"}, {"t": "texto", "x": 150, "y": 740, "texto": "Oi", "tam": 30, "cor": "#000000"}]
     texto, img = artcraft.vetor_desenhar(formas, "d.png")
     assert img and len(img) > 2000
+
+
+def test_desenhar_por_descricao_usa_a_ia_e_gera_o_arquivo(monkeypatch):
+    if not _tem("vectorcraft"):
+        pytest.skip("ArtCraft nao instalado")
+    from braniac_seed import llm
+    monkeypatch.setattr(llm, "responder", lambda *a, **k: ('[{"t":"rect","x":0,"y":0,"w":612,"h":792,"cor":"#87ceeb"},{"t":"estrela","cx":300,"cy":300,"r1":100,"r2":40,"cor":"#ffd700"}]', "ia"))
+    texto, img = artcraft.desenhar("uma estrela")
+    assert img and (artcraft.pasta_saida() / "desenho-uma-estrela.png").is_file()

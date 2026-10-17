@@ -144,6 +144,34 @@ def _passos_desenho(formas):
     return passos
 
 
+def _prompt_desenho(descricao):
+    return ("Você é ilustrador vetorial. Desenhe: " + str(descricao)[:400] + "\n" + DESENHO_AJUDA + "\nUse de 10 a 30 formas, composição bonita e cores harmoniosas, "
+            "o assunto bem reconhecível e grande, fundo primeiro. Responda SOMENTE a lista JSON, sem texto antes ou depois, sem markdown.")
+
+
+def formas_de_descricao(descricao, gerar):
+    """Pede a uma IA (gerar(prompt) -> texto) as formas do desenho; tenta 2 vezes e devolve a lista ja validada."""
+    erro = ""
+    for _ in range(2):
+        texto = gerar(_prompt_desenho(descricao) + erro) or ""
+        m = re.search(r"\[.*\]", texto, re.S)
+        try:
+            formas = json.loads(m.group(0))
+            _passos_desenho(formas)
+            return formas
+        except (ValueError, AttributeError, ArtCraftErro) as e:
+            erro = f"\nSua resposta anterior foi inválida ({str(e)[:120]}). Responda apenas o JSON válido da lista."
+    raise ArtCraftErro("A IA não conseguiu montar o desenho agora; tente de novo em instantes.")
+
+
+def desenhar(descricao):
+    """O assistente so descreve a imagem; o BRANIAC pede as formas a uma IA conectada e desenha."""
+    from . import llm
+    formas = formas_de_descricao(descricao, lambda p: llm.responder(p, sistema="Você responde somente JSON válido.")[0])
+    slug = re.sub(r"[^a-z0-9]+", "-", str(descricao).lower())[:30].strip("-") or "imagem"
+    return vetor_desenhar(formas, f"desenho-{slug}.png")
+
+
 def vetor_desenhar(formas, arquivo="desenho.png"):
     out = _saida(arquivo, ".png")
     args = ["run"]

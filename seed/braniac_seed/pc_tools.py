@@ -211,6 +211,7 @@ def _art(nome):
 _SAI = "O resultado vai para a pasta Documentos/BRANIAC-Criacoes; o original nunca é alterado."
 for _n, _d, _a, _p in [
     ("vetor_cartaz", "Cria um cartaz/arte em PNG com um texto grande (cores opcionais em #rrggbb).", ["texto", "arquivo?", "fundo?", "cor_texto?", "destaque?"], "criativo.vetor"),
+    ("desenhar", "DESENHA uma imagem (ilustração, logo, cena, personagem simples) em PNG com o VectorCraft: mande só a DESCRIÇÃO do que desenhar, o resto é automático. Use para todo pedido de desenho ou imagem.", ["descricao"], "criativo.vetor"),
     ("vetor_desenhar", "DESENHA uma imagem livre (ilustração, logo, cena) em PNG montando-a com formas. Para pedido de desenho ou imagem que não seja só texto, use esta. Formato: " + DESENHO_AJUDA, ["formas", "arquivo?"], "criativo.vetor"),
     ("vetor_converter", "Converte um arquivo vetorial (svg, pdf, ai, eps) em png, pdf ou svg.", ["entrada", "saida"], "criativo.vetor"),
     ("foto_converter", "Converte uma foto entre formatos (png, jpg, webp, tif...); qualidade 1-100 opcional.", ["entrada", "saida", "qualidade?"], "criativo.foto"),
