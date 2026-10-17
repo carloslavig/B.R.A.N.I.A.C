@@ -7,7 +7,7 @@ pessoa liberou. Acao perigosa (apagar, escrever, rodar comando, enviar WhatsApp)
 O resultado de uma ferramenta vai para a PESSOA e nunca volta para a IA (nada escondido em arquivo ou mensagem consegue dar ordens).
 Modo jogo: com o assistente SUSPENSO ele nao responde nem age (nem pelo Telegram) ate a pessoa retomar."""
 import base64, json, re, secrets, threading, time
-from . import llm, perfil, permissoes, pc_tools
+from . import llm, memoria_usuario, perfil, permissoes, pc_tools
 
 HISTORICO = []                 # ultimas trocas desta sessao: [("eu"|"ia", texto)]
 PENDENTES = {}                 # id -> {"acao", "args", "ate"}
@@ -41,7 +41,8 @@ def sistema():
             "se não souber, diga que não sabe. Converta o pedido em UMA ação quando for o caso. Responda SOMENTE um JSON: "
             '{"acao": "<nome da ferramenta ou nenhuma>", "args": {...}, "resposta": "frase curta para a pessoa"}. '
             "Use 'nenhuma' para conversa comum (coloque a fala em 'resposta'). Ferramentas liberadas pela pessoa:\n" + (cat or "(nenhuma: a pessoa não liberou acesso ao PC, então só converse)")
-            + "\nSe a pessoa pedir algo que exige uma ferramenta que não está na lista, explique que ela ainda não liberou essa permissão (em Configurações).")
+            + "\nSe a pessoa pedir algo que exige uma ferramenta que não está na lista, explique que ela ainda não liberou essa permissão (em Configurações)."
+            + memoria_usuario.contexto())
 
 
 def _contexto():
@@ -90,6 +91,10 @@ def conversar(texto, planejar=None):
                 r = "Tudo bem, vou descansar. Me chama quando precisar."
             _lembrar("ia", r)
             return {"resposta": r, "ui": ui}
+    r = memoria_usuario.tratar(texto)
+    if r:
+        _lembrar("ia", r)
+        return {"resposta": r}
     try:
         plano = (planejar or _planejar_padrao)(texto)
     except Exception as e:

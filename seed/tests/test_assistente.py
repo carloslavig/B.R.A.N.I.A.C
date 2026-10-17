@@ -207,3 +207,13 @@ def test_modo_jogo_e_chat_pela_api(srv):
 def test_transcrever_sem_chave_devolve_erro_legivel(srv):
     st, r = req(srv, "POST", "/api/transcrever", {"audio": base64.b64encode(b"x").decode()})
     assert st == 200 and r["texto"] == "" and r["erro"]
+
+
+def test_memoria_do_usuario_grava_usa_no_prompt_e_esquece():
+    r = assistente.conversar("me chama de Chefe", planejar=lambda t: pytest.fail("não deve chamar a IA"))
+    assert "Chefe" in r["resposta"] and perfil.carregar()["nome_pessoa"] == "Chefe"
+    assistente.conversar("lembre que eu prefiro respostas curtas", planejar=lambda t: pytest.fail("não deve chamar a IA"))
+    assert "respostas curtas" in assistente.sistema() and "Chefe" in assistente.sistema()
+    r = assistente.conversar("esqueça tudo que você sabe sobre mim", planejar=lambda t: pytest.fail("não deve chamar a IA"))
+    assert "esqueci 2" in r["resposta"] and "respostas curtas" not in assistente.sistema()
+    assert assistente.conversar("que horas são?", planejar=plano(resposta="Agora."))["resposta"] == "Agora."

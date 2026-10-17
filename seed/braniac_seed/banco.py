@@ -41,3 +41,16 @@ def listar(escopo=None, nivel=None):
         rows = c.execute(sql + " ORDER BY ts", args).fetchall()
         c.close()
     return rows
+
+
+def apagar(escopo, trecho=None):
+    """Apaga os fatos do escopo (todos, ou so os que contem 'trecho'). Devolve quantos."""
+    with _lock:
+        c = _con()
+        if trecho:
+            n = c.execute("DELETE FROM fatos WHERE escopo=? AND (texto LIKE ? OR chave LIKE ?)", (escopo, f"%{trecho}%", f"%{trecho}%")).rowcount
+        else:
+            n = c.execute("DELETE FROM fatos WHERE escopo=?", (escopo,)).rowcount
+        c.commit()
+        c.close()
+    return n

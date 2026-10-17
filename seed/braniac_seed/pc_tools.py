@@ -19,7 +19,10 @@ class FerramentaErro(RuntimeError):
 
 
 def _caminho(p, existe=True):
-    cam = Path(os.path.expandvars(os.path.expanduser(p.strip().strip('"')))).resolve()
+    cam = Path(os.path.expandvars(os.path.expanduser(p.strip().strip('"'))))
+    if not cam.is_absolute():       # caminho relativo cairia na pasta do app (ex.: System32): usa Documentos
+        cam = Path.home() / "Documents" / cam
+    cam = cam.resolve()
     if any(b in str(cam).lower() for b in BLOQUEADOS):
         raise FerramentaErro("Esse local é protegido (credenciais/dados do assistente); não acesso por segurança.")
     if existe and not cam.exists():
