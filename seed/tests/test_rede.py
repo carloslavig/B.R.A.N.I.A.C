@@ -124,3 +124,9 @@ def test_ferramentas_do_assistente_de_ponta_a_ponta(tmp_path, monkeypatch):
         ra.parar()
         rb.parar()
         rede_local._R = None
+
+
+def test_ip_da_radmin_ignora_o_gateway():
+    amostra = ("Adaptador Ethernet Radmin VPN:\n   Endereço IPv4. . . : 26.122.118.60\n   Máscara de Sub-rede . . : 255.0.0.0\n"
+               "   Gateway Padrão. . . . . : 26.0.0.1\nAdaptador Wi-Fi:\n   IPv4 Address. . . : 192.168.0.10\n")
+    assert rede._ips_do_ipconfig(amostra) == ["26.122.118.60"]

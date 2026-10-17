@@ -29,17 +29,22 @@ def ip_radmin():
     forcado = os.environ.get("BRANIAC_REDE_IP", "").strip()
     if forcado:
         return forcado
-    achados = set()
+    achados = []
     try:
-        achados |= {i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)}
+        achados += [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)]
     except OSError:
         pass
     try:
         saida = subprocess.run(["ipconfig"], capture_output=True, text=True, encoding="cp850", errors="replace", timeout=10, creationflags=0x08000000).stdout
-        achados |= set(re.findall(r"\b(26\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", saida))
+        achados += _ips_do_ipconfig(saida)
     except (OSError, subprocess.SubprocessError):
         pass
-    return next((ip for ip in sorted(achados) if ip.startswith("26.")), None)
+    return next((ip for ip in achados if ip.startswith("26.") and not ip.endswith(".0.0.1")), None)
+
+
+def _ips_do_ipconfig(texto):
+    """So as linhas 'IPv4' (endereco da PROPRIA maquina). A linha do gateway (26.0.0.1) tambem tem 26.x e NAO e o nosso IP."""
+    return [m.group(1) for l in texto.splitlines() if "IPv4" in l for m in [re.search(r"\b(26\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", l)] if m]
 
 
 def _mac(segredo, *partes):
