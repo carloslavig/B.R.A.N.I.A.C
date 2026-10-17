@@ -113,7 +113,10 @@ def _json(caminho, metodo="GET", timeout=4):
     r = c.getresponse()
     corpo = r.read()
     c.close()
-    return json.loads(corpo) if corpo else None
+    try:
+        return json.loads(corpo) if corpo else None
+    except ValueError:      # /json/activate e /json/close respondem texto puro ("Target activated"), nao JSON
+        return corpo.decode("utf-8", "replace")
 
 
 def rodando():

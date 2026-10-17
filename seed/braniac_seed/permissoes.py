@@ -67,12 +67,23 @@ def _arq():
 
 def _ler():
     try:
-        return json.loads(_arq().read_text(encoding="utf-8-sig"))
+        d = json.loads(_arq().read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         return {"liberadas": [], "registro": []}
+    visto = d.get("catalogo_visto")
+    if visto is None:
+        visto = [c for c in CATALOGO if not c.startswith("criativo")]   # arquivo anterior a 0.5.0: so 'criativo' e novo
+    novas = [c for c in CATALOGO if c not in visto]
+    if novas or "catalogo_visto" not in d:
+        if perfil.carregar().get("consentimento_acesso_pc") == "total":   # quem escolheu 'total' recebe as permissoes novas das atualizacoes
+            d["liberadas"] = sorted(set(d.get("liberadas", [])) | set(novas))
+        d["catalogo_visto"] = list(CATALOGO)
+        _gravar(d)
+    return d
 
 
 def _gravar(d):
+    d.setdefault("catalogo_visto", list(CATALOGO))
     d["registro"] = d["registro"][-500:]
     _arq().write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 

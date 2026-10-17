@@ -42,7 +42,7 @@ def test_argumento_obrigatorio_e_opcional():
 
 
 def test_saida_sempre_na_pasta_de_criacoes_com_nome_simples():
-    s = artcraft._saida("..\..\Windows\evil.png", ".png")
+    s = artcraft._saida(r"..\..\Windows\evil.png", ".png")
     assert s.parent == artcraft.pasta_saida() and s.name == "evil.png"
     assert artcraft._saida("relatorio", ".pdf").name == "relatorio.pdf"
     assert artcraft._saida("a.exe", ".png").name == "a.png"
@@ -55,3 +55,36 @@ def test_cartaz_real_e_conversao_de_foto(ambiente):
     if _tem("photocraft"):
         artcraft.foto_redimensionar(str(artcraft.pasta_saida() / "c.png"), "p.png", "200")
         assert (artcraft.pasta_saida() / "p.png").is_file()
+
+
+def test_atualizacao_libera_permissoes_novas_so_para_quem_escolheu_total(ambiente):
+    from braniac_seed import perfil
+    import json
+    antigas = [c for c in permissoes.CATALOGO if not c.startswith("criativo")]
+    arq = permissoes._arq()
+    for modo, esperado in (("total", True), ("granular", False)):
+        perfil.atualizar(consentimento_acesso_pc=modo)
+        arq.write_text(json.dumps({"liberadas": antigas, "registro": []}), encoding="utf-8")   # arquivo gravado pela versao 0.4
+        assert permissoes.permitido("criativo.vetor") is esperado
+    perfil.atualizar(consentimento_acesso_pc="total")
+    permissoes.aplicar_modo("total")
+    permissoes.revogar("criativo.vetor")
+    assert not permissoes.permitido("criativo.vetor")      # revogar continua valendo depois de uma nova leitura
+
+
+def test_json_de_texto_puro_do_navegador_nao_quebra():
+    import http.server, threading
+    from braniac_seed import navegador
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200); self.end_headers(); self.wfile.write(b"Target activated")
+        log_message = lambda *a: None
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    navegador.PORTA, antes = srv.server_port, navegador.PORTA
+    try:
+        assert navegador._json("/json/activate/x") == "Target activated"
+    finally:
+        navegador.PORTA = antes
+        srv.shutdown()
