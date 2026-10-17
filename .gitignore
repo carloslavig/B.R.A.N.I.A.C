@@ -17,3 +17,6 @@ build/
 app/src-tauri/binaries/*.exe
 app/src-tauri/gen/
 *.spec
+
+# CLIs do ArtCraft (~250 MB): o build.ps1 copia da instalacao do desenvolvedor
+app/src-tauri/artcraft/

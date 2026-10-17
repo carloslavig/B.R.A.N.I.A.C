@@ -196,6 +196,34 @@ FERRAMENTAS = {
 }
 
 
+def _art(nome):
+    """Liga uma funcao do artcraft.py (importada so quando usada); erro do app vira FerramentaErro. Argumento com '?' no nome e opcional."""
+    def f(**kw):
+        from . import artcraft
+        try:
+            return getattr(artcraft, nome)(**kw)
+        except (artcraft.ArtCraftErro, subprocess.SubprocessError, OSError) as e:
+            raise FerramentaErro(str(e))
+    return f
+
+
+_SAI = "O resultado vai para a pasta Documentos/BRANIAC-Criacoes; o original nunca é alterado."
+for _n, _d, _a, _p in [
+    ("vetor_cartaz", "Cria um cartaz/arte em PNG com um texto grande (cores opcionais em #rrggbb).", ["texto", "arquivo?", "fundo?", "cor_texto?", "destaque?"], "criativo.vetor"),
+    ("vetor_converter", "Converte um arquivo vetorial (svg, pdf, ai, eps) em png, pdf ou svg.", ["entrada", "saida"], "criativo.vetor"),
+    ("foto_converter", "Converte uma foto entre formatos (png, jpg, webp, tif...); qualidade 1-100 opcional.", ["entrada", "saida", "qualidade?"], "criativo.foto"),
+    ("foto_redimensionar", "Redimensiona uma foto pela largura em pixels, mantendo a proporção.", ["entrada", "saida", "largura"], "criativo.foto"),
+    ("foto_girar", "Gira uma foto em 90, 180 ou 270 graus.", ["entrada", "saida", "graus?"], "criativo.foto"),
+    ("foto_preto_e_branco", "Converte uma foto para preto e branco.", ["entrada", "saida"], "criativo.foto"),
+    ("pdf_texto", "Lê o texto de um PDF (página opcional).", ["arquivo", "pagina?"], "criativo.pdf"),
+    ("pdf_juntar", "Junta vários PDFs em um (caminhos separados por ponto e vírgula).", ["arquivos", "saida?"], "criativo.pdf"),
+    ("pdf_extrair_paginas", "Cria um PDF só com certas páginas (ex.: 1,3,5).", ["arquivo", "paginas", "saida?"], "criativo.pdf"),
+    ("pdf_dividir", "Divide um PDF em partes de N páginas.", ["arquivo", "a_cada"], "criativo.pdf"),
+    ("pdf_para_imagem", "Converte uma página de PDF em imagem PNG.", ["arquivo", "pagina?", "saida?"], "criativo.pdf"),
+]:
+    FERRAMENTAS[_n] = (_d + ("" if _n == "pdf_texto" else " " + _SAI), _a, _p, False, _art(_n))
+
+
 def catalogo_para_ia():
     """Texto com as ferramentas que a pessoa LIBEROU (as outras nem aparecem para a IA)."""
     return "\n".join(f"- {n}({', '.join(a)}): {d}" for n, (d, a, perm, _, _) in FERRAMENTAS.items() if permissoes.permitido(perm))
@@ -216,8 +244,10 @@ def executar_ferramenta(nome, args):
         raise FerramentaErro("Não conheço essa ação.")
     desc, nomes_args, perm, _, fn = FERRAMENTAS[nome]
     permissoes.exigir(perm)
-    faltam = [a for a in nomes_args if not str(args.get(a, "")).strip()]
+    obrig = [a for a in nomes_args if not a.endswith("?")]
+    faltam = [a for a in obrig if not str(args.get(a, "")).strip()]
     if faltam:
         raise FerramentaErro("Faltou informar: " + ", ".join(faltam))
-    r = fn(**{a: args[a] for a in nomes_args})
+    opc = [a[:-1] for a in nomes_args if a.endswith("?") and str(args.get(a[:-1], "")).strip()]
+    r = fn(**{a: args[a] for a in obrig + opc})
     return r if isinstance(r, tuple) else (r, None)
