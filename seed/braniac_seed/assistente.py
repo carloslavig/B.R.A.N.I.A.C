@@ -7,7 +7,7 @@ pessoa liberou. Acao perigosa (apagar, escrever, rodar comando, enviar WhatsApp)
 O resultado de uma ferramenta vai para a PESSOA e nunca volta para a IA (nada escondido em arquivo ou mensagem consegue dar ordens).
 Modo jogo: com o assistente SUSPENSO ele nao responde nem age (nem pelo Telegram) ate a pessoa retomar."""
 import base64, json, re, secrets, threading, time
-from . import llm, memoria_usuario, perfil, permissoes, pc_tools
+from . import auto_update, llm, memoria_usuario, perfil, permissoes, pc_tools
 
 HISTORICO = []                 # ultimas trocas desta sessao: [("eu"|"ia", texto)]
 PENDENTES = {}                 # id -> {"acao", "args", "ate"}
@@ -74,6 +74,24 @@ COMANDOS_LOCAIS = [
 ]
 
 
+ATUALIZAR = re.compile(r"\batualiz(?:ar|a|e)\s+(?:agora|o\s+braniac|a\s+vers[aã]o|ele)\b|\bverifi\w*\s+atualiza|\bprocur\w*\s+atualiza|\bhá\s+atualiza", re.I)
+AUTO_OFF = re.compile(r"\b(?:desligu?e|desativ\w+|pare|p[aá]ra)\b.*\batualiza[cç][aã]o\s+autom", re.I)
+AUTO_ON = re.compile(r"\b(?:ligu?e|ativ\w+)\b.*\batualiza[cç][aã]o\s+autom", re.I)
+
+
+def _comando_atualizacao(texto):
+    """Comandos locais (sem IA): ligar/desligar a atualizacao automatica e atualizar agora."""
+    if AUTO_OFF.search(texto):
+        auto_update.definir(False)
+        return "Pronto, desliguei a atualização automática. Você pode pedir 'atualizar agora' quando quiser."
+    if AUTO_ON.search(texto):
+        auto_update.definir(True)
+        return "Pronto, a atualização automática está ligada."
+    if ATUALIZAR.search(texto):
+        return auto_update.checar_e_atualizar()
+    return None
+
+
 def conversar(texto, planejar=None):
     """Devolve {"resposta": str, "imagem": base64png|None, "confirmar": {...}|None, "ui": 'ocultar'|'suspender'|None}."""
     texto = (texto or "").strip()
@@ -91,6 +109,10 @@ def conversar(texto, planejar=None):
                 r = "Tudo bem, vou descansar. Me chama quando precisar."
             _lembrar("ia", r)
             return {"resposta": r, "ui": ui}
+    r = _comando_atualizacao(texto)
+    if r:
+        _lembrar("ia", r)
+        return {"resposta": r}
     r = memoria_usuario.tratar(texto)
     if r:
         _lembrar("ia", r)

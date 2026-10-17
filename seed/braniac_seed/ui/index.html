@@ -503,5 +503,7 @@ speechSynthesis.onvoiceschanged = () => {};
 (async () => { await recarregar(); etapa = S.perfil.concluido ? 'concluido' : (S.perfil.etapa || 'boas_vindas'); if (!S.etapas.includes(etapa)) etapa = 'boas_vindas';
   if (etapa === 'concluido' && !S.perfil.concluido && S.faltando.length) etapa = passoQueFalta(S.faltando[0]); render(); })();
 </script>
+<script>fetch('/api/estado').then(r => r.json()).then(e => { const v = document.createElement('div'); v.id = 'versao-braniac'; v.textContent = 'v' + e.versao;
+  v.style.cssText = 'position:fixed;right:10px;bottom:6px;font:11px system-ui,sans-serif;opacity:.55;pointer-events:none;z-index:9999'; document.body.appendChild(v); }).catch(() => {});</script>
 </body>
 </html>

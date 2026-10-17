@@ -3,6 +3,7 @@
 Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam para a tela."""
 import html, urllib.parse, json, mimetypes, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from . import __version__
 from pathlib import Path
 from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
 
@@ -48,6 +49,7 @@ def estado_geral():
     p = perfil.carregar()
     chaves = provedores.chaves_validas()
     return {
+        "versao": __version__,
         "perfil": {k: p[k] for k in ("nome_assistente", "voz", "modo_icone", "integracoes", "consentimento_acesso_pc", "etapa", "concluido", "perfil_ia")
                    if k in p},
         "etapas": onboarding.ETAPAS, "opcionais": onboarding.OPCIONAIS, "integracoes": onboarding.INTEGRACOES,

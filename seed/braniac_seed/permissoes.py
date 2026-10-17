@@ -38,6 +38,8 @@ CATALOGO = {
     "criativo.vetor": ("Criar artes e vetores", "Criar cartazes e converter arquivos vetoriais.", "baixo"),
     "criativo.foto": ("Editar fotos", "Converter, redimensionar e girar fotos (cria cópias, nunca altera o original).", "baixo"),
     "criativo.pdf": ("Mexer em PDFs", "Ler, juntar, dividir e extrair páginas de PDFs (cria cópias).", "baixo"),
+    "rede": ("Rede de Braniacs", "Conversar com assistentes de outras pessoas que você e eles autorizarem.", "medio"),
+    "rede.conversar": ("Conversar com outros Braniacs", "Receber e mandar mensagens de texto a Braniacs pareados e permitidos por você, pela Radmin VPN. Nunca dá acesso ao seu PC.", "medio"),
     "spotify": ("Spotify", "Tocar músicas e controlar o volume.", "baixo"),
     "sistema": ("Sistema", "Volume, janelas, modo jogo e lembretes.", "baixo"),
     "sistema.tela": ("Ver a tela", "Tirar prints da tela do PC (usado no controle remoto).", "alto"),

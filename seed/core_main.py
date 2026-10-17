@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """Ponto de entrada do backend empacotado (sidecar do app Tauri): `braniac-core.exe <porta>`."""
 import sys, time
-from braniac_seed import email_diario, guarda, remoto, servidor
+from braniac_seed import auto_update, rede_local, email_diario, guarda, remoto, servidor
 
 if __name__ == "__main__":
     porta = int(sys.argv[1]) if len(sys.argv) > 1 else None
     srv, porta = servidor.servir(porta, bloquear=False)
     guarda.iniciar()           # guarda de seguranca (so age se a pessoa ligou)
     email_diario.iniciar()     # resumo diario do e-mail (so se a pessoa conectou o proprio Gmail)
+    auto_update.iniciar()      # confere as releases do GitHub de tempos em tempos (a pessoa pode desligar)
+    rede_local.iniciar()       # rede de Braniacs: so abre porta com Radmin e se a pessoa liberou
     remoto.iniciar()           # se ja houver bot pareado, volta a atender o Telegram assim que o app abre
     try:
         print(f"BRANIAC em http://127.0.0.1:{porta}", flush=True)

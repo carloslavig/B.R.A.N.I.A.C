@@ -227,6 +227,24 @@ for _n, _d, _a, _p in [
     FERRAMENTAS[_n] = (_d + ("" if _n == "pdf_texto" else " " + _SAI), _a, _p, False, _art(_n))
 
 
+def _rede(acao):
+    def f(nome="", texto="", convite=""):
+        from . import rede_local
+        return rede_local.ferramenta(acao, nome or convite, texto)
+    return f
+
+
+for _n, _d, _a, _c in [
+    ("rede_listar", "Lista os Braniacs de outras pessoas pareados com este e se cada um pode falar com você.", [], False),
+    ("rede_convidar", "Gera um CONVITE (uso único, 30 min) para parear com o Braniac de outra pessoa pela Radmin VPN.", [], False),
+    ("rede_aceitar", "Aceita um convite recebido (cole o código BRN1...) e pareia com aquele Braniac. Depois cada dono ainda precisa permitir a conversa.", ["convite"], True),
+    ("rede_permitir", "O dono PERMITE (texto vazio) ou BLOQUEIA (texto 'nao') que o Braniac de nome X converse com este.", ["nome", "texto?"], True),
+    ("rede_falar", "Manda uma mensagem de texto ao assistente (IA) de outro Braniac pareado e permitido, e mostra a resposta dele.", ["nome", "texto"], True),
+    ("rede_remover", "Remove um Braniac da rede (desfaz o pareamento).", ["nome"], True),
+]:
+    FERRAMENTAS[_n] = (_d, _a, "rede.conversar", _c, _rede(_n.split("_", 1)[1]))
+
+
 def catalogo_para_ia():
     """Texto com as ferramentas que a pessoa LIBEROU (as outras nem aparecem para a IA)."""
     return "\n".join(f"- {n}({', '.join(a)}): {d}" for n, (d, a, perm, _, _) in FERRAMENTAS.items() if permissoes.permitido(perm))
