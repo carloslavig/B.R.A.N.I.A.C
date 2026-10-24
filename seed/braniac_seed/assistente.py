@@ -7,7 +7,7 @@ pessoa liberou. Acao perigosa (apagar, escrever, rodar comando, enviar WhatsApp)
 O resultado de uma ferramenta vai para a PESSOA e nunca volta para a IA (nada escondido em arquivo ou mensagem consegue dar ordens).
 Modo jogo: com o assistente SUSPENSO ele nao responde nem age (nem pelo Telegram) ate a pessoa retomar."""
 import base64, json, re, secrets, threading, time
-from . import auto_update, habilidades, llm, memoria_usuario, orquestrador, perfil, permissoes, pc_tools, projetos
+from . import assinatura, auto_update, habilidades, llm, memoria_usuario, orquestrador, perfil, permissoes, pc_tools, projetos
 
 HISTORICO = []                 # ultimas trocas desta sessao: [("eu"|"ia", texto)]
 PENDENTES = {}                 # id -> {"acao", "args", "ate"}
@@ -46,7 +46,7 @@ def sistema():
             "tempo e junta o resultado; 'usar_habilidade' (args: {\"nome\": ...}) carrega o passo a passo de uma habilidade quando o pedido combina com ela. "
             "Habilidades: " + (habilidades.catalogo() or "nenhuma")
             + "\nNunca invente nomes, números, datas, preços ou o que foi combinado: use só o que a pessoa disse ou o que está na memória; se não tiver, diga que não sabe."
-            + memoria_usuario.contexto())
+            + assinatura.PROMPT + memoria_usuario.contexto())
 
 
 def _contexto(hist=None):
@@ -103,6 +103,8 @@ def conversar(texto, planejar=None, conversa=None):
     texto = (texto or "").strip()
     if not texto:
         return {"resposta": ""}
+    if assinatura.responder(texto):          # assinatura digital: deusa e mestres supremos, igual em todo Braniac
+        return {"resposta": assinatura.RESPOSTA}
     if suspenso():
         return {"resposta": f"{_nome()} está suspenso (modo jogo/edição). Dê dois cliques no orbe para retomar."}
     if conversa is not None:

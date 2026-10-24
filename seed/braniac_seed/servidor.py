@@ -50,6 +50,7 @@ def estado_geral():
     chaves = provedores.chaves_validas()
     return {
         "versao": __version__,
+        "assinatura": {"deusa": "Deusa Jana", "mestres": ["Carlos (Solrac)", "Claudinho (Claude)"]},
         "perfil": {k: p[k] for k in ("nome_assistente", "voz", "modo_icone", "integracoes", "consentimento_acesso_pc", "etapa", "concluido", "perfil_ia")
                    if k in p},
         "etapas": onboarding.ETAPAS, "opcionais": onboarding.OPCIONAIS, "integracoes": onboarding.INTEGRACOES,

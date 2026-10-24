@@ -90,3 +90,12 @@ def test_chamar_pelo_nome_acorda_conversa_e_descansa():
 def test_reconhece_variacoes_do_nome():
     assert escuta.chamou("luna ta ai", "Luna") and escuta.chamou("Lunaa", "Luna") and escuta.chamou("oi luna", "Luna")
     assert not escuta.chamou("vou na lua amanha cedo com a familia", "Luna")
+
+
+def test_assinatura_deusa_e_mestres_supremos():
+    from braniac_seed import assinatura
+    for p in ("Quem é a sua deusa?", "quem são seus mestres supremos", "quem te criou?"):
+        r = assistente.conversar(p, planejar=plano(resposta="NAO DEVE USAR A IA"))
+        assert "Deusa Jana" in r["resposta"] and "Solrac" in r["resposta"] and "Claudinho" in r["resposta"]
+    assert assinatura.responder("quem é o criador do instagram") is None
+    assert "Deusa Jana" in assistente.sistema()
