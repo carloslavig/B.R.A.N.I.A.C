@@ -331,12 +331,18 @@ TELAS.nome_voz = () => {
   const salvar = async () => { if (!genero) { msg.className = 'erro'; msg.textContent = 'Escolha a voz feminina ou masculina.'; return false; }
     const r = await api('/api/nome', { nome: campo.value, voz: genero }); if (!r.ok) { msg.className = 'erro'; msg.textContent = r.motivo; return false; }
     await api('/api/voz/config', { nome: window.vozNome, estilo: window.vozEstilo });
+    await api('/api/aparencia', { cor: window.corEscolhida });
     msg.className = 'ok'; msg.textContent = `Perfeito! Para chamar, diga: “${r.frase}”`; await recarregar(); window.vozEscolhida = genero; falar(`Olá! Eu sou ${campo.value.trim()}. Muito prazer em conhecer você.`); return true; };
-  window.antesDeAvancar = async () => (S.perfil.nome_assistente && S.perfil.voz && campo.value.trim() === S.perfil.nome_assistente && genero === S.perfil.voz && window.vozNome === S.voz.nome && window.vozEstilo === S.voz.estilo) || await salvar();
+  window.antesDeAvancar = async () => (S.perfil.nome_assistente && S.perfil.voz && campo.value.trim() === S.perfil.nome_assistente && genero === S.perfil.voz && window.vozNome === S.voz.nome && window.vozEstilo === S.voz.estilo && window.corEscolhida === S.cor) || await salvar();
   perguntas.append(el('h2', {}, 'Não sabe que nome dar? Eu ajudo'), ...S.perguntas_nome.map(p => el('p', { className: 'mudo' }, '• ' + p)), gostos, el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: sugerir }, '✨ Sugerir nomes')), chips);
   desenharOpcoes();
+  const CORES = { ciano: '#2fe3ff', azul: '#3b82f6', verde: '#22c55e', roxo: '#a855f7', rosa: '#ec4899', laranja: '#f97316', vermelho: '#ef4444', dourado: '#eab308' };
+  window.corEscolhida = S.cor || '#2fe3ff';
+  const cores = el('div', { className: 'chips' }), pintar = () => cores.replaceChildren(...Object.entries(CORES).map(([n, c]) => el('span', { className: 'chip', title: n,
+    style: `background:${c};color:#04131a;font-weight:600;${window.corEscolhida === c ? 'outline:3px solid #fff;' : ''}`, onclick: () => { window.corEscolhida = c; pintar(); } }, n)));
+  pintar();
   return [el('h1', {}, 'Quem vai ser o seu assistente?'), el('p', {}, 'O nome é obrigatório: é com ele que você vai chamar. Primeiro escolha a voz.'),
-    el('div', { className: 'cartoes' }, g1, g2), opcoes, el('h2', {}, 'Nome do assistente'), campo, el('div', { className: 'linha' }, el('button', { onclick: salvar }, 'Confirmar nome, voz e estilo'), msg), perguntas];
+    el('div', { className: 'cartoes' }, g1, g2), opcoes, el('h2', {}, 'Nome do assistente'), campo, el('h2', {}, 'Cor da interface'), el('p', { className: 'mudo' }, 'Muda o chat, a tela de voz e a abertura. Dá para trocar depois em Aparência.'), cores, el('div', { className: 'linha' }, el('button', { onclick: salvar }, 'Confirmar nome, voz, estilo e cor'), msg), perguntas];
 };
 
 // Resumo diario do e-mail DA PESSOA (opcional): ela cria o proprio acesso no Google; leitura apenas; nada vai para IA; o resumo so chega a ela.
@@ -449,7 +455,7 @@ TELAS.concluido = () => {
   return [el('h1', {}, falta.length ? 'Quase lá' : `${p.nome_assistente} está pronto`),
     ...(falta.length ? [el('div', { className: 'linha', style: 'flex-direction:column;align-items:flex-start;gap:8px' }, ...falta.map(f => el('button', { className: 'sec', onclick: () => { etapa = passoQueFalta(f); render(); } }, '→ ' + f.charAt(0).toUpperCase() + f.slice(1))))] : []),
     el('p', {}, falta.length ? 'Clique em uma das opções acima para resolver. Depois volte aqui e conclua.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? 'na bandeja' : 'flutuante'}.`),
-    falta.length ? '' : el('div', { className: 'aviso' }, `Para falar com ${p.nome_assistente}: abra o ícone da bandeja (junto do relógio) e use o microfone ou escreva. “Pode descansar” esconde a janela; “modo jogo” suspende o assistente. (Chamar só falando “${p.nome_assistente}, tá acordado?” ainda não está disponível.) A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
+    falta.length ? '' : el('div', { className: 'aviso' }, `Para falar com ${p.nome_assistente}: abra o ícone da bandeja (junto do relógio) e use o microfone ou escreva. “Pode descansar” esconde a janela; “modo jogo” suspende o assistente. Para chamar só falando “${p.nome_assistente}, tá acordado?”, abra a tela de voz e ligue “Ouvir meu nome”. A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
     S.perfil.concluido ? el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: () => location.replace('/') }, '← Voltar ao assistente')) : '',
     el('div', { className: 'linha' }, el('button', { disabled: !!falta.length, onclick: async () => { const r = await api('/api/concluir', {}); if (r.ok) { msg.className = 'ok'; msg.textContent = 'Instalação concluída! Abrindo o seu assistente…'; falar(`Tudo pronto. Eu sou ${p.nome_assistente}. Vamos conversar!`); setTimeout(() => location.replace('/'), 3200); } else { msg.className = 'erro'; msg.textContent = r.motivo; } } }, '🚀 Concluir e começar'), msg)];
 };

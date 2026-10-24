@@ -1,2 +1,57 @@
-<!doctype html><meta charset="utf-8"><title>BRANIAC</title>
-<body style="background:#05070d;color:#8c9ab8;font:16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">Iniciando o BRANIAC…</body>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>BRANIAC</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%;margin:0}:root{--c:#22d3ee}
+body{background:#0c121b;color:#8fb3c4;font:15px Rajdhani,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.c{text-align:center;width:min(620px,86vw)}
+h1{margin:0;font:900 clamp(44px,7vw,72px) Orbitron,sans-serif;letter-spacing:.06em;color:var(--c);text-shadow:0 0 18px color-mix(in srgb,var(--c) 75%,transparent),0 0 42px color-mix(in srgb,var(--c) 35%,transparent)}
+.sub{margin-top:14px;letter-spacing:.32em;font-size:13px;color:#7c8fa0;text-transform:uppercase}
+.anel{width:128px;height:128px;margin:56px auto 0;position:relative}
+.anel svg{color:var(--c);width:100%;height:100%;animation:gira 1.4s linear infinite}
+.anel i{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+@keyframes gira{to{transform:rotate(360deg)}}
+.etapa{margin-top:58px;font:600 17px Rajdhani,sans-serif;letter-spacing:.22em;color:#a5f3fc;text-transform:uppercase;min-height:22px}
+.barra{margin-top:56px;height:8px;border:1px solid #1e3a4a;border-radius:99px;overflow:hidden;background:#0f1d29}
+.barra b{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--c),color-mix(in srgb,var(--c) 55%,#3b82f6));box-shadow:0 0 12px color-mix(in srgb,var(--c) 60%,transparent);transition:width .5s ease}
+.pct{margin-top:18px;font-size:13px;letter-spacing:.12em;color:#7c8fa0}
+.pontos{margin-top:30px;display:flex;gap:10px;justify-content:center}
+.pontos span{width:8px;height:8px;border-radius:50%;background:#1f3341;transition:background .3s,box-shadow .3s}
+.pontos span.on{background:var(--c);box-shadow:0 0 8px var(--c)}
+.marca{margin-top:40px;font:700 12px Orbitron,sans-serif;letter-spacing:.4em;color:#3d5566}
+</style>
+</head>
+<body>
+<div class="c">
+  <h1>B.R.A.N.I.A.C</h1>
+  <div class="sub">Seu assistente de IA pessoal</div>
+  <div class="anel"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#123241" stroke-width="3"/><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="210 80" style="filter:drop-shadow(0 0 4px currentColor)"/></svg><i></i></div>
+  <div class="etapa" id="etapa">Iniciando</div>
+  <div class="barra"><b id="barra"></b></div>
+  <div class="pct" id="pct">0%</div>
+  <div class="pontos" id="pontos"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="marca" id="marca"></div>
+</div>
+<script>
+// O programa em Rust chama progresso(n, 'texto') conforme o assistente liga; sozinha a barra so avanca devagar ate 90% (nunca finge que terminou).
+let atual = 0;
+const ETAPAS = ['Iniciando', 'Verificando sistemas', 'Calibrando', 'Ligando o assistente', 'Conectando as IAs', 'Online'];
+function progresso(n, texto) {
+  atual = Math.max(atual, Math.min(100, n));
+  document.getElementById('barra').style.width = atual + '%';
+  document.getElementById('pct').textContent = Math.round(atual) + '%';
+  if (texto) document.getElementById('etapa').textContent = texto;
+  const acesos = Math.max(1, Math.ceil(atual / 100 * 6));
+  document.querySelectorAll('#pontos span').forEach((s, i) => s.classList.toggle('on', i < acesos));
+}
+window.progresso = progresso;
+// nome e cor escolhidos pela pessoa (o programa em Rust le o perfil local e chama tema({nome, cor}))
+window.tema = a => { document.documentElement.style.setProperty('--c', a.cor); document.querySelector('h1').textContent = a.nome.toUpperCase().split('').filter(c => c !== ' ').join('.'); };
+progresso(4, ETAPAS[0]);
+setInterval(() => { if (atual < 90) progresso(atual + (90 - atual) * 0.035, atual > 30 && atual < 60 ? ETAPAS[2] : atual >= 60 ? ETAPAS[4] : null); }, 400);
+</script>
+</body>
+</html>

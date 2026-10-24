@@ -4,210 +4,247 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BRANIAC</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#05070d;--painel:#0d1322;--linha:#1d2740;--texto:#e9eef9;--mudo:#8c9ab8;--ouro:#f0c75e;--azul:#4cc3ff;--verde:#3ddc97;--verm:#ff6b6b}
-  *{box-sizing:border-box} html,body{height:100%;margin:0}
-  body{background:radial-gradient(1100px 600px at 15% 0%,#0c1630 0%,var(--bg) 60%);color:var(--texto);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
-  header{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--linha)}
-  header canvas{width:54px;height:54px;cursor:pointer} header h1{font-size:18px;margin:0} header .sub{color:var(--mudo);font-size:12.5px}
-  header .acoes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-  button{background:var(--azul);color:#04101c;border:0;border-radius:10px;padding:9px 16px;font:600 14px inherit;cursor:pointer}
-  button.sec{background:transparent;color:var(--texto);border:1px solid var(--linha)} button:disabled{opacity:.4;cursor:not-allowed}
-  button.perigo{background:var(--verm);color:#2a0606}
-  #chat{flex:1;overflow:auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px}
-  .msg{max-width:78%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}
-  .msg.eu{align-self:flex-end;background:#12335a;border:1px solid #1d4f86} .msg.ia{align-self:flex-start;background:var(--painel);border:1px solid var(--linha)}
-  .msg.sis{align-self:center;color:var(--mudo);font-size:13px;background:transparent}
-  .msg img{max-width:100%;border-radius:8px;margin-top:8px;display:block}
-  .cartao{align-self:flex-start;background:#241d08;border:1px solid #5a4a14;border-radius:14px;padding:12px 14px;max-width:78%}
-  .cartao code{display:block;margin:6px 0;color:#f3dc8a;white-space:pre-wrap;word-break:break-all}
-  footer{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--linha);align-items:flex-end}
-  textarea{flex:1;background:#0a0f1c;border:1px solid var(--linha);color:var(--texto);border-radius:12px;padding:10px 12px;font:inherit;resize:none;max-height:120px}
-  #mic.gravando{background:var(--verm);color:#fff;animation:pulsa 1s infinite} @keyframes pulsa{50%{opacity:.6}}
-  #nivel{height:4px;background:var(--linha);margin:0 20px} #nivel div{height:100%;width:0;background:linear-gradient(90deg,var(--azul),var(--verde))}
-  #suspenso{position:fixed;inset:0;background:rgba(5,7,13,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;text-align:center;padding:30px}
-  #suspenso canvas{width:200px;height:200px;cursor:pointer;opacity:.8}
-  #modoVoz{font-size:12px;color:var(--mudo)}
+:root{--cor:#2fe3ff;--bg:#07121a;--painel:#0a1924;--card:#0e2230;--txt:#d6f4ff;--sub:#6f98aa;--verm:#f87171;
+ --linha:color-mix(in srgb,var(--cor) 22%,#0a1924);--acento2:color-mix(in srgb,var(--cor) 70%,#fff);--usuario:color-mix(in srgb,var(--cor) 13%,#0e2230)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:radial-gradient(ellipse at 60% 40%,color-mix(in srgb,var(--cor) 9%,#07121a),#050d13 70%);color:var(--txt);font:15px/1.55 "Segoe UI",system-ui,sans-serif;display:flex;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+aside{width:280px;min-width:280px;background:var(--painel);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%}
+.marca{padding:16px 16px 8px;font:800 15px Orbitron,sans-serif;letter-spacing:.12em;color:var(--cor);text-shadow:0 0 10px color-mix(in srgb,var(--cor) 60%,transparent)}
+.marca small{display:block;font:400 12px "Segoe UI",sans-serif;letter-spacing:0;color:var(--sub);text-shadow:none;margin-top:2px}
+.bt{display:block;width:calc(100% - 24px);margin:6px 12px;padding:9px 12px;border:1px solid var(--linha);background:var(--card);border-radius:10px;text-align:left}
+.bt:hover{border-color:var(--cor)}.bt.voz{border-color:var(--cor);color:var(--acento2);background:transparent}
+.abas{display:flex;gap:4px;padding:4px 12px}.abas button{flex:1;border:0;background:none;padding:6px;border-radius:8px;color:var(--sub);font-size:13px}.abas button.ativa{background:var(--card);color:var(--txt)}
+.lista{flex:1;overflow:auto;padding:4px 8px 12px}
+.proj h4{margin:10px 8px 4px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);display:flex;justify-content:space-between}
+.proj h4 button{border:0;background:none;color:var(--sub);padding:0 6px}
+.conv{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.conv:hover{background:var(--card)}.conv.ativa{background:var(--card);font-weight:600}
+.item{background:var(--card);border:1px solid var(--linha);border-radius:10px;padding:10px 12px;margin:8px 4px;font-size:13px}.item b{display:block;font-size:14px}
+.rod{padding:8px 0 12px;border-top:1px solid var(--linha)}
+main{flex:1;display:flex;flex-direction:column;height:100%;min-width:0}
+header{padding:10px 22px;border-bottom:1px solid var(--linha);display:flex;justify-content:space-between;align-items:center;gap:12px}
+header h2{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topo{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.topo button{border:1px solid var(--linha);background:var(--card);border-radius:99px;padding:5px 13px;font-size:13px}
+.topo button.ativa{background:var(--cor);border-color:var(--cor);color:#04131a}
+#chat{flex:1;overflow:auto;padding:22px 0}
+.msg{max-width:760px;margin:0 auto 16px;padding:0 24px}.msg .quem{font-size:12px;color:var(--sub);margin-bottom:4px}
+.msg .b{padding:11px 15px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}.msg.eu .b{background:var(--usuario);margin-left:80px}.msg.ia .b{padding-left:0}
+.msg.sis{text-align:center;color:var(--sub);font-size:13px}.msg img{max-width:100%;border-radius:8px;margin-top:8px;display:block}
+.cartao{max-width:712px;margin:0 auto 16px;background:#241d08;border:1px solid #5a4a14;border-radius:14px;padding:12px 14px}.cartao code{display:block;margin:6px 0;color:#f3dc8a;white-space:pre-wrap;word-break:break-all}
+.vazio{max-width:620px;margin:12vh auto 0;text-align:center;color:var(--sub);padding:0 24px}.vazio h1{color:var(--txt);font-weight:600}
+.comp{padding:10px 24px 18px}.caixa{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--linha);border-radius:16px;padding:8px 10px;display:flex;gap:8px;align-items:flex-end}
+.caixa:focus-within{border-color:var(--cor);box-shadow:0 0 18px color-mix(in srgb,var(--cor) 25%,transparent)}
+textarea{flex:1;border:0;background:none;color:var(--txt);font:inherit;resize:none;max-height:200px;min-height:24px;outline:none;padding:6px}
+.enviar{border:0;background:var(--cor);color:#04131a;border-radius:10px;padding:8px 14px;font-weight:600;box-shadow:0 0 14px color-mix(in srgb,var(--cor) 45%,transparent)}
+#mic{border:1px solid var(--linha);background:transparent;border-radius:10px;padding:7px 11px}#mic.gravando{background:var(--verm);color:#fff}
+#modoVoz{font-size:12px;color:var(--sub);text-align:center;margin-top:6px}
+dialog{border:1px solid var(--linha);border-radius:14px;background:var(--card);color:var(--txt);width:min(560px,92vw);padding:20px}dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}dialog input,dialog textarea{width:100%;border:1px solid var(--linha);border-radius:8px;padding:8px;background:var(--bg);color:var(--txt);font:inherit}
+dialog textarea{min-height:110px}.acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.btn{border:1px solid var(--linha);background:var(--card);border-radius:8px;padding:7px 14px}.btn.prim{background:var(--cor);border-color:var(--cor);color:#04131a}
+.cores{display:flex;gap:10px;flex-wrap:wrap}.cores button{width:36px;height:36px;border-radius:50%;border:2px solid transparent}.cores button.sel{border-color:#fff}
+.prev{margin-top:12px;text-align:center;font:800 24px Orbitron,sans-serif;letter-spacing:.12em}
+#hud{flex:1;display:none;position:relative;overflow:hidden}
+#suspenso{position:fixed;inset:0;background:rgba(5,9,13,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:20;text-align:center;padding:30px}
+/* HUD */
+.palco{position:absolute;inset:0;display:grid;grid-template-columns:minmax(210px,1fr) minmax(300px,1.3fr) minmax(210px,1fr);gap:0 16px;padding:18px 22px 110px}
+.col{display:flex;flex-direction:column;justify-content:space-between;gap:8px;z-index:2}
+.p{display:flex;background:rgba(8,32,44,.72);border:1px solid color-mix(in srgb,var(--cor) 28%,transparent);min-height:84px;position:relative;font-family:Rajdhani,sans-serif}
+.p::after{content:"";position:absolute;top:-1px;left:-1px;width:13px;height:13px;border-top:2px solid var(--cor);border-left:2px solid var(--cor)}
+.dir .p{flex-direction:row-reverse}.dir .p::after{left:auto;right:-1px;border-left:0;border-right:2px solid var(--cor)}
+.num{width:90px;min-width:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid color-mix(in srgb,var(--cor) 25%,transparent);background:color-mix(in srgb,var(--cor) 5%,transparent)}
+.dir .num{border-right:0;border-left:1px solid color-mix(in srgb,var(--cor) 25%,transparent)}
+.num b{font:900 28px Orbitron,sans-serif;color:var(--cor);text-shadow:0 0 12px color-mix(in srgb,var(--cor) 65%,transparent)}.num span{font:600 10px Orbitron,sans-serif;letter-spacing:.04em;color:var(--sub);text-transform:uppercase}
+.cn{flex:1;padding:9px 11px;min-width:0;font-size:14px}.cn .v{font:700 18px Orbitron,sans-serif;color:var(--cor);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cn .s{color:var(--sub);font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.barra{height:6px;background:color-mix(in srgb,var(--cor) 12%,transparent);margin-top:7px}.barra i{display:block;height:100%;width:0;background:var(--cor);box-shadow:0 0 10px var(--cor)}
+.centro{position:relative;display:flex;align-items:center;justify-content:center}canvas#nucleo{width:100%;max-width:560px;aspect-ratio:1/1}
+.est{position:absolute;bottom:1%;left:0;right:0;text-align:center}.est b{display:block;font:900 24px Orbitron,sans-serif;letter-spacing:.18em;color:var(--cor);text-shadow:0 0 16px color-mix(in srgb,var(--cor) 70%,transparent)}.est span{color:var(--sub)}
+svg#fios{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.rodHud{position:absolute;left:0;right:0;bottom:0;height:104px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 22px 12px;background:linear-gradient(transparent,rgba(4,13,19,.92) 35%)}
+.fala{max-width:880px;width:100%;text-align:center;font-size:16px;min-height:42px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.fala small{color:var(--sub)}
+.bhud{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.bhud button{font:600 12px Orbitron,sans-serif;letter-spacing:.06em;color:var(--cor);background:color-mix(in srgb,var(--cor) 6%,transparent);border:1px solid color-mix(in srgb,var(--cor) 45%,transparent);padding:8px 14px;text-transform:uppercase}
+.bhud button.on{background:var(--cor);color:#04131a}
+@media (max-width:1050px){.palco{grid-template-columns:1fr}.col{display:none}}
+@media (max-width:760px){aside{display:none}}
 </style>
 </head>
 <body>
-<header>
-  <canvas id="orbe" width="108" height="108" title="Dois cliques: retomar quando suspenso"></canvas>
-  <div><h1 id="nome">…</h1><div class="sub" id="sub"></div><div id="modoVoz"></div></div>
-  <div class="acoes">
-    <button class="sec" id="bJogo" title="Suspende o assistente (e o Telegram) para você jogar ou editar sem interrupções">🎮 Modo jogo</button>
-    <button class="sec" id="bFala" title="Liga ou desliga a voz do assistente">🔊 Voz: ligada</button>
-    <button class="sec" onclick="location.href='/configuracoes'">⚙ Configurações</button>
+<aside>
+  <div class="marca">B.R.A.N.I.A.C<small><span class="nomeIA">…</span> · tudo salvo no seu PC</small></div>
+  <button class="bt" id="bNova">＋ Nova conversa</button>
+  <button class="bt voz" onclick="aba('voz')">🎙 Tela de voz de <span class="nomeIA">…</span></button>
+  <div class="abas"><button class="ativa" data-lado="conversas">Conversas</button><button data-lado="habilidades">Habilidades</button></div>
+  <div class="lista" id="lista"></div>
+  <div class="rod"><button class="bt" onclick="abrirAparencia()">🎨 Aparência</button><button class="bt" id="bJogo">🎮 Modo jogo</button><button class="bt" onclick="location.href='/configuracoes'">⚙ Configurações</button></div>
+</aside>
+<main>
+  <header><h2 id="titulo">Nova conversa</h2><div class="topo"><button id="tChat" class="ativa" onclick="aba('chat')">Conversas</button><button id="tVoz" onclick="aba('voz')">Voz</button><button id="bFala">🔊 Voz ligada</button></div></header>
+  <div id="chat"></div>
+  <div class="comp" id="comp"><div class="caixa"><button id="mic" title="Falar (clique de novo para parar)">🎙</button><textarea id="texto" rows="1" placeholder="Escreva sua mensagem…"></textarea><button class="enviar" id="enviar">Enviar</button></div><div id="modoVoz"></div></div>
+  <div id="hud">
+    <svg id="fios"></svg>
+    <div class="palco">
+      <div class="col esq">
+        <div class="p"><div class="num"><b>01</b><span>Voz</span></div><div class="cn"><div class="v" id="p1">—</div><div class="s" id="p1s"></div><div class="barra"><i id="nivelMic"></i></div></div></div>
+        <div class="p"><div class="num"><b>02</b><span>IAs</span></div><div class="cn"><div class="v" id="p2">—</div><div class="s" id="p2s"></div></div></div>
+        <div class="p"><div class="num"><b>03</b><span>Nível</span></div><div class="cn"><div class="v" id="p3">—</div><div class="s" id="p3s">quanto mais chaves, melhor</div></div></div>
+        <div class="p"><div class="num"><b>04</b><span>Acesso PC</span></div><div class="cn"><div class="v" id="p4">—</div><div class="s" id="p4s"></div></div></div>
+        <div class="p"><div class="num"><b>05</b><span>Habilid.</span></div><div class="cn"><div class="v" id="p5">—</div><div class="s" id="p5s"></div></div></div>
+      </div>
+      <div class="centro"><canvas id="nucleo" width="900" height="900"></canvas><div class="est"><b id="est">DORMINDO</b><span id="estSub"></span></div></div>
+      <div class="col dir">
+        <div class="p"><div class="num"><b>06</b><span>Hora</span></div><div class="cn"><div class="v" id="p6">—</div><div class="s" id="p6s"></div></div></div>
+        <div class="p"><div class="num"><b>07</b><span>Ouvi</span></div><div class="cn"><div class="v" id="p7">—</div><div class="s">última frase ouvida</div></div></div>
+        <div class="p"><div class="num"><b>08</b><span>Resposta</span></div><div class="cn"><div class="s" id="p8" style="-webkit-line-clamp:3;color:var(--txt)">—</div></div></div>
+        <div class="p"><div class="num"><b>09</b><span>Projetos</span></div><div class="cn"><div class="v" id="p9">—</div><div class="s">projetos / conversas</div></div></div>
+        <div class="p"><div class="num"><b>10</b><span>Sistema</span></div><div class="cn"><div class="v" id="p10">—</div><div class="s" id="p10s"></div></div></div>
+      </div>
+    </div>
+    <div class="rodHud"><div class="fala" id="fala"><small>A conversa por voz aparece aqui.</small></div>
+      <div class="bhud"><button id="bOuvir">Ouvir meu nome: desligado</button><button id="bDescansar">Descansar</button></div></div>
   </div>
-</header>
-<div id="nivel"><div></div></div>
-<div id="chat"></div>
-<footer>
-  <button class="sec" id="mic" title="Falar (clique de novo para parar)">🎙</button>
-  <textarea id="texto" rows="1" placeholder="Escreva ou toque no microfone…"></textarea>
-  <button id="enviar">Enviar</button>
-</footer>
-<div id="suspenso">
-  <canvas id="orbe2" width="400" height="400"></canvas>
-  <h2 id="tSusp">Suspenso</h2>
-  <p class="mudo" style="color:var(--mudo);max-width:420px">Modo jogo/edição: não estou respondendo nem agindo (nem pelo Telegram). Dê <b>dois cliques no orbe</b> para me chamar de volta.</p>
-</div>
-
+</main>
+<div id="suspenso"><h2 id="tSusp">Suspenso</h2><p style="color:var(--sub);max-width:420px">Modo jogo/edição: não estou respondendo nem agindo (nem pelo Telegram).</p><button class="btn prim" id="bVoltar">Voltar</button></div>
+<dialog id="dlgProj"><h3 id="dpTit">Projeto</h3><label>Nome</label><input id="pNome" maxlength="80"><label>Instruções do projeto (valem em todas as conversas dele)</label><textarea id="pInstr" maxlength="4000"></textarea>
+  <div class="acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn prim" id="pSalvar">Salvar</button></div></dialog>
+<dialog id="dlgHab"><h3>Nova habilidade</h3><label>Nome</label><input id="hNome" maxlength="40"><label>Quando usar</label><input id="hDesc" maxlength="300"><label>Passo a passo</label><textarea id="hPassos"></textarea>
+  <div class="acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn prim" id="hSalvar">Criar</button></div></dialog>
+<dialog id="dlgAp"><h3>Aparência</h3><div style="color:var(--sub);font-size:14px">A cor muda o chat, a tela de voz e a abertura. Para trocar o nome ou a voz, use Configurações.</div>
+  <label>Cor da interface</label><div class="cores" id="apCores"></div><label>Ou qualquer cor</label><input id="apCor" type="color" style="height:40px;padding:2px">
+  <div class="prev" id="apPrev"></div><div class="acoes"><button class="btn" data-fechar id="apCanc">Cancelar</button><button class="btn prim" id="apSalvar">Salvar</button></div></dialog>
 <script>
-const $ = s => document.querySelector(s);
-const el = (t, props = {}, ...filhos) => { const e = Object.assign(document.createElement(t), props); filhos.flat().forEach(f => e.append(f)); return e; };
-let S = null, voz = true, falando = false, nivelMic = 0, seq = 0, audioAtual = null;
-
-async function api(caminho, corpo) {
-  const r = await fetch(caminho, corpo === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
-  const d = await r.json(); if (d.erro) throw new Error(d.erro); return d;
-}
-async function recarregar() { S = await api('/api/estado'); return S; }
-function aviso(msg) { add('sis', '⚠️ ' + msg); fetch('/api/log', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ msg: String(msg).slice(0, 300), etapa: 'app' }) }).catch(() => {}); }
-window.addEventListener('unhandledrejection', e => aviso('Algo não saiu como esperado: ' + ((e.reason && e.reason.message) || e.reason)));
-
+const $=s=>document.querySelector(s), esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CORES={ciano:'#2fe3ff',azul:'#3b82f6',verde:'#22c55e',roxo:'#a855f7',rosa:'#ec4899',laranja:'#f97316',vermelho:'#ef4444',dourado:'#eab308'};
+let S=null, P={projetos:[],conversas:[]}, atual=null, lado='conversas', ed=null, voz=true, falando=false, nivelMic=0, seq=0, audioAtual=null, RGB='47,227,255', NOME='Assistente';
+async function api(c,corpo){const r=await fetch(c,corpo===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});const d=await r.json();if(d.erro)throw new Error(d.erro);return d}
+function aviso(m){addSis('⚠️ '+m);fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:String(m).slice(0,300),etapa:'app'})}).catch(()=>{})}
+const pont=n=>n.toUpperCase().split('').filter(c=>c!==' ').join('.');
+function aplicarCor(c){document.documentElement.style.setProperty('--cor',c);const h=c.replace('#','');RGB=[0,2,4].map(i=>parseInt(h.substr(i,2),16)).join(',');setTimeout(fios,30)}
+// ---------- projetos e conversas ----------
+async function carregarP(){P=await api('/api/projetos');desenharLado()}
+function desenharLado(){const L=$('#lista');L.innerHTML='';
+ if(lado==='conversas'){for(const p of P.projetos){const d=document.createElement('div');d.className='proj';d.innerHTML=`<h4><span>${esc(p.nome)}</span><span><button data-n="${p.id}" title="Nova conversa">＋</button><button data-e="${p.id}" title="Editar projeto">✎</button></span></h4>`;
+   for(const c of P.conversas.filter(c=>c.projeto===p.id)){const b=document.createElement('button');b.className='conv'+(atual===c.id?' ativa':'');b.textContent=c.titulo;b.onclick=()=>abrir(c.id);b.oncontextmenu=e=>{e.preventDefault();menu(c)};d.appendChild(b)}L.appendChild(d)}
+  const np=document.createElement('button');np.className='bt';np.textContent='＋ Novo projeto';np.onclick=()=>editar(null);L.appendChild(np);
+  L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>nova(+b.dataset.n));L.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>editar(+b.dataset.e))}
+ else{const nb=document.createElement('button');nb.className='bt';nb.textContent='＋ Nova habilidade';nb.onclick=()=>$('#dlgHab').showModal();L.appendChild(nb);
+  for(const h of S.habilidades||[]){const d=document.createElement('div');d.className='item';d.innerHTML=`<b>${esc(h.nome)}</b>${esc(h.descricao).slice(0,170)}`;L.appendChild(d)}}}
+async function abrir(id){atual=id;aba('chat');const c=P.conversas.find(c=>c.id===id);$('#titulo').textContent=c?c.titulo:'Conversa';desenharLado();
+ const j=await api('/api/projetos/conversa?id='+id);$('#chat').innerHTML='';if(!j.mensagens.length)vazio();for(const m of j.mensagens)add(m.papel,m.texto)}
+function vazio(){$('#chat').innerHTML=`<div class="vazio"><h1>Como posso ajudar?</h1>Cada conversa tem memória própria. Organize por projetos na barra da esquerda.</div>`}
+async function nova(projeto){const j=await api('/api/projetos/acao',{acao:'criar_conversa',projeto:projeto||1});P=j;await abrir(j.novo);$('#texto').focus()}
+function editar(id){ed=id;const p=P.projetos.find(p=>p.id===id);$('#dpTit').textContent=p?'Editar projeto':'Novo projeto';$('#pNome').value=p?p.nome:'';$('#pInstr').value=p?p.instrucoes:'';$('#dlgProj').showModal()}
+async function menu(c){const op=prompt('Conversa "'+c.titulo+'"\n1 = renomear\n2 = mover para outro projeto\n3 = arquivar (some da lista; nada é apagado)');
+ try{if(op==='1'){const t=prompt('Novo título',c.titulo);if(t)P=await api('/api/projetos/acao',{acao:'renomear',id:c.id,titulo:t})}
+  else if(op==='2'){const pid=prompt('Para qual projeto?\n'+P.projetos.map(p=>p.id+' = '+p.nome).join('\n'));if(pid)P=await api('/api/projetos/acao',{acao:'mover',id:c.id,projeto:+pid})}
+  else if(op==='3'){P=await api('/api/projetos/acao',{acao:'arquivar',id:c.id});if(atual===c.id){atual=null;vazio()}}desenharLado()}catch(e){aviso(e.message)}}
 // ---------- conversa ----------
-function add(tipo, texto, imagem) {
-  const m = el('div', { className: 'msg ' + tipo }, texto);
-  if (imagem) m.append(el('img', { src: 'data:image/png;base64,' + imagem }));
-  $('#chat').append(m); $('#chat').scrollTop = 1e9; return m;
-}
-async function enviar(texto) {
-  texto = (texto || $('#texto').value).trim(); if (!texto) return;
-  $('#texto').value = ''; add('eu', texto);
-  const espera = add('sis', '…');
-  try {
-    const r = await api('/api/chat', { texto });
-    espera.remove(); tratar(r);
-  } catch (e) { espera.remove(); aviso(e.message); }
-}
-function tratar(r) {
-  if (r.resposta) { add('ia', r.resposta, r.imagem); falar(r.resposta); }
-  if (r.confirmar) {
-    const c = r.confirmar, cartao = el('div', { className: 'cartao' }, el('b', {}, '⚠️ Confirma esta ação?'), el('code', {}, c.descricao),
-      el('div', { style: 'display:flex;gap:8px;margin-top:6px' },
-        el('button', { onclick: async () => { cartao.remove(); try { tratar(await api('/api/chat/confirmar', { id: c.id, sim: true })); } catch (e) { aviso(e.message); } } }, 'Confirmar'),
-        el('button', { className: 'sec', onclick: async () => { cartao.remove(); try { tratar(await api('/api/chat/confirmar', { id: c.id, sim: false })); } catch (e) { aviso(e.message); } } }, 'Cancelar')));
-    $('#chat').append(cartao); $('#chat').scrollTop = 1e9;
-  }
-  if (r.ui === 'suspender') { mostrarSuspenso(true); setTimeout(() => window.close(), 7000); }
-  if (r.ui === 'ocultar') setTimeout(() => window.close(), 3500);
-}
-$('#enviar').onclick = () => enviar();
-$('#texto').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } });
-
-// ---------- voz do assistente (natural pela API; sistema se nao houver chave) ----------
-function pararVoz() { speechSynthesis.cancel(); if (audioAtual) { audioAtual.pause(); audioAtual = null; } falando = false; }
-function falarSistema(texto) {
-  if (!('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(texto); u.lang = 'pt-BR';
-  const vs = speechSynthesis.getVoices().filter(v => /pt[-_]BR/i.test(v.lang));
-  const fem = /francisca|maria|luciana|female/i, mas = /antonio|daniel|felipe|male/i;
-  const v = (S.perfil.voz === 'masculina' ? vs.find(x => mas.test(x.name)) : vs.find(x => fem.test(x.name))) || vs[0]; if (v) u.voice = v;
-  u.onstart = () => falando = true; u.onend = u.onerror = () => falando = false; speechSynthesis.speak(u);
-}
-async function falar(texto) {
-  const minha = ++seq; pararVoz(); if (!voz || S.suspenso) return;
-  if (S.voz.nuvem && !(window.pausaVoz > Date.now())) {
-    $('#modoVoz').textContent = '⏳ gerando a voz…';
-    try {
-      const r = await fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: texto.slice(0, 600), genero: S.perfil.voz || 'feminina', voz: S.voz.nome, estilo: S.voz.estilo }) });
-      if (minha !== seq) return;
-      if (r.ok && (r.headers.get('content-type') || '').includes('audio')) {
-        const a = new Audio(URL.createObjectURL(await r.blob())); audioAtual = a; a.onplay = () => falando = true; a.onended = a.onerror = () => falando = false;
-        await a.play(); indicar(); return;
-      }
-      const d = await r.json().catch(() => ({})); if (d.motivo === 'cota') window.pausaVoz = Date.now() + 5 * 60 * 1000; window.motivoVoz = d.motivo || 'outro';
-    } catch (e) { window.motivoVoz = 'rede'; }
-    indicar(); if (minha !== seq || !S.voz.reserva) return;
-  } else if (S.voz.nuvem && !S.voz.reserva) return;
-  falarSistema(texto);
-}
-function indicar() {
-  const m = window.motivoVoz;
-  $('#modoVoz').textContent = S.voz.privada ? '🔒 voz do sistema (modo privado)' : !S.voz.nuvem ? '🤖 voz do sistema · conecte uma chave do Google para a voz natural' :
-    m ? '🔇 voz natural indisponível agora (' + ({ cota: 'sem cota', lento: 'demorou', rede: 'sem conexão' }[m] || 'falhou') + '): leia o texto' : '✨ voz natural';
-}
-$('#bFala').onclick = () => { voz = !voz; if (!voz) pararVoz(); $('#bFala').textContent = '🔊 Voz: ' + (voz ? 'ligada' : 'desligada'); };
-
-// ---------- microfone: grava, detecta o fim da fala e transcreve (Google, pela chave da pessoa) ----------
-let gr = null;
-function wav16k(blocos, taxa) {
-  let n = 0; blocos.forEach(b => n += b.length);
-  const todo = new Float32Array(n); let o = 0; blocos.forEach(b => { todo.set(b, o); o += b.length; });
-  const r = taxa / 16000, m = Math.floor(n / r), pcm = new Int16Array(m);
-  for (let i = 0; i < m; i++) { let soma = 0, c = 0; for (let j = Math.floor(i * r); j < Math.min(n, Math.floor((i + 1) * r)); j++) { soma += todo[j]; c++; } pcm[i] = Math.max(-1, Math.min(1, soma / (c || 1))) * 32767; }
-  const buf = new ArrayBuffer(44 + m * 2), v = new DataView(buf), w = (p, s) => [...s].forEach((ch, i) => v.setUint8(p + i, ch.charCodeAt(0)));
-  w(0, 'RIFF'); v.setUint32(4, 36 + m * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, m * 2, true);
-  new Int16Array(buf, 44).set(pcm);
-  let bin = ''; const u8 = new Uint8Array(buf); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-  return btoa(bin);
-}
-async function microfone() {
-  if (gr) { parar(true); return; }
-  pararVoz();
-  if (!S.stt) {   // sem chave do Google (ou voz privada): tenta o reconhecimento do proprio navegador
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { add('sis', '🎙 Para falar comigo conecte a chave do Google em Configurações (ou escreva aqui).'); return; }
-    const rec = new SR(); rec.lang = 'pt-BR'; rec.onresult = e => enviar(e.results[0][0].transcript); rec.onerror = () => add('sis', 'Não consegui ouvir. Tente de novo ou escreva.'); rec.start(); return;
-  }
-  let st; try { st = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { add('sis', 'Autorize o microfone quando o Windows perguntar.'); return; }
-  const ctx = new AudioContext(), fonte = ctx.createMediaStreamSource(st), proc = ctx.createScriptProcessor(4096, 1, 1);
-  gr = { st, ctx, fonte, proc, blocos: [], falou: false, silencio: 0, ini: Date.now() };
-  proc.onaudioprocess = e => {
-    if (!gr) return; const x = new Float32Array(e.inputBuffer.getChannelData(0)); gr.blocos.push(x);
-    let s = 0; for (const a of x) s += a * a; const rms = Math.sqrt(s / x.length); nivelMic = Math.min(1, rms * 8); $('#nivel div').style.width = (nivelMic * 100) + '%';
-    const dt = x.length / ctx.sampleRate;
-    if (rms > 0.02) { gr.falou = true; gr.silencio = 0; } else if (gr.falou) gr.silencio += dt;
-    if ((gr.falou && gr.silencio > 1.4) || (!gr.falou && Date.now() - gr.ini > 7000) || Date.now() - gr.ini > 30000) parar(gr.falou);
-  };
-  fonte.connect(proc); proc.connect(ctx.destination); $('#mic').classList.add('gravando'); $('#mic').textContent = '⏹';
-}
-async function parar(enviarAudio) {
-  const g = gr; if (!g) return; gr = null; nivelMic = 0; $('#nivel div').style.width = '0';
-  g.proc.disconnect(); g.fonte.disconnect(); g.st.getTracks().forEach(t => t.stop()); const taxa = g.ctx.sampleRate; g.ctx.close();
-  $('#mic').classList.remove('gravando'); $('#mic').textContent = '🎙';
-  if (!enviarAudio) { if (!g.falou) add('sis', 'Não ouvi nada. Tente de novo.'); return; }
-  const espera = add('sis', '🎙 ouvindo…');
-  try { const r = await api('/api/transcrever', { audio: wav16k(g.blocos, taxa) }); espera.remove();
-    if (r.texto) enviar(r.texto); else add('sis', r.erro ? '🎙 ' + r.erro : 'Não entendi o áudio. Tente de novo ou escreva.'); }
-  catch (e) { espera.remove(); aviso(e.message); }
-}
-$('#mic').onclick = microfone;
-
-// ---------- orbe ----------
-function desenhar(cv, esc) {
-  const cx = cv.getContext('2d'), w = cv.width, c = w / 2, t = performance.now() / 1000, e = falando ? 0.5 + 0.35 * Math.sin(t * 9) : nivelMic;
-  cx.clearRect(0, 0, w, w);
-  for (let i = 0; i < 4; i++) { cx.beginPath(); for (let a = 0; a <= 6.3; a += 0.08) { const r = (0.23 + i * 0.027) * w + ((0.015 + e * 0.05) * w) * Math.sin(a * (3 + i) + t * (1.5 + i * .4)); cx[a ? 'lineTo' : 'moveTo'](c + r * Math.cos(a), c + r * Math.sin(a)); }
-    cx.closePath(); cx.strokeStyle = `rgba(${i % 2 ? '240,199,94' : '76,195,255'},${.8 - i * .15})`; cx.lineWidth = 1.6 * esc; cx.stroke(); }
-  const g = cx.createRadialGradient(c, c, 2, c, c, w * .23); g.addColorStop(0, `rgba(240,199,94,${.35 + e * .4})`); g.addColorStop(1, 'rgba(76,195,255,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(c, c, w * .23, 0, 6.3); cx.fill();
-}
-(function laco() { desenhar($('#orbe'), 1); if ($('#suspenso').style.display === 'flex') desenhar($('#orbe2'), 2); requestAnimationFrame(laco); })();
-
+function add(papel,texto,imagem){$('#chat .vazio')?.remove();const d=document.createElement('div');d.className='msg '+(papel==='eu'?'eu':'ia');
+ d.innerHTML=`<div class="quem">${papel==='eu'?'Você':esc(NOME)}</div><div class="b"></div>`;d.querySelector('.b').textContent=texto;if(imagem){const i=document.createElement('img');i.src='data:image/png;base64,'+imagem;d.appendChild(i)}
+ $('#chat').appendChild(d);$('#chat').scrollTop=1e9;return d}
+function addSis(t){const d=document.createElement('div');d.className='msg sis';d.textContent=t;$('#chat').appendChild(d);$('#chat').scrollTop=1e9;return d}
+async function enviar(texto){texto=(texto||$('#texto').value).trim();if(!texto)return;if(!atual)await nova(1);$('#texto').value='';add('eu',texto);const esp=addSis('…');
+ try{const r=await api('/api/projetos/chat',{conversa:atual,texto});esp.remove();tratar(r);carregarP()}catch(e){esp.remove();aviso(e.message)}}
+function tratar(r){if(r.resposta){add('ia',r.resposta,r.imagem);falar(r.resposta);$('#p8').textContent=r.resposta}
+ if(r.confirmar){const c=r.confirmar,k=document.createElement('div');k.className='cartao';k.innerHTML=`<b>⚠️ Confirma esta ação?</b><code></code><div style="display:flex;gap:8px;margin-top:6px"><button class="btn prim">Confirmar</button><button class="btn">Cancelar</button></div>`;
+  k.querySelector('code').textContent=c.descricao;const [s,n]=k.querySelectorAll('button');s.onclick=async()=>{k.remove();try{tratar(await api('/api/chat/confirmar',{id:c.id,sim:true}))}catch(e){aviso(e.message)}};
+  n.onclick=async()=>{k.remove();try{tratar(await api('/api/chat/confirmar',{id:c.id,sim:false}))}catch(e){aviso(e.message)}};$('#chat').appendChild(k);$('#chat').scrollTop=1e9}
+ if(r.ui==='suspender')mostrarSuspenso(true)}
+$('#enviar').onclick=()=>enviar();$('#texto').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar()}});$('#bNova').onclick=()=>nova(1);
+// ---------- voz falada ----------
+function pararVoz(){speechSynthesis.cancel();if(audioAtual){audioAtual.pause();audioAtual=null}falando=false}
+function falarSistema(t){if(!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';const vs=speechSynthesis.getVoices().filter(v=>/pt[-_]BR/i.test(v.lang));
+ const v=(S.perfil.voz==='masculina'?vs.find(x=>/antonio|daniel|male/i.test(x.name)):vs.find(x=>/francisca|maria|female/i.test(x.name)))||vs[0];if(v)u.voice=v;u.onstart=()=>falando=true;u.onend=u.onerror=()=>falando=false;speechSynthesis.speak(u)}
+async function falar(t){const m=++seq;pararVoz();if(!voz||S.suspenso)return;
+ if(S.voz.nuvem&&!(window.pausaVoz>Date.now())){try{const r=await fetch('/api/voz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({texto:t.slice(0,600),genero:S.perfil.voz||'feminina',voz:S.voz.nome,estilo:S.voz.estilo})});
+   if(m!==seq)return;if(r.ok&&(r.headers.get('content-type')||'').includes('audio')){const a=new Audio(URL.createObjectURL(await r.blob()));audioAtual=a;a.onplay=()=>falando=true;a.onended=a.onerror=()=>falando=false;await a.play();indicar();return}
+   const d=await r.json().catch(()=>({}));if(d.motivo==='cota')window.pausaVoz=Date.now()+300000;window.motivoVoz=d.motivo||'outro'}catch(e){window.motivoVoz='rede'}indicar();if(m!==seq||!S.voz.reserva)return}
+ else if(S.voz.nuvem&&!S.voz.reserva)return;falarSistema(t)}
+function indicar(){const m=window.motivoVoz;$('#modoVoz').textContent=S.voz.privada?'🔒 voz do sistema (modo privado)':!S.voz.nuvem?'🤖 voz do sistema · conecte uma chave do Google para a voz natural':m?'🔇 voz natural indisponível agora: leia o texto':'✨ voz natural'}
+$('#bFala').onclick=()=>{voz=!voz;if(!voz)pararVoz();$('#bFala').textContent=voz?'🔊 Voz ligada':'🔇 Voz desligada'};
+// ---------- microfone (clique) ----------
+function wav16k(blocos,taxa){let n=0;blocos.forEach(b=>n+=b.length);const todo=new Float32Array(n);let o=0;blocos.forEach(b=>{todo.set(b,o);o+=b.length});const r=taxa/16000,m=Math.floor(n/r),pcm=new Int16Array(m);
+ for(let i=0;i<m;i++){let s=0,c=0;for(let j=Math.floor(i*r);j<Math.min(n,Math.floor((i+1)*r));j++){s+=todo[j];c++}pcm[i]=Math.max(-1,Math.min(1,s/(c||1)))*32767}
+ const buf=new ArrayBuffer(44+m*2),v=new DataView(buf),w=(p,s)=>[...s].forEach((ch,i)=>v.setUint8(p+i,ch.charCodeAt(0)));w(0,'RIFF');v.setUint32(4,36+m*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+ v.setUint32(24,16000,true);v.setUint32(28,32000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,m*2,true);new Int16Array(buf,44).set(pcm);
+ let bin='';const u8=new Uint8Array(buf);for(let i=0;i<u8.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(bin)}
+let gr=null;
+async function microfone(){if(gr){parar(true);return}pararVoz();if(!S.stt){addSis('🎙 Para falar comigo conecte a chave do Google em Configurações (ou escreva).');return}
+ let st;try{st=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){addSis('Autorize o microfone quando o Windows perguntar.');return}
+ const ctx=new AudioContext(),fonte=ctx.createMediaStreamSource(st),proc=ctx.createScriptProcessor(4096,1,1);gr={st,ctx,fonte,proc,blocos:[],falou:false,silencio:0,ini:Date.now()};
+ proc.onaudioprocess=e=>{if(!gr)return;const x=new Float32Array(e.inputBuffer.getChannelData(0));gr.blocos.push(x);let s=0;for(const a of x)s+=a*a;const rms=Math.sqrt(s/x.length);nivelMic=Math.min(1,rms*8);const dt=x.length/ctx.sampleRate;
+  if(rms>0.02){gr.falou=true;gr.silencio=0}else if(gr.falou)gr.silencio+=dt;if((gr.falou&&gr.silencio>1.4)||(!gr.falou&&Date.now()-gr.ini>7000)||Date.now()-gr.ini>30000)parar(gr.falou)};
+ fonte.connect(proc);proc.connect(ctx.destination);$('#mic').classList.add('gravando');$('#mic').textContent='⏹'}
+async function parar(env){const g=gr;if(!g)return;gr=null;nivelMic=0;g.proc.disconnect();g.fonte.disconnect();g.st.getTracks().forEach(t=>t.stop());const taxa=g.ctx.sampleRate;g.ctx.close();$('#mic').classList.remove('gravando');$('#mic').textContent='🎙';
+ if(!env){if(!g.falou)addSis('Não ouvi nada. Tente de novo.');return}const esp=addSis('🎙 ouvindo…');try{const r=await api('/api/transcrever',{audio:wav16k(g.blocos,taxa)});esp.remove();if(r.texto)enviar(r.texto);else addSis(r.erro?'🎙 '+r.erro:'Não entendi o áudio.')}catch(e){esp.remove();aviso(e.message)}}
+$('#mic').onclick=microfone;
+// ---------- ouvir o nome (escuta continua; so os trechos com fala vao virar texto) ----------
+let ouv=null;
+async function ouvirNome(ligar){if(ligar&&!ouv){let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}catch(e){aviso('Autorize o microfone para eu ouvir meu nome.');return false}
+  const ctx=new AudioContext(),fonte=ctx.createMediaStreamSource(st),proc=ctx.createScriptProcessor(4096,1,1);ouv={st,ctx,fonte,proc,blocos:[],falando:false,sil:0,dur:0,ruido:.01};
+  proc.onaudioprocess=e=>{const o=ouv;if(!o)return;const x=new Float32Array(e.inputBuffer.getChannelData(0));let s=0;for(const a of x)s+=a*a;const rms=Math.sqrt(s/x.length),dt=x.length/ctx.sampleRate;
+   if(!gr)nivelMic=Math.min(1,rms*8);if(falando||gr){o.blocos=[];o.falando=false;return}            // nao escuta a propria voz
+   const lim=Math.max(.012,o.ruido*3);if(!o.falando)o.ruido=o.ruido*.97+rms*.03;
+   if(rms>lim){o.falando=true;o.sil=0}else if(o.falando)o.sil+=dt;if(o.falando){o.blocos.push(x);o.dur+=dt}
+   if(o.falando&&(o.sil>.8||o.dur>6)){const blocos=o.blocos,dur=o.dur;o.blocos=[];o.falando=false;o.dur=0;o.sil=0;if(dur>.45)mandarFrase(wav16k(blocos,ctx.sampleRate))}};
+  fonte.connect(proc);proc.connect(ctx.destination);return true}
+ if(!ligar&&ouv){ouv.proc.disconnect();ouv.fonte.disconnect();ouv.st.getTracks().forEach(t=>t.stop());ouv.ctx.close();ouv=null}return true}
+async function mandarFrase(audio){try{const r=await api('/api/escuta/frase',{audio});if(r.erro||r.ignorado)return;if(r.texto)$('#p7').textContent='“'+r.texto.slice(0,40)+'”';
+  if(r.acordou)aba('voz');if(r.resposta){$('#fala').innerHTML='<small>Você: </small>'+esc(r.texto)+'<br><small>'+esc(NOME)+': </small>'+esc(r.resposta);$('#p8').textContent=r.resposta;falar(r.resposta)}
+  if(r.confirmar)tratar({confirmar:r.confirmar});pintarEscuta(r)}catch(e){}}
+function pintarEscuta(e){const on=S.escuta.ligada=('ligada'in e?e.ligada:S.escuta.ligada);const est=e.estado||S.escuta.estado;S.escuta.estado=est;
+ $('#bOuvir').textContent='Ouvir meu nome: '+(on?'ligado':'desligado');$('#bOuvir').classList.toggle('on',on);
+ $('#est').textContent=!on?'MICROFONE OFF':est==='acordado'?'ONLINE':'DORMINDO';$('#estSub').textContent=!on?'ligue “Ouvir meu nome” para me chamar falando':est==='acordado'?'estou ouvindo · diga “pode descansar” para encerrar':`diga “${NOME}, tá acordado?”`;
+ $('#p1').textContent=$('#est').textContent;$('#p1s').textContent=on?'escutando só trechos com fala':'microfone desligado'}
+$('#bOuvir').onclick=async()=>{const lig=!S.escuta.ligada;if(lig&&!confirm('Com isso ligado eu escuto o microfone e mando só os trechos com fala (não o silêncio) para o Google, pela sua chave, para reconhecer meu nome. Nada é gravado. Ligar?'))return;
+ if(!(await ouvirNome(lig)))return;pintarEscuta(await api('/api/escuta/ligar',{ligada:lig}))};
+$('#bDescansar').onclick=async()=>{pintarEscuta(await api('/api/escuta/ligar',{ligada:S.escuta.ligada}))};
+// ---------- abas ----------
+function aba(n){const v=n==='voz';$('#hud').style.display=v?'block':'none';$('#chat').style.display=v?'none':'';$('#comp').style.display=v?'none':'';$('#tVoz').classList.toggle('ativa',v);$('#tChat').classList.toggle('ativa',!v);
+ $('#titulo').textContent=v?NOME:((P.conversas.find(c=>c.id===atual)||{}).titulo||'Nova conversa');if(v)setTimeout(fios,30)}
+window.aba=aba;document.querySelectorAll('[data-lado]').forEach(b=>b.onclick=()=>{lado=b.dataset.lado;document.querySelectorAll('[data-lado]').forEach(x=>x.classList.toggle('ativa',x===b));desenharLado()});
+document.querySelectorAll('[data-fechar]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+$('#pSalvar').onclick=async()=>{try{P=await api('/api/projetos/acao',{acao:ed?'editar_projeto':'criar_projeto',id:ed,nome:$('#pNome').value,instrucoes:$('#pInstr').value});$('#dlgProj').close();desenharLado()}catch(e){aviso(e.message)}};
+$('#hSalvar').onclick=async()=>{try{await api('/api/habilidades/criar',{nome:$('#hNome').value,descricao:$('#hDesc').value,passos:$('#hPassos').value});$('#dlgHab').close();S=await api('/api/estado');desenharLado()}catch(e){aviso(e.message)}};
+function abrirAparencia(){const C=$('#apCores');C.innerHTML='';$('#apCor').value=S.cor;for(const [n,c] of Object.entries(CORES)){const b=document.createElement('button');b.title=n;b.style.background=c;b.onclick=()=>{$('#apCor').value=c;prev()};C.appendChild(b)}
+ const prev=()=>{const c=$('#apCor').value;$('#apPrev').textContent=pont(NOME);$('#apPrev').style.color=c;$('#apPrev').style.textShadow='0 0 14px '+c;C.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',CORES[b.title]===c));aplicarCor(c)};$('#apCor').oninput=prev;prev();$('#dlgAp').showModal()}
+$('#apCanc').addEventListener('click',()=>aplicarCor(S.cor));$('#apSalvar').onclick=async()=>{try{const r=await api('/api/aparencia',{cor:$('#apCor').value});S.cor=r.cor;$('#dlgAp').close()}catch(e){aviso(e.message)}};
 // ---------- modo jogo ----------
-function mostrarSuspenso(ligado) { S.suspenso = ligado; $('#suspenso').style.display = ligado ? 'flex' : 'none'; $('#tSusp').textContent = (S.perfil.nome_assistente || 'Assistente') + ' está suspenso'; }
-$('#bJogo').onclick = async () => {
-  await api('/api/modo-jogo', { ligado: true }); const nome = S.perfil.nome_assistente || 'O assistente';
-  mostrarSuspenso(true); falar(`${nome} está suspenso para você jogar ou editar. Para me chamar de volta, dê dois cliques no meu orbe.`); setTimeout(() => window.close(), 9000);
-};
-$('#orbe').ondblclick = $('#orbe2').ondblclick = async () => { if (!S.suspenso) return; await api('/api/modo-jogo', { ligado: false }); mostrarSuspenso(false); S.suspenso = false; add('ia', 'Voltei! Em que posso ajudar?'); falar('Voltei! Em que posso ajudar?'); };
-
+function mostrarSuspenso(l){S.suspenso=l;$('#suspenso').style.display=l?'flex':'none';$('#tSusp').textContent=NOME+' está suspenso'}
+$('#bJogo').onclick=async()=>{await api('/api/modo-jogo',{ligado:true});mostrarSuspenso(true);falar(NOME+' está suspenso para você jogar ou editar.')};
+$('#bVoltar').onclick=async()=>{await api('/api/modo-jogo',{ligado:false});mostrarSuspenso(false);add('ia','Voltei! Em que posso ajudar?')};
+// ---------- HUD ----------
+const cv=$('#nucleo'),g=cv.getContext('2d'),V={f:0,giro:0,br:.4};
+function arco(r,a0,a1,w,a,bl){g.beginPath();g.arc(450,450,r,a0,a1);g.lineWidth=w;g.strokeStyle=`rgba(${RGB},${a})`;g.shadowBlur=bl||0;g.shadowColor=`rgb(${RGB})`;g.stroke()}
+function desenhar(t){if($('#hud').style.display==='block'){const acord=S&&S.escuta&&S.escuta.estado==='acordado',som=Math.max(falando?.5+.35*Math.sin(t/110):0,nivelMic*.8);V.br+=((acord?.75:.35)+som*.5-V.br)*.08;V.giro+=(acord?.006:.002)+som*.03;
+ g.clearRect(0,0,900,900);const h=g.createRadialGradient(450,450,40,450,450,430);h.addColorStop(0,`rgba(${RGB},${.18*V.br})`);h.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=h;g.beginPath();g.arc(450,450,430,0,7);g.fill();
+ for(let i=0;i<180;i++){const a=i/180*Math.PI*2+V.giro*.3,l=(i%5?8:16)+(falando?Math.abs(Math.sin(i*.7+t/90))*som*22:0);g.beginPath();g.moveTo(450+Math.cos(a)*400,450+Math.sin(a)*400);g.lineTo(450+Math.cos(a)*(400+l),450+Math.sin(a)*(400+l));g.lineWidth=2;g.strokeStyle=`rgba(${RGB},${.25+.35*V.br})`;g.shadowBlur=0;g.stroke()}
+ arco(372,0,7,3,.55*V.br+.2,18);for(let k=0;k<6;k++){const a=V.giro*1.2+k*Math.PI/3;arco(340,a,a+.65,10,.25+.4*V.br,10)}
+ for(let k=0;k<40;k++){const a=-V.giro*2+k/40*Math.PI*2;g.beginPath();g.arc(450+Math.cos(a)*300,450+Math.sin(a)*300,3,0,7);g.fillStyle=`rgba(${RGB},${.3+.5*V.br})`;g.fill()}
+ arco(262,-V.giro*1.6,-V.giro*1.6+4.4,4,.6*V.br+.2,14);arco(236,V.giro*2.2,V.giro*2.2+1.2,14,.45,8);for(let k=0;k<5;k++){const a=V.giro*-1.1+k*Math.PI*2/5;arco(176,a,a+.95,30,.45+.45*V.br,16)}
+ arco(126,0,7,2,.6,10);arco(96+som*18,0,7,3,.5+.5*V.br,22);const n=g.createRadialGradient(450,450,4,450,450,70+som*30);n.addColorStop(0,'rgba(235,253,255,.95)');n.addColorStop(.35,`rgba(${RGB},${.7*V.br+.2})`);n.addColorStop(1,`rgba(${RGB},0)`);g.fillStyle=n;g.beginPath();g.arc(450,450,80+som*30,0,7);g.fill();
+ $('#nivelMic').style.width=Math.min(100,nivelMic*100)+'%'}requestAnimationFrame(desenhar)}
+requestAnimationFrame(desenhar);
+function fios(){if($('#hud').style.display!=='block')return;const s=$('#fios'),c=cv.getBoundingClientRect(),hb=$('#hud').getBoundingClientRect(),cx=c.left+c.width/2-hb.left,cy=c.top+c.height/2-hb.top,r=c.width*.41;let h='';
+ document.querySelectorAll('#hud .p').forEach(p=>{const b=p.getBoundingClientRect();if(!b.width)return;const esq=b.left-hb.left<cx,x=(esq?b.right:b.left)-hb.left,y=b.top+b.height/2-hb.top,an=Math.atan2(y-cy,(esq?-1:1)*Math.max(Math.abs(x-cx),1)),tx=cx+Math.cos(an)*r,ty=cy+Math.sin(an)*r,mx=(x+tx)/2;
+  h+=`<path d="M${x},${y} C${mx},${y} ${mx},${ty} ${tx},${ty}" fill="none" stroke="rgba(${RGB},.45)" stroke-width="1.4"/><circle cx="${tx}" cy="${ty}" r="5" fill="rgb(${RGB})"/>`});s.innerHTML=h}
+addEventListener('resize',fios);
+function painel(){$('#p2').textContent=(S.chaves||[]).length+' CHAVES';$('#p2s').textContent=(S.chaves||[]).join(' · ')||'só IA local';$('#p3').textContent=String(S.nivel||'—').toUpperCase();
+ $('#p4').textContent=({total:'TOTAL',granular:'POR ITEM',nenhum:'NENHUM'}[S.perfil.consentimento_acesso_pc]||'—');$('#p4s').textContent=S.remoto&&S.remoto.armado?'controle remoto armado':'';
+ $('#p5').textContent=(S.habilidades||[]).length+' ATIVAS';$('#p5s').textContent=(S.habilidades||[]).slice(-2).map(h=>h.nome).join(' · ');$('#p9').textContent=P.projetos.length+' / '+P.conversas.length;
+ $('#p10').textContent=S.suspenso?'SUSPENSO':'ONLINE';$('#p10s').textContent='versão '+S.versao}
+setInterval(()=>{const d=new Date();$('#p6').textContent=d.toLocaleTimeString('pt-BR');$('#p6s').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})},1000);
 // ---------- partida ----------
-(async () => {
-  await recarregar();
-  if (!S.concluido) { location.replace('/instalacao'); return; }
-  const nome = S.perfil.nome_assistente || 'Assistente'; document.title = nome; $('#nome').textContent = nome;
-  $('#sub').textContent = 'Acesso ao PC: ' + ({ total: 'total', granular: 'por item', nenhum: 'nenhum (só conversa)' }[S.perfil.consentimento_acesso_pc] || '—') + (S.remoto && S.remoto.armado ? ' · 🔓 controle remoto armado' : '');
-  indicar(); speechSynthesis.onvoiceschanged = () => {};
-  if (S.suspenso) mostrarSuspenso(true);
-  else if (!sessionStorage.getItem('saudou')) { sessionStorage.setItem('saudou', '1'); const g = `Olá! Eu sou ${nome}. Como posso ajudar?`; add('ia', g); falar(g); }
-  else add('ia', `Olá! Eu sou ${nome}. Como posso ajudar?`);
-  setInterval(async () => { try { const e = await api('/api/estado'); if (e.suspenso !== S.suspenso) { S = e; mostrarSuspenso(e.suspenso); } else { S = e; } } catch (x) {} }, 5000);
-})();
+(async()=>{S=await api('/api/estado');if(!S.concluido){location.replace('/instalacao');return}
+ NOME=S.perfil.nome_assistente||'Assistente';document.title=NOME;document.querySelectorAll('.nomeIA').forEach(e=>e.textContent=NOME);aplicarCor(S.cor||'#2fe3ff');indicar();
+ await carregarP();painel();pintarEscuta(S.escuta||{});if(S.escuta&&S.escuta.ligada)ouvirNome(true);if(S.suspenso)mostrarSuspenso(true);
+ if(location.hash==='#voz')aba('voz');else if(P.conversas.length)abrir(P.conversas[0].id);else vazio();
+ setInterval(async()=>{try{const e=await api('/api/estado');S=e;painel();if(e.suspenso!==($('#suspenso').style.display==='flex'))mostrarSuspenso(e.suspenso);pintarEscuta(e.escuta||{})}catch(x){}},5000)})();
 </script>
-<script>fetch('/api/estado').then(r => r.json()).then(e => { const v = document.createElement('div'); v.id = 'versao-braniac'; v.textContent = 'v' + e.versao;
-  v.style.cssText = 'position:fixed;right:10px;bottom:6px;font:11px system-ui,sans-serif;opacity:.55;pointer-events:none;z-index:9999'; document.body.appendChild(v); }).catch(() => {});</script>
+<script>fetch('/api/estado').then(r=>r.json()).then(e=>{const v=document.createElement('div');v.textContent='v'+e.versao;v.style.cssText='position:fixed;right:10px;bottom:6px;font:11px system-ui;opacity:.55;pointer-events:none;z-index:9999';document.body.appendChild(v)}).catch(()=>{});</script>
 </body>
 </html>

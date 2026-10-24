@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """Servidor LOCAL da instalacao (127.0.0.1): serve a tela e a API que conduz o roteiro. A janela (Tauri) so abre esta pagina.
 Recusa quem nao vem do proprio PC (Host/Origin). Chaves digitadas nunca voltam para a tela."""
-import html, urllib.parse, json, mimetypes, socket, sys, threading, time
+import html, urllib.parse, json, mimetypes, re, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from . import __version__
 from pathlib import Path
-from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp)
+from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp, escuta, habilidades, projetos)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -57,6 +57,7 @@ def estado_geral():
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
         "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "email_diario": email_diario.estado(), "guarda": {"ativa": guarda.ativa(), "ligada": bool(p.get("guarda_ativa")), "permitida": permissoes.permitido("sistema.seguranca"), "resumo": guarda.resumo()}, "autostart": autostart.ativo(), "navegador": navegador.info(),
+        "cor": p.get("cor") or "#2fe3ff", "escuta": escuta.estado(), "habilidades": [{"nome": n, "descricao": dd, "origem": o} for n, dd, o in habilidades.listar()],
         "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"), "reserva": bool(p.get("voz_reserva")),
                 "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
         "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
@@ -237,6 +238,23 @@ def acao(caminho, d):
         except Exception as e:
             return {"ok": False, "motivo": str(e)}
         return {"ok": True}
+    # ---- v0.7: projetos/conversas, habilidades, chamar pelo nome, cor da interface ----
+    if caminho == "/api/projetos/acao":
+        return projetos.acao(d)
+    if caminho == "/api/projetos/chat":
+        return assistente.conversar(d.get("texto", ""), conversa=int(d["conversa"]))
+    if caminho == "/api/habilidades/criar":
+        return {"habilidade": habilidades.criar(d.get("nome"), d.get("descricao"), d.get("passos"))}
+    if caminho == "/api/escuta/frase":
+        return escuta.frase(d.get("audio", ""))
+    if caminho == "/api/escuta/ligar":
+        return escuta.definir(bool(d.get("ligada")))
+    if caminho == "/api/aparencia":
+        cor = str(d.get("cor") or "").lower()
+        if not re.fullmatch(r"#[0-9a-f]{6}", cor):
+            return {"ok": False, "motivo": "cor inválida"}
+        perfil.atualizar(cor=cor)
+        return {"ok": True, "cor": cor}
     if caminho == "/api/nome/sugerir":
         return {"nomes": nomes.sugerir(d.get("gostos", ""), d["voz"])}
     if caminho == "/api/nome":
@@ -307,6 +325,18 @@ class Handler(BaseHTTPRequestHandler):
                 _registrar(f"[erro] GET /api/estado: {e!r}")
                 return self._json({"erro": "não consegui ler o estado: " + str(e)[:200]}, 500)
         caminho = self.path.split("?")[0]
+        if caminho == "/api/projetos":
+            return self._json(projetos.estado())
+        if caminho == "/api/projetos/conversa":
+            q = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+            try:
+                return self._json({"mensagens": projetos.mensagens(int((q.get("id") or ["0"])[0]))})
+            except ValueError:
+                return self._json({"erro": "id inválido"}, 400)
+        if caminho == "/api/escuta":
+            return self._json(escuta.estado())
+        if caminho == "/api/sinal":       # a janela (Tauri) pergunta a cada 1 s: chamaram o assistente pelo nome? entao aparece
+            return self._json({"mostrar": escuta.ler_sinal()})
         if caminho == "/email/callback":      # volta do login do Google (so leitura): guarda o token e leva de volta as configuracoes
             q = urllib.parse.parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
             try:

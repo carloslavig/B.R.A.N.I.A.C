@@ -294,8 +294,9 @@ dependencies = [
 
 [[package]]
 name = "braniac"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-single-instance",

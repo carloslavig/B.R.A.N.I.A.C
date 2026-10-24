@@ -51,6 +51,30 @@ fn esperar(porta: u16) -> bool {
     false
 }
 
+/// GET /api/sinal no backend (o assistente foi chamado pelo nome?). Devolve o corpo da resposta.
+fn sinal(porta: u16) -> String {
+    use std::io::{Read, Write};
+    let addr: SocketAddr = format!("127.0.0.1:{porta}").parse().unwrap();
+    let Ok(mut s) = TcpStream::connect_timeout(&addr, Duration::from_millis(800)) else {
+        return String::new();
+    };
+    let _ = s.set_read_timeout(Some(Duration::from_secs(3)));
+    let _ = s.write_all(format!("GET /api/sinal HTTP/1.0\r\nHost: 127.0.0.1:{porta}\r\n\r\n").as_bytes());
+    let mut r = String::new();
+    let _ = s.read_to_string(&mut r);
+    r
+}
+
+/// Nome e cor que a pessoa escolheu (perfil local), para a tela de carregamento ja sair com o jeito dela.
+fn aparencia() -> Option<(String, String)> {
+    let base = std::env::var("LOCALAPPDATA").ok()?;
+    let txt = std::fs::read_to_string(std::path::Path::new(&base).join("BRANIAC-dados").join("perfil.json")).ok()?;
+    let v: serde_json::Value = serde_json::from_str(txt.trim_start_matches('\u{feff}')).ok()?;
+    let nome = v.get("nome_assistente")?.as_str()?.to_string();
+    let cor = v.get("cor").and_then(|c| c.as_str()).unwrap_or("#2fe3ff").to_string();
+    Some((nome, cor))
+}
+
 fn mostrar(app: &AppHandle) {
     if let Some(j) = app.get_webview_window("main") {
         let _ = j.show();
@@ -69,18 +93,42 @@ fn main() {
         .setup(move |app| {
             let filho = subir_backend(porta)?;
             *app.state::<Backend>().0.lock().unwrap() = Some(filho);
-            let url = if esperar(porta) {
-                WebviewUrl::External(format!("http://127.0.0.1:{porta}/").parse().unwrap())
-            } else {
-                WebviewUrl::App("index.html".into()) // backend nao subiu: mostra a tela de espera em vez de uma janela vazia
-            };
-            let janela = WebviewWindowBuilder::new(app, "main", url)
+            // v0.7: abre JA com a tela de carregamento (ui-loader) e troca para o assistente quando o backend responder
+            let janela = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                 .title("BRANIAC")
                 .inner_size(1120.0, 780.0)
                 .min_inner_size(900.0, 620.0)
                 .center()
                 .visible(!em_segundo_plano)
                 .build()?;
+            let j3 = janela.clone();
+            std::thread::spawn(move || {
+                let p = |n: u32, t: &str| {
+                    let _ = j3.eval(&format!("window.progresso && progresso({n}, '{t}')"));
+                };
+                std::thread::sleep(Duration::from_millis(600));
+                if let Some((nome, cor)) = aparencia() {
+                    let _ = j3.eval(&format!("window.tema && tema({})", serde_json::json!({"nome": nome, "cor": cor})));
+                }
+                p(20, "Ligando o assistente");
+                if !esperar(porta) {
+                    p(100, "O assistente nao ligou: feche e abra de novo");
+                    return;
+                }
+                p(100, "Online");
+                std::thread::sleep(Duration::from_millis(700));
+                let _ = j3.navigate(format!("http://127.0.0.1:{porta}/").parse().unwrap());
+                loop {
+                    // chamaram o assistente pelo nome ('<nome>, ta acordado?'): a janela aparece na tela de voz
+                    std::thread::sleep(Duration::from_secs(1));
+                    if sinal(porta).contains("\"mostrar\": true") {
+                        let _ = j3.show();
+                        let _ = j3.unminimize();
+                        let _ = j3.set_focus();
+                        let _ = j3.eval("window.aba && aba('voz')");
+                    }
+                }
+            });
             let j2 = janela.clone();
             janela.on_window_event(move |ev| {
                 if let WindowEvent::CloseRequested { api, .. } = ev {

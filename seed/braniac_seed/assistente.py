@@ -7,7 +7,7 @@ pessoa liberou. Acao perigosa (apagar, escrever, rodar comando, enviar WhatsApp)
 O resultado de uma ferramenta vai para a PESSOA e nunca volta para a IA (nada escondido em arquivo ou mensagem consegue dar ordens).
 Modo jogo: com o assistente SUSPENSO ele nao responde nem age (nem pelo Telegram) ate a pessoa retomar."""
 import base64, json, re, secrets, threading, time
-from . import auto_update, llm, memoria_usuario, perfil, permissoes, pc_tools
+from . import auto_update, habilidades, llm, memoria_usuario, orquestrador, perfil, permissoes, pc_tools, projetos
 
 HISTORICO = []                 # ultimas trocas desta sessao: [("eu"|"ia", texto)]
 PENDENTES = {}                 # id -> {"acao", "args", "ate"}
@@ -42,17 +42,22 @@ def sistema():
             '{"acao": "<nome da ferramenta ou nenhuma>", "args": {...}, "resposta": "frase curta para a pessoa"}. '
             "Use 'nenhuma' para conversa comum (coloque a fala em 'resposta'). Ferramentas liberadas pela pessoa:\n" + (cat or "(nenhuma: a pessoa não liberou acesso ao PC, então só converse)")
             + "\nSe a pessoa pedir algo que exige uma ferramenta que não está na lista, explique que ela ainda não liberou essa permissão (em Configurações)."
+            + "\nAções extras (sempre liberadas): 'orquestrar' (args: {\"tarefa\": ...}) divide uma tarefa GRANDE ou com várias partes entre várias IAs ao mesmo "
+            "tempo e junta o resultado; 'usar_habilidade' (args: {\"nome\": ...}) carrega o passo a passo de uma habilidade quando o pedido combina com ela. "
+            "Habilidades: " + (habilidades.catalogo() or "nenhuma")
+            + "\nNunca invente nomes, números, datas, preços ou o que foi combinado: use só o que a pessoa disse ou o que está na memória; se não tiver, diga que não sabe."
             + memoria_usuario.contexto())
 
 
-def _contexto():
-    if not HISTORICO:
+def _contexto(hist=None):
+    hist = HISTORICO if hist is None else hist
+    if not hist:
         return ""
-    return "Conversa recente:\n" + "\n".join(f"{'Pessoa' if q == 'eu' else _nome()}: {t[:300]}" for q, t in HISTORICO[-8:]) + "\n\nNova mensagem da pessoa: "
+    return "Conversa recente:\n" + "\n".join(f"{'Pessoa' if q == 'eu' else _nome()}: {t[:300]}" for q, t in hist[-8:]) + "\n\nNova mensagem da pessoa: "
 
 
-def _planejar_padrao(texto):
-    bruto, _ = llm.responder(_contexto() + texto, sistema=sistema())
+def _planejar_padrao(texto, extra="", hist=None):
+    bruto, _ = llm.responder(_contexto(hist) + texto, sistema=sistema() + extra)
     m = re.search(r"\{.*\}", bruto, re.S)
     if not m:
         return {"acao": "nenhuma", "args": {}, "resposta": bruto.strip()[:1500]}
@@ -92,13 +97,16 @@ def _comando_atualizacao(texto):
     return None
 
 
-def conversar(texto, planejar=None):
-    """Devolve {"resposta": str, "imagem": base64png|None, "confirmar": {...}|None, "ui": 'ocultar'|'suspender'|None}."""
+def conversar(texto, planejar=None, conversa=None):
+    """Devolve {"resposta": str, "imagem": base64png|None, "confirmar": {...}|None, "ui": 'ocultar'|'suspender'|None}.
+    conversa = id de uma conversa de projeto (v0.7): historico proprio + instrucoes do projeto; None = conversa geral (voz, Telegram)."""
     texto = (texto or "").strip()
     if not texto:
         return {"resposta": ""}
     if suspenso():
         return {"resposta": f"{_nome()} está suspenso (modo jogo/edição). Dê dois cliques no orbe para retomar."}
+    if conversa is not None:
+        return _conversar_projeto(texto, planejar, int(conversa))
     _lembrar("eu", texto)
     for rx, ui in COMANDOS_LOCAIS:
         if rx.search(texto):
@@ -123,6 +131,10 @@ def conversar(texto, planejar=None):
         r = "Não consegui falar com nenhuma IA agora. Confira se você conectou ao menos uma chave de API em ⚙ Configurações (ou se o Ollama está instalado e ligado) e tente de novo."
         return {"resposta": r}
     acao, args = plano.get("acao"), plano.get("args") or {}
+    especial = _acao_especial(acao, args, texto, planejar)
+    if especial is not None:
+        _lembrar("ia", especial.get("resposta") or "")
+        return especial
     if acao in (None, "", "nenhuma") or acao not in pc_tools.FERRAMENTAS:
         r = plano.get("resposta") or "Não entendi. Pode explicar de outro jeito?"
         _lembrar("ia", r)
@@ -141,6 +153,65 @@ def conversar(texto, planejar=None):
         _lembrar("ia", r)
         return {"resposta": r, "confirmar": {"id": cid, "descricao": pc_tools.descrever(acao, args)}}
     return _executar(acao, args, plano.get("resposta"))
+
+
+def _acao_especial(acao, args, texto, planejar=None, hist=None, extra=""):
+    """'orquestrar' e 'usar_habilidade' (v0.7). Devolve a resposta, ou None se nao for uma delas."""
+    if acao == "orquestrar":
+        try:
+            o = orquestrador.orquestrar(args.get("tarefa") or texto)
+        except Exception as e:
+            return {"resposta": f"Não consegui orquestrar as IAs agora ({str(e)[:120]})."}
+        quem = ", ".join(sorted({q for _, q in o["partes"]}))
+        return {"resposta": o["resposta"][:3900] + (f"\n\n(feito em {len(o['partes'])} partes por: {quem})" if len(o["partes"]) > 1 else "")}
+    if acao == "usar_habilidade":
+        passos = habilidades.carregar(args.get("nome"))
+        if not passos:
+            return None
+        if planejar is not None:
+            plano = planejar(texto)
+        else:
+            plano = _planejar_padrao(texto, extra + "\n\nSiga esta habilidade:\n" + passos[:6000], hist)
+        if plano.get("acao") == "orquestrar":
+            return _acao_especial("orquestrar", plano.get("args") or {}, texto)
+        if plano.get("acao") in pc_tools.FERRAMENTAS:
+            return None     # a habilidade levou a uma ferramenta do PC: segue o fluxo normal (permissoes/confirmacao)
+        return {"resposta": plano.get("resposta") or "Pronto."}
+    return None
+
+
+def _conversar_projeto(texto, planejar, conversa):
+    """Conversa de projeto: mesma logica, com historico e instrucoes proprios; as falas ficam guardadas na conversa."""
+    nome_proj, instr = projetos.instrucoes(conversa)
+    if nome_proj is None:
+        return {"resposta": "Essa conversa não existe mais."}
+    hist = projetos.historico(conversa, 16)
+    projetos.anotar(conversa, "eu", texto)
+    extra = f"\n\nProjeto atual: {nome_proj}." + (f" Instruções do projeto (siga sempre): {instr[:3000]}" if instr.strip() else "")
+    try:
+        plano = planejar(texto) if planejar else _planejar_padrao(texto, extra, hist)
+    except Exception:
+        r = {"resposta": "Não consegui falar com nenhuma IA agora. Confira suas chaves em ⚙ Configurações (ou o Ollama) e tente de novo."}
+        projetos.anotar(conversa, "ia", r["resposta"])
+        return r
+    acao, args = plano.get("acao"), plano.get("args") or {}
+    r = _acao_especial(acao, args, texto, planejar, hist, extra)
+    if r is None and acao in pc_tools.FERRAMENTAS:
+        try:
+            permissoes.exigir(pc_tools.FERRAMENTAS[acao][2])
+            if pc_tools.precisa_confirmar(acao):
+                cid = secrets.token_hex(4)
+                with _lock:
+                    PENDENTES[cid] = {"acao": acao, "args": args, "ate": time.time() + VALIDADE_CONFIRMACAO_S}
+                r = {"resposta": plano.get("resposta") or "Preciso da sua confirmação.", "confirmar": {"id": cid, "descricao": pc_tools.descrever(acao, args)}}
+            else:
+                r = _executar(acao, args, plano.get("resposta"))
+        except permissoes.PermissaoNegada as e:
+            r = {"resposta": f"{e} Você pode liberar isso em Configurações › Acesso ao PC."}
+    if r is None:
+        r = {"resposta": plano.get("resposta") or "Não entendi. Pode explicar de outro jeito?"}
+    projetos.anotar(conversa, "ia", r.get("resposta") or "")
+    return r
 
 
 def _executar(acao, args, fala=None):
