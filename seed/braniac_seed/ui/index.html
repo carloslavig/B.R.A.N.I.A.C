@@ -389,6 +389,16 @@ TELAS.integracoes = () => {
     el('div', { className: 'aviso' }, 'Cada conexão também precisa da permissão correspondente na etapa de acesso ao PC. Sem a permissão, o assistente avisa e não faz nada.')];
 };
 
+TELAS.modulos = () => {
+  const marc = new Set(S.perfil.modulos || (S.modulos || []).filter(m => m.instalado).map(m => m.id));
+  window.antesDeAvancar = async () => { await api('/api/modulos/escolher', { lista: [...marc] }); return true; };
+  return [el('h1', {}, 'Quais agentes você quer?'),
+    el('p', {}, 'Cada módulo é um agente de IA independente, com a própria memória guardada só no seu PC. Instale só os que vai usar: dá para ligar e desligar depois, em Configurações › Módulos.'),
+    ...(S.modulos || []).map(m => el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: marc.has(m.id), onchange: e => e.target.checked ? marc.add(m.id) : marc.delete(m.id) }),
+      el('div', {}, el('b', {}, `${m.icone || '🧩'} ${m.nome} — agente ${m.agente}`), el('div', { className: 'sub' }, m.descricao), el('div', { className: 'sub' }, 'Exemplo: “' + ((m.exemplos || [])[0] || '') + '”'), el('div', { className: 'sub' }, 'Usa: ' + ((m.permissoes || ['dados_locais']).join(', ').replace('dados_locais', 'só dados locais')) + ' · espaço: menos de 1 MB')))),
+    el('div', { className: 'aviso' }, 'Nenhum módulo acessa o seu banco, cartão ou senhas. Os dados de cada um ficam só neste computador.')];
+};
+
 TELAS.remoto = () => {
   const wa = el('div'), tg = el('div'), auto = el('div');
   const permWa = S.permissoes.find(p => p.chave === 'whatsapp.ler')?.liberada;
@@ -469,6 +479,7 @@ const FALAS = {
   reuniao_inicial: 'Vou reunir as inteligências para elas me contarem o que sabem sobre você.',
   nome_voz: 'Chegou a hora de me dar um nome. Escolha a voz e o nome que mais combinam com você.',
   integracoes: 'Conte como você quer me usar: e-mail, música, mensagens…',
+  modulos: 'Escolha os agentes que você quer ter: finanças, programação, negócio, saúde. Cada um é uma IA com memória própria.',
   remoto: 'Se quiser, conecte o WhatsApp e o Telegram. Com o Telegram você me manda comandos de qualquer lugar, com segurança.',
   icone: 'Onde você prefere me deixar: na bandeja ou flutuando na tela?',
   concluido: 'Está tudo pronto!'

@@ -8,9 +8,9 @@
 """
 from . import hardware, nomes, perfil, permissoes, provedores
 
-ETAPAS = ["boas_vindas", "chaves", "consentimento", "remoto", "hardware", "ias_nuvem", "reuniao_inicial", "nome_voz", "integracoes", "icone", "concluido"]
+ETAPAS = ["boas_vindas", "chaves", "consentimento", "remoto", "hardware", "ias_nuvem", "reuniao_inicial", "nome_voz", "integracoes", "modulos", "icone", "concluido"]
 # etapas OPCIONAIS (a tela mostra "pular"): nenhuma delas e obrigatoria. Obrigatorios: acesso (pode ser nenhum), 1 chave de API, nome e voz.
-OPCIONAIS = ["remoto", "ias_nuvem", "reuniao_inicial", "integracoes"]
+OPCIONAIS = ["remoto", "ias_nuvem", "reuniao_inicial", "integracoes", "modulos"]
 INTEGRACOES = ["email", "spotify", "whatsapp", "agenda", "arquivos"]
 
 

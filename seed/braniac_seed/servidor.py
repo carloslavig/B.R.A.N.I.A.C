@@ -5,7 +5,7 @@ import html, urllib.parse, json, mimetypes, re, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from . import __version__
 from pathlib import Path
-from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp, escuta, habilidades, projetos)
+from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp, escuta, habilidades, projetos, modulos)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -58,7 +58,7 @@ def estado_geral():
         "sem_chave": provedores.SEM_CHAVE, "faltando": onboarding.faltando(chaves),
         "ias": {k: {"titulo": v["titulo"]} for k, v in ias_web.ADAPTERS.items()},
         "jobs": {k: dict(v) for k, v in JOBS.items()}, "suspenso": bool(p.get("suspenso")), "stt": transcricao.disponivel(), "concluido": bool(p.get("concluido")), "remoto": remoto.resumo(), "email_diario": email_diario.estado(), "guarda": {"ativa": guarda.ativa(), "ligada": bool(p.get("guarda_ativa")), "permitida": permissoes.permitido("sistema.seguranca"), "resumo": guarda.resumo()}, "autostart": autostart.ativo(), "navegador": navegador.info(),
-        "cor": p.get("cor") or "#2fe3ff", "escuta": escuta.estado(), "habilidades": [{"nome": n, "descricao": dd, "origem": o} for n, dd, o in habilidades.listar()],
+        "cor": p.get("cor") or "#2fe3ff", "modulos": modulos.estado(), "modulos_escolhidos": bool(p.get("modulos_escolhidos")), "escuta": escuta.estado(), "habilidades": [{"nome": n, "descricao": dd, "origem": o} for n, dd, o in habilidades.listar()],
         "voz": {"nuvem": voz_nuvem.disponivel() and not p.get("voz_privada"), "privada": bool(p.get("voz_privada")), "nome": p.get("voz_nome"), "reserva": bool(p.get("voz_reserva")),
                 "estilo": p.get("voz_estilo") or "calmo", "vozes": voz_nuvem.VOZES, "estilos": {k: v[0] for k, v in voz_nuvem.ESTILOS.items()}},
         "nivel": provedores.nivel(chaves), "por_que_mais": provedores.POR_QUE_MAIS, "aviso_passos": provedores.AVISO_PASSOS, "perguntas_nome": nomes.PERGUNTAS, "perfis_ia": hardware.PERFIS,
@@ -264,6 +264,17 @@ def acao(caminho, d):
         except onboarding.Pendencia as e:
             return {"ok": False, "motivo": str(e)}
         return {"ok": True, "frase": nomes.frase_de_acordar(d["nome"])}
+    if caminho == "/api/modulos/escolher":          # v1.1: instalacao e tela Modulos
+        return {"ok": True, "modulos": modulos.escolher(d.get("lista", [])), "catalogo": modulos.estado()}
+    if caminho == "/api/modulos/instalar":
+        try:
+            modulos.instalar(d.get("id", ""))
+        except ValueError as e:
+            return {"ok": False, "erro": str(e)}
+        return {"ok": True, "catalogo": modulos.estado()}
+    if caminho == "/api/modulos/desinstalar":
+        modulos.desinstalar(d.get("id", ""))
+        return {"ok": True, "catalogo": modulos.estado()}
     if caminho == "/api/integracoes":
         onboarding.definir_integracoes(d.get("lista", []))
         return {}
@@ -326,6 +337,8 @@ class Handler(BaseHTTPRequestHandler):
                 _registrar(f"[erro] GET /api/estado: {e!r}")
                 return self._json({"erro": "não consegui ler o estado: " + str(e)[:200]}, 500)
         caminho = self.path.split("?")[0]
+        if caminho == "/api/modulos":
+            return self._json({"catalogo": modulos.estado(), "escolhidos": bool(perfil.carregar().get("modulos_escolhidos"))})
         if caminho == "/api/projetos":
             return self._json(projetos.estado())
         if caminho == "/api/projetos/conversa":

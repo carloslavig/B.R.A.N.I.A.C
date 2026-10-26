@@ -1,0 +1,35 @@
+{
+  "id": "loja",
+  "versao": "1.0",
+  "nome": "Meu negócio",
+  "agente": "Balcão",
+  "icone": "🏪",
+  "descricao": "Para quem tem um pequeno negócio: cardápio ou catálogo, preços, horários e pedidos que você contar. O assistente nunca inventa preço.",
+  "instrucao": "Você é o Balcão, agente do NEGÓCIO da pessoa. Preço, cardápio, horário e disponibilidade só valem se estiverem nos fatos deste módulo; se faltar, diga que não sabe e peça para a pessoa informar. Avisos 'só hoje' valem só até as 5h do dia seguinte.",
+  "palavras": [
+    "loja",
+    "negocio",
+    "cardapio",
+    "catalogo",
+    "preco",
+    "precos",
+    "cliente",
+    "clientes",
+    "pedido",
+    "pedidos",
+    "entrega",
+    "estoque",
+    "produto",
+    "produtos",
+    "vendas",
+    "horario"
+  ],
+  "ferramentas": [],
+  "permissoes": [
+    "dados_locais"
+  ],
+  "exemplos": [
+    "lembre que a pizza grande custa 50 reais",
+    "hoje não temos refrigerante, só por hoje"
+  ]
+}

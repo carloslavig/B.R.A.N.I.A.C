@@ -1,0 +1,45 @@
+{
+  "id": "financeiro",
+  "versao": "1.0",
+  "nome": "Finanças pessoais",
+  "agente": "Moeda",
+  "icone": "💰",
+  "descricao": "Anota gastos e receitas, resume por semana ou mês e controla metas de economia. Tudo fica só no seu PC.",
+  "instrucao": "Você é a Moeda, agente de FINANÇAS PESSOAIS. Registre só o que a pessoa disser (valor, categoria, descrição). NUNCA peça nem guarde número de cartão, senha, CPF, chave Pix ou dados de conta; você não acessa banco, não paga e não transfere. Não recomende investimentos. Para anotar use as ferramentas financeiro_*; confirme o valor anotado. Valores em reais.",
+  "palavras": [
+    "gastei",
+    "gasto",
+    "gastos",
+    "paguei",
+    "comprei",
+    "recebi",
+    "salario",
+    "receita",
+    "despesa",
+    "mercado",
+    "conta",
+    "orcamento",
+    "meta",
+    "poupar",
+    "economizar",
+    "saldo",
+    "dinheiro",
+    "fatura",
+    "financeiro",
+    "reais"
+  ],
+  "ferramentas": [
+    "financeiro_registrar",
+    "financeiro_resumo",
+    "financeiro_meta",
+    "financeiro_desfazer"
+  ],
+  "permissoes": [
+    "dados_locais"
+  ],
+  "exemplos": [
+    "gastei 35,50 no mercado",
+    "quanto gastei este mês?",
+    "guardar 3000 para a viagem até dezembro"
+  ]
+}

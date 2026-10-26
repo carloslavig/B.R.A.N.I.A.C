@@ -19,6 +19,8 @@ PADRAO = {
     "suspenso": False,               # modo jogo/edicao: o assistente nao responde nem age ate a pessoa retomar
     "voz_reserva": False,            # True = se a voz natural falhar, fala com a voz robotica do sistema (padrao: fica so o texto na tela)
     "voz_privada": False,            # True = nunca manda texto para gerar voz na nuvem (usa so a voz do sistema)
+    "modulos": [],                   # v1.1: ids dos MODULOS DE AGENTE instalados (financeiro, programacao...)
+    "modulos_escolhidos": False,
     "etapa": "boas_vindas",
     "concluido": False,
 }

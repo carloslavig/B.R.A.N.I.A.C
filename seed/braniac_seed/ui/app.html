@@ -77,7 +77,7 @@ svg#fios{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-even
   <div class="marca">B.R.A.N.I.A.C<small><span class="nomeIA">…</span> · tudo salvo no seu PC</small><small style="display:block;opacity:.7;margin-top:6px">✦ Mestres supremos: Carlos (Solrac) &amp; Claudinho · Deusa Jana ✦</small></div>
   <button class="bt" id="bNova">＋ Nova conversa</button>
   <button class="bt voz" onclick="aba('voz')">🎙 Tela de voz de <span class="nomeIA">…</span></button>
-  <div class="abas"><button class="ativa" data-lado="conversas">Conversas</button><button data-lado="habilidades">Habilidades</button></div>
+  <div class="abas"><button class="ativa" data-lado="conversas">Conversas</button><button data-lado="habilidades">Habilidades</button><button data-lado="modulos">Módulos</button></div>
   <div class="lista" id="lista"></div>
   <div class="rod"><button class="bt" onclick="abrirAparencia()">🎨 Aparência</button><button class="bt" id="bJogo">🎮 Modo jogo</button><button class="bt" onclick="location.href='/configuracoes'">⚙ Configurações</button></div>
 </aside>
@@ -119,6 +119,7 @@ svg#fios{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-even
 <script>
 const $=s=>document.querySelector(s), esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const CORES={ciano:'#2fe3ff',azul:'#3b82f6',verde:'#22c55e',roxo:'#a855f7',rosa:'#ec4899',laranja:'#f97316',vermelho:'#ef4444',dourado:'#eab308'};
+function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0e4a63;color:#fff;padding:10px 16px;border-radius:10px;z-index:99;max-width:90vw';document.body.appendChild(d);setTimeout(()=>d.remove(),5000)}
 let S=null, P={projetos:[],conversas:[]}, atual=null, lado='conversas', ed=null, voz=true, falando=false, nivelMic=0, seq=0, audioAtual=null, RGB='47,227,255', NOME='Assistente';
 async function api(c,corpo){const r=await fetch(c,corpo===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});const d=await r.json();if(d.erro)throw new Error(d.erro);return d}
 function aviso(m){addSis('⚠️ '+m);fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:String(m).slice(0,300),etapa:'app'})}).catch(()=>{})}
@@ -131,6 +132,9 @@ function desenharLado(){const L=$('#lista');L.innerHTML='';
    for(const c of P.conversas.filter(c=>c.projeto===p.id)){const b=document.createElement('button');b.className='conv'+(atual===c.id?' ativa':'');b.textContent=c.titulo;b.onclick=()=>abrir(c.id);b.oncontextmenu=e=>{e.preventDefault();menu(c)};d.appendChild(b)}L.appendChild(d)}
   const np=document.createElement('button');np.className='bt';np.textContent='＋ Novo projeto';np.onclick=()=>editar(null);L.appendChild(np);
   L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>nova(+b.dataset.n));L.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>editar(+b.dataset.e))}
+ else if(lado==='modulos'){const dica=document.createElement('div');dica.className='item';dica.style.color='var(--sub)';dica.textContent='Cada módulo é um agente de IA independente, com memória própria só neste PC. Ligue só os que for usar.';L.appendChild(dica);
+  for(const m of S.modulos||[]){const d=document.createElement('div');d.className='item';d.innerHTML=`<b>${esc(m.icone||'🧩')} ${esc(m.nome)} · agente ${esc(m.agente)}</b>${esc(m.descricao).slice(0,170)}<div style="margin-top:6px"><button class="bt" data-mod="${m.id}">${m.instalado?'Desligar':'Instalar'}</button> ${m.instalado?'<span style="color:#5dffb0">ativo</span>':''}</div>`;L.appendChild(d)}
+  L.querySelectorAll('[data-mod]').forEach(b=>b.onclick=async()=>{const m=(S.modulos||[]).find(x=>x.id===b.dataset.mod);try{const r=await api(m.instalado?'/api/modulos/desinstalar':'/api/modulos/instalar',{id:m.id});S.modulos=r.catalogo;desenharLado();toast(m.instalado?'Módulo desligado (os dados ficam guardados)':'Módulo instalado: '+m.agente+' já responde pelo assunto')}catch(e){toast('Erro: '+e.message)}})}
  else{const nb=document.createElement('button');nb.className='bt';nb.textContent='＋ Nova habilidade';nb.onclick=()=>$('#dlgHab').showModal();L.appendChild(nb);
   for(const h of S.habilidades||[]){const d=document.createElement('div');d.className='item';d.innerHTML=`<b>${esc(h.nome)}</b>${esc(h.descricao).slice(0,170)}`;L.appendChild(d)}}}
 async function abrir(id){atual=id;aba('chat');const c=P.conversas.find(c=>c.id===id);$('#titulo').textContent=c?c.titulo:'Conversa';desenharLado();

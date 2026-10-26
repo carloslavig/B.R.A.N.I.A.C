@@ -7,7 +7,7 @@ pessoa liberou. Acao perigosa (apagar, escrever, rodar comando, enviar WhatsApp)
 O resultado de uma ferramenta vai para a PESSOA e nunca volta para a IA (nada escondido em arquivo ou mensagem consegue dar ordens).
 Modo jogo: com o assistente SUSPENSO ele nao responde nem age (nem pelo Telegram) ate a pessoa retomar."""
 import base64, json, re, secrets, threading, time
-from . import assinatura, auto_update, habilidades, llm, memoria_usuario, orquestrador, perfil, permissoes, pc_tools, projetos
+from . import assinatura, auto_update, habilidades, modulos, llm, memoria_usuario, orquestrador, perfil, permissoes, pc_tools, projetos
 
 HISTORICO = []                 # ultimas trocas desta sessao: [("eu"|"ia", texto)]
 PENDENTES = {}                 # id -> {"acao", "args", "ate"}
@@ -46,7 +46,7 @@ def sistema():
             "tempo e junta o resultado; 'usar_habilidade' (args: {\"nome\": ...}) carrega o passo a passo de uma habilidade quando o pedido combina com ela. "
             "Habilidades: " + (habilidades.catalogo() or "nenhuma")
             + "\nNunca invente nomes, números, datas, preços ou o que foi combinado: use só o que a pessoa disse ou o que está na memória; se não tiver, diga que não sabe."
-            + assinatura.PROMPT + memoria_usuario.contexto())
+            + modulos.ferramentas_texto() + assinatura.PROMPT + memoria_usuario.contexto())
 
 
 def _contexto(hist=None):
@@ -57,6 +57,7 @@ def _contexto(hist=None):
 
 
 def _planejar_padrao(texto, extra="", hist=None):
+    extra = extra + modulos.contexto_para(texto)      # v1.1: so o agente do modulo detectado entra no prompt (custo minimo)
     bruto, _ = llm.responder(_contexto(hist) + texto, sistema=sistema() + extra)
     m = re.search(r"\{.*\}", bruto, re.S)
     if not m:
@@ -158,7 +159,9 @@ def conversar(texto, planejar=None, conversa=None):
 
 
 def _acao_especial(acao, args, texto, planejar=None, hist=None, extra=""):
-    """'orquestrar' e 'usar_habilidade' (v0.7). Devolve a resposta, ou None se nao for uma delas."""
+    """'orquestrar' e 'usar_habilidade' (v0.7) e as ferramentas dos modulos instalados (v1.1). Devolve a resposta, ou None se nao for uma delas."""
+    if acao and modulos.eh_ferramenta(acao):
+        return {"resposta": modulos.executar(acao, args)}
     if acao == "orquestrar":
         try:
             o = orquestrador.orquestrar(args.get("tarefa") or texto)
