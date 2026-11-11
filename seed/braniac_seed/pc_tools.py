@@ -4,15 +4,17 @@ Cada ferramenta devolve texto (ou texto + imagem) para a PESSOA; o resultado nun
 (isso fecha a porta para 'injecao de comando' escondida em arquivos ou mensagens)."""
 import ctypes, os, re, shutil, subprocess, sys, time, webbrowser
 from pathlib import Path
-from . import permissoes
+from . import permissoes, plataforma
 from .artcraft import DESENHO_AJUDA
 
 BLOQUEADOS = ("\\.ssh", "\\appdata\\roaming\\microsoft\\credentials", "\\appdata\\roaming\\microsoft\\protect", "login data", "\\cookies",
-              "braniac-dados", "\\navegador\\", ".kdbx", "id_rsa", "\\.aws", "\\.gnupg")
+              "braniac-dados", "\\navegador\\", ".kdbx", "id_rsa", "\\.aws", "\\.gnupg",
+              "\\library\\keychains", "\\library\\cookies", "\\library\\application support\\google\\chrome", "\\library\\application support\\microsoft edge")
 APPS = {"calculadora": "calc.exe", "bloco de notas": "notepad.exe", "explorador": "explorer.exe", "paint": "mspaint.exe", "configuracoes": "ms-settings:",
         "navegador": "msedge.exe", "edge": "msedge.exe", "chrome": "chrome.exe", "spotify": "spotify.exe", "word": "winword.exe", "excel": "excel.exe"}
 PERIGOSOS = re.compile(r"format-volume|diskpart|\bformat\s+[a-z]:|remove-item\s+.*-recurse\s+[a-z]:\\\s*$|\bdel\s+/s\s+/q\s+[a-z]:\\|\bcipher\s+/w|bcdedit|"
-                       r"reg\s+delete\s+hk(lm|cu)\\?\s*$|set-executionpolicy|\bnet\s+user\b", re.I)
+                       r"reg\s+delete\s+hk(lm|cu)\\?\s*$|set-executionpolicy|\bnet\s+user\b|"
+                       r"\brm\s+-[a-z]*[rf][a-z]*\s+(?:--no-preserve-root\s+)?(?:/|~|\$home|\*)\s*$|\bsudo\b|\bmkfs\b|\bdiskutil\s+(?:erase|partition|secure)|\bdd\b.*\bof=/dev/|:\(\)\s*\{", re.I)
 
 
 class FerramentaErro(RuntimeError):
@@ -24,7 +26,7 @@ def _caminho(p, existe=True):
     if not cam.is_absolute():       # caminho relativo cairia na pasta do app (ex.: System32): usa Documentos
         cam = Path.home() / "Documents" / cam
     cam = cam.resolve()
-    if any(b in str(cam).lower() for b in BLOQUEADOS):
+    if any(b in str(cam).lower().replace("/", "\\") for b in BLOQUEADOS):      # a lista usa '\\' (Windows); no macOS normaliza as barras
         raise FerramentaErro("Esse local é protegido (credenciais/dados do assistente); não acesso por segurança.")
     if existe and not cam.exists():
         raise FerramentaErro(f"Não achei: {cam}")
@@ -45,12 +47,10 @@ def abrir(alvo):
     if re.match(r"https?://", alvo, re.I):
         webbrowser.open(alvo)
         return f"Abri {alvo}."
-    app = APPS.get(alvo.lower())
-    if app:
-        os.startfile(app)  # noqa: S606 (so apps conhecidos)
+    if plataforma.abrir_app(alvo):
         return f"Abri {alvo}."
     cam = _caminho(alvo)
-    os.startfile(str(cam))  # noqa: S606
+    plataforma.abrir_arquivo(cam)
     return f"Abri {cam}."
 
 
@@ -86,19 +86,17 @@ def escrever_arquivo(caminho, texto):
 def apagar(caminho):
     """Manda para a LIXEIRA (da para restaurar)."""
     cam = _caminho(caminho)
-    metodo = "DeleteDirectory" if cam.is_dir() else "DeleteFile"
-    cmd = (f"Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::{metodo}"
-           f"('{str(cam).replace(chr(39), chr(39) * 2)}','OnlyErrorDialogs','SendToRecycleBin')")
-    r = subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True, text=True, timeout=30, creationflags=0x08000000)
-    if r.returncode != 0:
-        raise FerramentaErro("não consegui mover para a lixeira: " + r.stderr.strip()[:150])
+    try:
+        plataforma.mover_para_lixeira(cam)
+    except (RuntimeError, OSError, subprocess.SubprocessError) as e:
+        raise FerramentaErro("não consegui mover para a lixeira: " + str(e)[:150])
     return f"Movi para a lixeira: {cam}"
 
 
 def executar(comando):
     if PERIGOSOS.search(comando):
         raise FerramentaErro("Esse comando pode apagar ou danificar o sistema; recusei por segurança.")
-    r = subprocess.run(["powershell", "-NoProfile", "-Command", comando], capture_output=True, text=True, timeout=30, creationflags=0x08000000)
+    r = subprocess.run(plataforma.comando_shell(comando), capture_output=True, text=True, timeout=30, creationflags=plataforma.SEM_JANELA)
     saida = ((r.stdout or "") + (("\n" + r.stderr) if r.stderr else "")).strip()
     return f"(código {r.returncode})\n{saida[:3000] or '(sem saída)'}"
 
@@ -184,7 +182,7 @@ FERRAMENTAS = {
     "ler_arquivo": ("Lê um arquivo de texto.", ["caminho"], "arquivos.ler", False, ler_arquivo),
     "escrever_arquivo": ("Cria ou substitui um arquivo de texto.", ["caminho", "texto"], "arquivos.escrever", True, escrever_arquivo),
     "apagar": ("Move um arquivo ou pasta para a lixeira.", ["caminho"], "arquivos.apagar", True, apagar),
-    "executar": ("Roda um comando do PowerShell e mostra a saída.", ["comando"], "programas.executar", True, executar),
+    "executar": (f"Roda um comando do {plataforma.nome_shell()} e mostra a saída.", ["comando"], "programas.executar", True, executar),
     "captura_tela": ("Tira um print da tela do PC e envia.", [], "sistema.tela", False, captura_tela),
     "whatsapp_nao_lidas": ("Lista as conversas do WhatsApp com mensagens não lidas.", [], "whatsapp.ler", False, whatsapp_nao_lidas),
     "whatsapp_ler": ("Lê as últimas mensagens de uma conversa do WhatsApp.", ["nome"], "whatsapp.ler", False, whatsapp_ler),

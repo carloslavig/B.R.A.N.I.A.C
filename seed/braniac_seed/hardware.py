@@ -12,7 +12,17 @@ PERFIS = {
 }
 
 
+def _sysctl(chave):
+    try:
+        return subprocess.run(["sysctl", "-n", chave], capture_output=True, text=True, timeout=5).stdout.strip()
+    except Exception:
+        return ""
+
+
 def _ram_gb():
+    if sys.platform == "darwin":
+        mem = _sysctl("hw.memsize")
+        return round(int(mem) / 2 ** 30, 1) if mem.isdigit() else 0.0
     if sys.platform != "win32":
         return 0.0
     import ctypes
@@ -28,6 +38,9 @@ def _ram_gb():
 
 
 def _gpu():
+    if sys.platform == "darwin" and _sysctl("hw.optional.arm64") == "1":
+        # Apple Silicon: a GPU usa a memoria unificada (o Ollama roda no Metal); ~2/3 dela da para modelos
+        return {"nome": _sysctl("machdep.cpu.brand_string") or "Apple Silicon", "vram_gb": round(_ram_gb() * 0.66, 1)}
     try:
         r = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
                            capture_output=True, text=True, timeout=8)

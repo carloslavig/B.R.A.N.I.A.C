@@ -3,6 +3,7 @@
 Regra de seguranca: o resultado SEMPRE vai para a pasta de criacoes (Documentos/BRANIAC-Criacoes) com nome simples; o original nunca e sobrescrito."""
 import json, os, re, subprocess, sys
 from pathlib import Path
+from .plataforma import SEM_JANELA
 
 PASTA = "BRANIAC-Criacoes"
 EXT_SAIDA = {".png", ".jpg", ".jpeg", ".webp", ".pdf", ".svg", ".tif", ".tiff"}
@@ -20,7 +21,7 @@ def pasta_saida():
 
 def _exe(app):
     """Acha <app>-cli.exe: variavel BRANIAC_ARTCRAFT, pasta 'artcraft' ao lado do programa instalado, ou a instalacao portatil do desenvolvedor."""
-    nome = f"{app}-cli.exe"
+    nome = f"{app}-cli.exe" if sys.platform == "win32" else f"{app}-cli"
     bases = [os.environ.get("BRANIAC_ARTCRAFT"), Path(sys.executable).parent / "artcraft", Path(sys.executable).parent / "resources" / "artcraft",
              Path.home() / "Apps" / "ArtCraft"]
     for b in filter(None, bases):
@@ -32,7 +33,7 @@ def _exe(app):
 
 def _rodar(app, args, timeout=180):
     r = subprocess.run([_exe(app), *map(str, args)], capture_output=True, text=True, encoding="utf-8", errors="replace",
-                       timeout=timeout, creationflags=0x08000000, cwd=str(pasta_saida()))
+                       timeout=timeout, creationflags=SEM_JANELA, cwd=str(pasta_saida()))
     if r.returncode:
         raise ArtCraftErro((r.stderr or r.stdout or "falhou").strip()[-300:])
     return r.stdout
@@ -47,7 +48,7 @@ def _entrada(caminho):
 
 
 def _saida(nome, padrao_ext):
-    n = re.sub(r"[^\w\-. ]", "_", Path(str(nome).strip().strip('"')).name) or "resultado"
+    n = re.sub(r"[^\w\-. ]", "_", Path(str(nome).strip().strip('"').replace("\\", "/")).name) or "resultado"
     if Path(n).suffix.lower() not in EXT_SAIDA:
         n = Path(n).stem + padrao_ext
     return pasta_saida() / n

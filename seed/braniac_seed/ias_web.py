@@ -28,7 +28,11 @@ ADAPTERS = {
 }
 
 
-class _Aba:
+class _AbaCDP:
+    """Aba controlada por CDP (Chrome/Edge/Brave/...). A interface de alto nivel (js, navegar, inserir_texto, enter, clicar, ativar) e a mesma da
+    navegador_safari.Aba: quem usa a aba nao precisa saber qual navegador esta por tras."""
+    tipo = "cdp"
+
     def __init__(self, site):
         self.site = site
 
@@ -60,9 +64,36 @@ class _Aba:
             raise IAWebErro(str(r["exceptionDetails"])[:200])
         return r.get("result", {}).get("value")
 
+    def navegar(self, url):
+        self.cmd("Page.navigate", {"url": url})
+
+    def ativar(self):
+        self.cmd("Target.activateTarget", {"targetId": self.id})
+        self.cmd("Page.bringToFront")
+
+    def inserir_texto(self, texto):
+        self.cmd("Input.insertText", {"text": texto})
+
+    def clicar(self, x, y, pausa=0.2):
+        self.cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": x, "y": y})
+        time.sleep(pausa)
+        for tipo, bt in (("mousePressed", 1), ("mouseReleased", 0)):
+            self.cmd("Input.dispatchMouseEvent", {"type": tipo, "x": x, "y": y, "button": "left", "buttons": bt, "clickCount": 1})
+
     def enter(self):
         for tipo in ("keyDown", "keyUp"):
             self.cmd("Input.dispatchKeyEvent", {"type": tipo, "key": "Enter", "code": "Enter", "windowsVirtualKeyCode": 13, "text": "\r" if tipo == "keyDown" else ""})
+
+
+def _Aba(site):
+    """Aba do site no navegador do assistente: Safari (AppleScript) no Mac quando e o escolhido; nos demais, CDP."""
+    if navegador.usa_safari():
+        alvo = navegador.aba_de(site["dominio"])
+        if not alvo:
+            raise IAWebErro(f"{site['titulo']}: aba não aberta")
+        from . import navegador_safari
+        return navegador_safari.Aba(alvo)
+    return _AbaCDP(site)
 
 
 def _estado_js(s):
@@ -96,7 +127,7 @@ def _perguntar(ia, texto, timeout_s, url_conversa):
     s = ADAPTERS[ia]
     navegador.abrir_aba(s["url"])
     with _Aba(s) as a:
-        a.cmd("Page.navigate", {"url": url_conversa or s["url"]})
+        a.navegar(url_conversa or s["url"])
         time.sleep(4)
         for _ in range(12):
             est = json.loads(a.js(_estado_js(s)))
@@ -110,7 +141,7 @@ def _perguntar(ia, texto, timeout_s, url_conversa):
             raise IAWebErro(f"{s['titulo']}: conta não conectada")
         n0, antes = est["n"], a.js(_ultima_js(s)) or ""
         a.js(f"document.querySelector({json.dumps(s['entrada'])}).focus()")
-        a.cmd("Input.insertText", {"text": texto})
+        a.inserir_texto(texto)
         time.sleep(0.8)
         if s["enviar"]:
             a.js(f"(function(){{var b=document.querySelector({json.dumps(s['enviar'])}); if(b) b.click()}})()")

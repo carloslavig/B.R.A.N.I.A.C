@@ -65,7 +65,7 @@ def test_catalogo_explica_o_que_cada_chave_melhora():
     assert provedores.ORDEM[0] == "google" and "openrouter" in provedores.ORDEM
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="cofre = Gerenciador de Credenciais do Windows")
+@pytest.mark.skipif(sys.platform not in ("win32", "darwin"), reason="cofre = Gerenciador de Credenciais do Windows ou Keychain do macOS")
 def test_cofre_guarda_le_e_remove():
     nome = "teste-braniac-seed"
     try:

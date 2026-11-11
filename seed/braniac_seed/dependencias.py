@@ -4,14 +4,15 @@ instalar (a tela diz o tamanho antes). Nao ha download escondido."""
 import json, os, shutil, subprocess, sys, urllib.request
 
 OLLAMA_API = "http://127.0.0.1:11434"
-OLLAMA_SETUP_URL = "https://ollama.com/download/OllamaSetup.exe"
+OLLAMA_SETUP_URL = ("https://ollama.com/download/Ollama-darwin.zip" if sys.platform == "darwin" else "https://ollama.com/download/OllamaSetup.exe")
 
 
 def ollama_exe():
     p = shutil.which("ollama")
     if p:
         return p
-    for c in (os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe"), r"C:\Program Files\Ollama\ollama.exe"):
+    for c in (os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe"), r"C:\Program Files\Ollama\ollama.exe",
+              "/opt/homebrew/bin/ollama", "/usr/local/bin/ollama", "/Applications/Ollama.app/Contents/Resources/ollama"):
         if os.path.exists(c):
             return c
     return None

@@ -53,6 +53,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
+const MAC = /Mac/i.test(navigator.platform), SO = MAC ? 'Mac' : 'Windows';      // textos que dependem do sistema
 const el = (t, props = {}, ...filhos) => { const e = Object.assign(document.createElement(t), props); filhos.flat().forEach(f => e.append(f)); return e; };
 let S = null, etapa = 'boas_vindas', voz = true, nivelMic = 0, falando = false, poll = null;
 
@@ -155,7 +156,7 @@ async function testarMic(botao, saida) {
       if (Date.now() > fim) { clearInterval(iv); st.getTracks().forEach(x => x.stop()); nivelMic = 0;
         saida.className = pico > 0.04 ? 'ok' : 'erro'; saida.textContent = pico > 0.04 ? 'Microfone funcionando. Ouvi você bem.' : 'Quase não ouvi nada. Aproxime-se do microfone ou escolha outro nas configurações do Windows.'; }
     }, 80);
-  } catch (e) { saida.className = 'erro'; saida.textContent = 'Não consegui usar o microfone: autorize o acesso quando o Windows perguntar.'; }
+  } catch (e) { saida.className = 'erro'; saida.textContent = 'Não consegui usar o microfone: autorize o acesso quando o ' + SO + ' perguntar.'; }
 }
 
 // ---------- telas ----------
@@ -267,7 +268,7 @@ TELAS.chaves = () => {
     S.voz.privada ? el('p', { className: 'mudo' }, '🔒 Voz privada: só a voz do sistema, nada é enviado para fora.') :
     el('p', { className: 'erro' }, tem ? '🤖 Sua chave é de outro serviço: a voz natural vem do Google. Adicione também a chave do Google para ligá-la.' : '🤖 Minha voz está robótica porque ainda não há nenhuma chave de API conectada.');
   return [el('h1', {}, 'Chaves de IA'),
-    el('div', { className: 'aviso' }, 'Pelo menos UMA chave é obrigatória; o resto é opcional. ' + S.sem_chave + ' As chaves ficam guardadas no cofre do Windows, protegidas, só neste PC.'),
+    el('div', { className: 'aviso' }, 'Pelo menos UMA chave é obrigatória; o resto é opcional. ' + S.sem_chave + ' As chaves ficam guardadas ' + (MAC ? 'nas Chaves (Keychain) do Mac' : 'no cofre do Windows') + ', protegidas, só neste ' + (MAC ? 'Mac' : 'PC') + '.'),
     el('div', { className: 'prov' }, el('h3', {}, 'Seu nível: ' + nv.nome + (nv.n ? ` (${nv.n} chave${nv.n > 1 ? 's' : ''})` : '')), el('div', { className: 'barra' }, el('div', { style: `width:${nv.pct}%` })),
       el('p', { className: 'mudo' }, nv.proximo), el('p', { className: 'mudo' }, S.por_que_mais), modoVoz,
       el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: S.voz.reserva, onchange: async e => { await api('/api/voz/config', { reserva: e.target.checked }); await recarregar(); render(); } }),
@@ -289,7 +290,9 @@ TELAS.ias_nuvem = () => {
     el('option', { value: 'auto', selected: nav.preferido === 'auto' }, 'Automático' + (nav.padrao_windows && nav.instalados[nav.padrao_windows] ? ' (o seu padrão: ' + nav.instalados[nav.padrao_windows] + ')' : '')),
     ...Object.entries(nav.instalados).map(([id, nome]) => el('option', { value: id, selected: nav.preferido === id }, nome)));
   const caixaNav = el('div', { className: 'prov' }, el('h3', {}, 'Navegador do assistente: ' + (nav.usado ? nav.instalados[nav.usado] : 'nenhum encontrado')),
-    el('p', { className: 'mudo' }, 'O assistente abre as suas contas numa janela PRÓPRIA do navegador, com um perfil separado (não mexe nas suas abas, senhas nem histórico). Precisa ser um navegador baseado em Chromium para ele conseguir controlar depois; o Firefox não dá. Usei o seu navegador padrão quando possível; se ele não serve, uso o Chrome ou o Edge, que vem no Windows.'),
+    el('p', { className: 'mudo' }, MAC && nav.usado === 'safari'
+      ? 'No Mac o assistente usa o Safari: abre uma janela PRÓPRIA (fica minimizada) e só mexe nas abas dela, nunca nas suas. Os logins são os mesmos do seu Safari. Precisa de uma configuração, uma vez só: Safari › Ajustes › Avançado › “Mostrar recursos para desenvolvedores web”; depois Ajustes › Desenvolvedor › “Permitir JavaScript de Eventos da Apple”. Se preferir, o Chrome ou o Edge também funcionam (perfil separado).'
+      : 'O assistente abre as suas contas numa janela PRÓPRIA do navegador, com um perfil separado (não mexe nas suas abas, senhas nem histórico). Funciona com navegadores baseados em Chromium' + (MAC ? ' e com o Safari' : ' (o Firefox não dá)') + '. Usei o seu navegador padrão quando possível; se ele não serve, uso ' + (MAC ? 'o Safari.' : 'o Chrome ou o Edge, que vem no Windows.')),
     el('div', { className: 'linha' }, el('span', { className: 'mudo' }, 'Trocar:'), sel));
   return [el('h1', {}, 'Conectar suas IAs na nuvem'), caixaNav, el('p', {}, 'Opcional, mas recomendado: com o ChatGPT e o Gemini conectados, seu assistente consulta essas IAs e já nasce conhecendo você.'),
     el('div', { className: 'aviso' }, 'Você entra na SUA conta, numa janela normal. O assistente nunca vê nem guarda sua senha. Usar contas pela automação pode ser limitado pelos termos de cada serviço; é por sua conta e você pode pular esta etapa.'), caixa,
@@ -442,7 +445,7 @@ TELAS.remoto = () => {
   };
   // ---- iniciar com o Windows ----
   auto.append(el('label', { className: 'perm' }, el('input', { type: 'checkbox', checked: S.autostart, onchange: async e => { const x = await api('/api/autostart', { ativo: e.target.checked }); if (!x.ok) { e.target.checked = !e.target.checked; alert(x.motivo); } } }),
-    el('div', {}, el('b', {}, 'Iniciar com o Windows'), el('div', { className: 'mudo' }, 'Abre escondido na bandeja ao ligar o PC, para o Telegram funcionar sempre. Fechar a janela só a esconde: o assistente continua na bandeja (clique com o botão direito no ícone para sair).'))));
+    el('div', {}, el('b', {}, 'Iniciar com o ' + SO), el('div', { className: 'mudo' }, 'Abre escondido ' + (MAC ? 'na barra de menus' : 'na bandeja') + ' ao ligar o ' + (MAC ? 'Mac' : 'PC') + ', para o Telegram funcionar sempre. Fechar a janela só a esconde: o assistente continua ' + (MAC ? 'na barra de menus' : 'na bandeja') + ' (clique com o botão direito no ícone para sair).'))));
   desenharWa(); desenharTg(); clearInterval(poll); poll = setInterval(desenharWa, 4000);
   return [el('h1', {}, 'WhatsApp e controle remoto'), el('p', {}, 'Opcional. Conecte o WhatsApp e/ou o seu bot do Telegram para o assistente trabalhar por você mesmo quando você estiver longe do PC.'), wa, tg, auto];
 };
@@ -451,9 +454,9 @@ TELAS.icone = () => {
   const cart = (id, t, d, mock) => el('div', { className: 'cartao' + (S.perfil.modo_icone === id ? ' sel' : ''), onclick: async () => { await api('/api/icone', { modo: id }); await recarregar(); render(); } }, el('h3', {}, t), el('p', {}, d), mock);
   return [el('h1', {}, 'Onde fica o ícone do assistente?'), el('p', {}, 'Para chamar, dar um duplo clique ou fazer ele voltar quando você estiver jogando ou editando.'),
     el('div', { className: 'cartoes' },
-      cart('bandeja', '📌 Na bandeja do Windows', 'Junto dos outros ícones perto do relógio. Discreto.', el('div', { className: 'bandeja' }, el('i'), el('i'), el('i', { className: 'eu' }), el('i'), el('span', { className: 'mudo' }, '14:32'))),
+      cart('bandeja', MAC ? '📌 Na barra de menus' : '📌 Na bandeja do Windows', MAC ? 'Junto dos outros ícones no alto da tela. Discreto.' : 'Junto dos outros ícones perto do relógio. Discreto.', el('div', { className: 'bandeja' }, el('i'), el('i'), el('i', { className: 'eu' }), el('i'), el('span', { className: 'mudo' }, '14:32'))),
       el('div', { className: 'cartao', style: 'opacity:.5;cursor:not-allowed' }, el('h3', {}, '🔮 Flutuante na tela (em breve)'), el('p', {}, 'Uma bolinha que você arrasta para onde quiser. Ainda não está disponível nesta versão.'))),
-    el('div', { className: 'aviso' }, 'Modo jogo e edição: clique em “🎮 Modo jogo” na tela do assistente (ou diga “modo jogo”) e ele se suspende e se esconde na bandeja, sem responder nem agir. Para reativar, clique no ícone da bandeja e dê dois cliques no orbe. (Detectar jogos sozinho: em breve.)')];
+    el('div', { className: 'aviso' }, 'Modo jogo e edição: clique em “🎮 Modo jogo” na tela do assistente (ou diga “modo jogo”) e ele se suspende e se esconde ' + (MAC ? 'na barra de menus' : 'na bandeja') + ', sem responder nem agir. Para reativar, clique no ícone ' + (MAC ? 'da barra de menus' : 'da bandeja') + ' e dê dois cliques no orbe. (Detectar jogos sozinho: em breve.)')];
 };
 
 // leva ao passo certo para cada pendencia (antes a pessoa ficava presa na tela final, sem botao e sem Voltar)
@@ -464,8 +467,8 @@ TELAS.concluido = () => {
   const falta = S.faltando;
   return [el('h1', {}, falta.length ? 'Quase lá' : `${p.nome_assistente} está pronto`),
     ...(falta.length ? [el('div', { className: 'linha', style: 'flex-direction:column;align-items:flex-start;gap:8px' }, ...falta.map(f => el('button', { className: 'sec', onclick: () => { etapa = passoQueFalta(f); render(); } }, '→ ' + f.charAt(0).toUpperCase() + f.slice(1))))] : []),
-    el('p', {}, falta.length ? 'Clique em uma das opções acima para resolver. Depois volte aqui e conclua.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? 'na bandeja' : 'flutuante'}.`),
-    falta.length ? '' : el('div', { className: 'aviso' }, `Para falar com ${p.nome_assistente}: abra o ícone da bandeja (junto do relógio) e use o microfone ou escreva. “Pode descansar” esconde a janela; “modo jogo” suspende o assistente. Para chamar só falando “${p.nome_assistente}, tá acordado?”, abra a tela de voz e ligue “Ouvir meu nome”. A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
+    el('p', {}, falta.length ? 'Clique em uma das opções acima para resolver. Depois volte aqui e conclua.' : `Voz ${p.voz}, acesso ao PC: ${p.consentimento_acesso_pc}, ícone: ${p.modo_icone === 'bandeja' ? (MAC ? 'na barra de menus' : 'na bandeja') : 'flutuante'}.`),
+    falta.length ? '' : el('div', { className: 'aviso' }, `Para falar com ${p.nome_assistente}: abra o ícone ${MAC ? 'da barra de menus (no alto da tela)' : 'da bandeja (junto do relógio)'} e use o microfone ou escreva. “Pode descansar” esconde a janela; “modo jogo” suspende o assistente. Para chamar só falando “${p.nome_assistente}, tá acordado?”, abra a tela de voz e ligue “Ouvir meu nome”. A partir de agora só o assistente gerencia as contas e o navegador dele; você só os vê se pedir.`),
     S.perfil.concluido ? el('div', { className: 'linha' }, el('button', { className: 'sec', onclick: () => location.replace('/') }, '← Voltar ao assistente')) : '',
     el('div', { className: 'linha' }, el('button', { disabled: !!falta.length, onclick: async () => { const r = await api('/api/concluir', {}); if (r.ok) { msg.className = 'ok'; msg.textContent = 'Instalação concluída! Abrindo o seu assistente…'; falar(`Tudo pronto. Eu sou ${p.nome_assistente}. Vamos conversar!`); setTimeout(() => location.replace('/'), 3200); } else { msg.className = 'erro'; msg.textContent = r.motivo; } } }, '🚀 Concluir e começar'), msg)];
 };
@@ -481,7 +484,7 @@ const FALAS = {
   integracoes: 'Conte como você quer me usar: e-mail, música, mensagens…',
   modulos: 'Escolha os agentes que você quer ter: finanças, programação, negócio, saúde. Cada um é uma IA com memória própria.',
   remoto: 'Se quiser, conecte o WhatsApp e o Telegram. Com o Telegram você me manda comandos de qualquer lugar, com segurança.',
-  icone: 'Onde você prefere me deixar: na bandeja ou flutuando na tela?',
+  icone: 'Onde você prefere me deixar: ' + (MAC ? 'na barra de menus' : 'na bandeja') + ' ou flutuando na tela?',
   concluido: 'Está tudo pronto!'
 };
 

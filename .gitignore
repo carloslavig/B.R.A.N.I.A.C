@@ -15,6 +15,9 @@ dist/
 build/
 
 app/src-tauri/binaries/*.exe
+app/src-tauri/binaries/braniac-core*
+.venv/
+.venv-build/
 app/src-tauri/gen/
 *.spec
 

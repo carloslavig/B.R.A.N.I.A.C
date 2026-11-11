@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>O BRANIAC usa o microfone só para você conversar por voz com o assistente. Nada é gravado em disco.</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>O BRANIAC pede ao Finder para mover arquivos para a Lixeira, só quando você manda e confirma.</string>
+</dict>
+</plist>

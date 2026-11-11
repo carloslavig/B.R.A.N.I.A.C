@@ -59,7 +59,8 @@ def test_guarda_ip_mudou_e_alertas_de_windows():
     roda(foto(portas={}))
     assert any("IP público mudou" in e for e in roda(foto(ip="2.2.2.2", portas={}), 100))
     txt = " | ".join(roda(foto(portas={}, firewall_desligado=["Public"], rdp_ligado=True, defender={"tempo_real": False, "assinatura_dias": 20}, falhas_login_1h=30), 200))
-    for trecho in ("Firewall do Windows está DESLIGADO", "RDP", "tempo real", "20 dias", "30 tentativas"):
+    from braniac_seed import plataforma
+    for trecho in (f"Firewall do {plataforma.SO} está DESLIGADO", "RDP", "tempo real", "20 dias", "30 tentativas"):
         assert trecho in txt
 
 
@@ -94,7 +95,8 @@ def test_arquivo_nunca_sai_de_areas_com_segredo_e_executavel_vira_zip(tmp_path):
     seguro.mkdir()
     # tmp_path fica em AppData (bloqueado de proposito): copia para uma pasta comum
     import shutil, os
-    comum = Path(os.environ.get("PUBLIC", "C:/Users/Public")) / "braniac_teste_arq"
+    import tempfile
+    comum = Path(os.environ.get("PUBLIC") or tempfile.gettempdir()) / "braniac_teste_arq"
     comum.mkdir(exist_ok=True)
     try:
         e2 = comum / "Setup.exe"
@@ -103,7 +105,7 @@ def test_arquivo_nunca_sai_de_areas_com_segredo_e_executavel_vira_zip(tmp_path):
         assert z.endswith("Setup.zip")
         with pytest.raises(whatsapp.WhatsAppErro):
             whatsapp.preparar_arquivo(str(tmp_path / "nao_existe.pdf"))
-        for ruim in (Path.home() / ".env", Path("C:/Windows/System32/notepad.exe")):
+        for ruim in (Path.home() / ".env", Path("C:/Windows/System32/notepad.exe") if os.name == "nt" else Path("/etc/hosts")):
             with pytest.raises(whatsapp.WhatsAppErro):
                 whatsapp.preparar_arquivo(str(ruim))
     finally:

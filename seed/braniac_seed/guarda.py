@@ -9,6 +9,7 @@ Limite honesto: nao e antivirus e nao impede ataque; atras de roteador domestico
 O aviso vai so para a pessoa (Telegram dela e a tela do assistente). Exige a permissao 'sistema.seguranca'."""
 import json, subprocess, threading, time, urllib.request
 from . import paths, perfil, permissoes
+from .plataforma import MAC, SEM_JANELA, SO
 
 PORTAS_RISCO = {21: "FTP", 23: "Telnet", 1433: "SQL Server", 3306: "MySQL", 3389: "Área de Trabalho Remota (RDP)", 5432: "PostgreSQL", 5900: "VNC",
                 6379: "Redis", 27017: "MongoDB", 9200: "Elasticsearch"}
@@ -43,7 +44,7 @@ def ligar(sim=True):
 
 def _ps(cmd, timeout=40):
     r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", cmd], capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace",
-                       creationflags=0x08000000)
+                       creationflags=SEM_JANELA)
     return r.stdout.strip()
 
 
@@ -55,7 +56,39 @@ def _json(cmd):
         return None
 
 
+def _sh(args, timeout=20):
+    try:
+        return subprocess.run(args, capture_output=True, text=True, timeout=timeout, errors="replace").stdout
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def _portas_mac():
+    """Portas TCP escutando em TODAS as interfaces (`*:porta`), com o nome do processo. lsof -F: linhas 'p<pid>', 'c<comando>', 'n<endereco>'."""
+    saida, cmd, achadas = _sh(["lsof", "-iTCP", "-sTCP:LISTEN", "-nP", "-Fcn"]), "?", {}
+    for l in saida.splitlines():
+        if l.startswith("c"):
+            cmd = l[1:]
+        elif l.startswith("n") and (l.startswith("n*:") or l.startswith("n[::]:")):
+            achadas[l.rsplit(":", 1)[1]] = cmd
+    return achadas or None
+
+
+def coletar_mac():
+    est = {"quando": time.time(), "rdp_ligado": None, "defender": None, "falhas_login_1h": None}
+    try:
+        est["ip"] = urllib.request.urlopen("https://api.ipify.org", timeout=8).read().decode().strip()
+    except Exception:
+        est["ip"] = None
+    est["portas"] = _portas_mac()
+    fw = _sh(["/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate"]).lower()
+    est["firewall_desligado"] = (["macOS"] if "disabled" in fw else []) if fw else None
+    return est
+
+
 def coletar():
+    if MAC:
+        return coletar_mac()
     est = {"quando": time.time()}
     try:
         est["ip"] = urllib.request.urlopen("https://api.ipify.org", timeout=8).read().decode().strip()
@@ -93,7 +126,7 @@ def avaliar(est, base):
             elif conhecidas and p not in conhecidas and pi not in ESPERADAS and pi < 49152:
                 a.append((f"nova:{pi}", f"🔎 Nova porta aberta para a rede: {pi} (processo {nome}). Se você não instalou nada agora, vale conferir."))
     if est.get("firewall_desligado"):
-        a.append(("firewall", "🚨 O Firewall do Windows está DESLIGADO no perfil: " + ", ".join(est["firewall_desligado"]) + "."))
+        a.append(("firewall", f"🚨 O Firewall do {SO} está DESLIGADO" + (" no perfil: " if not MAC else ": ") + ", ".join(est["firewall_desligado"]) + "."))
     if est.get("rdp_ligado"):
         a.append(("rdp", "🚨 A Área de Trabalho Remota (RDP) está LIGADA: é a porta de entrada mais atacada. Desligue se não usa."))
     d = est.get("defender")
@@ -140,7 +173,7 @@ def resumo():
         return "🛡 Guarda de segurança: ainda sem leitura."
     exp = [f"{p}({n})" for p, n in sorted((u.get("portas") or {}).items(), key=lambda x: int(x[0])) if int(p) in PORTAS_RISCO]
     partes = [f"IP {u.get('ip') or '?'}", "firewall " + ("OK" if u.get("firewall_desligado") == [] else "ATENÇÃO" if u.get("firewall_desligado") else "?"),
-              "antivírus " + ("OK" if (u.get("defender") or {}).get("tempo_real") else "ATENÇÃO"), f"falhas de login/h: {u.get('falhas_login_1h', '?')}"]
+              "antivírus " + ("n/d" if u.get("defender") is None and MAC else "OK" if (u.get("defender") or {}).get("tempo_real") else "ATENÇÃO"), f"falhas de login/h: {u.get('falhas_login_1h', '?')}"]
     return "🛡 Segurança: " + " · ".join(partes) + (f"\n⚠️ Portas de risco abertas para a rede: {', '.join(exp)}" if exp else "")
 
 

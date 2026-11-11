@@ -28,7 +28,21 @@ def listar_abas():
     return [(a["id"], a.get("title", "")[:80], a.get("url", "")[:140], privada(a.get("url", ""))) for a in navegador.abas()]
 
 
+class _SafariWs:
+    """Faz a aba do Safari parecer o (ws, cmd, js) do CDP para o resto deste modulo."""
+    def __init__(self, alvo):
+        from . import navegador_safari
+        self.aba = navegador_safari.Aba(alvo)
+        self.js = self.aba.js
+
+    def close(self):
+        pass
+
+
 def _ws(alvo):
+    if navegador.usa_safari():
+        s = _SafariWs(alvo)
+        return s, None, s.js
     import websocket
     ws = websocket.create_connection(alvo["webSocketDebuggerUrl"], timeout=30, suppress_origin=True, max_size=16 * 1024 * 1024)
     n = [0]
@@ -52,15 +66,11 @@ def _ws(alvo):
 
 
 def _nova_aba(url):
-    navegador.iniciar()
-    return navegador._json("/json/new?" + urllib.parse.quote(url, safe=":/?&=%#"), "PUT")
+    return navegador.nova_aba(url)
 
 
 def _fechar_aba(id_):
-    try:
-        navegador._json("/json/close/" + id_)
-    except Exception:
-        pass
+    navegador.fechar_aba(id_)
 
 
 def _texto_da_aba(alvo, esperar_s=6):

@@ -32,6 +32,9 @@ JS_MSGS = r"""(function(max){var msgs=[];
     var row=el.closest('[class*="message-in"],[class*="message-out"]');
     msgs.push({de: row && row.className.indexOf('message-out')>=0 ? 'eu' : 'ele', texto: txt.trim()});});
   return JSON.stringify(msgs.slice(-max));})(%d)"""
+JS_CAIXA_CHEIA = r"""(function(){var b=document.querySelector('footer [contenteditable="true"], [contenteditable="true"][data-tab="10"]'); return !!(b && (b.innerText||'').trim().length>0)})()"""
+JS_BOTAO_ENVIAR = r"""(function(){var i=document.querySelector('footer [data-icon="send"], footer [data-icon="wds-ic-send-filled"]'); if(!i) return null;
+  var b=i.closest('button,[role=button]')||i; var r=b.getBoundingClientRect(); return JSON.stringify({x:r.x+r.width/2,y:r.y+r.height/2});})()"""
 JS_CAIXA = r"""(function(){var b=document.querySelector('footer [contenteditable="true"], [contenteditable="true"][data-tab="10"]'); if(!b) return false; b.focus(); return true})()"""
 
 
@@ -45,8 +48,7 @@ def _aba():
 
 
 def _preparar(a):
-    a.cmd("Target.activateTarget", {"targetId": a.id})
-    a.cmd("Page.bringToFront")
+    a.ativar()
     time.sleep(0.6)
 
 
@@ -70,10 +72,7 @@ def _abrir_conversa(a, nome):
     if not rc:
         return False
     rc = json.loads(rc)
-    a.cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": rc["x"], "y": rc["y"]})
-    time.sleep(0.3)
-    for tipo, bt in (("mousePressed", 1), ("mouseReleased", 0)):
-        a.cmd("Input.dispatchMouseEvent", {"type": tipo, "x": rc["x"], "y": rc["y"], "button": "left", "buttons": bt, "clickCount": 1})
+    a.clicar(rc["x"], rc["y"], pausa=0.3)
     time.sleep(1.5)
     base = (re.split(r"[^\w\s.\-]", nome)[0].strip() or nome)[:12]      # emoji vira imagem no cabecalho e nao aparece no texto
     return bool(a.js("[...document.querySelectorAll('header')].some(h=>h.innerText.indexOf(%s)>=0 && !h.closest('#side'))" % json.dumps(base)))
@@ -149,7 +148,7 @@ def _achar_conversa(a, nome, achados):
         if _abrir_conversa(a, alvo):
             return alvo
     a.js("var i=document.querySelector('#side input[aria-label^=\"Pesquisar\"], #side [contenteditable=true]'); i&&i.focus()")
-    a.cmd("Input.insertText", {"text": (re.split(r"[^\w\s.\-]", nome)[0].strip() or nome)})
+    a.inserir_texto(re.split(r"[^\w\s.\-]", nome)[0].strip() or nome)
     time.sleep(2)
     nomes = [c["nome"] for c in json.loads(a.js(JS_LISTA))]
     cand = resolver(nome, nomes)
@@ -163,7 +162,8 @@ def _achar_conversa(a, nome, achados):
 
 # ---------- arquivos ----------
 BLOQUEADAS = {".exe", ".bat", ".cmd", ".msi", ".scr", ".com", ".vbs", ".js", ".jar", ".ps1", ".dll", ".lnk"}     # o WhatsApp bloqueia: vao dentro de um .zip
-BLOQUEIO_CAMINHO = (".env", ".pem", ".key", ".pfx", ".kdbx", "id_rsa", ".ssh", "cookies", "login data", "appdata", "braniac-dados", "\\windows\\", "program files", "programdata")
+BLOQUEIO_CAMINHO = (".env", ".pem", ".key", ".pfx", ".kdbx", "id_rsa", ".ssh", "cookies", "login data", "appdata", "braniac-dados", "\\windows\\", "program files", "programdata",
+                    "\\library\\keychains", "\\library\\application support\\", "\\system\\library\\", "\\private\\etc\\")
 LIMITE_MB = 100
 JS_ITEM_DOCUMENTO = r"""(function(){var els=[...document.querySelectorAll('[role=menuitem], li[role=button], [data-animate-dropdown-item], li, button')];
   var alvo=els.find(e=>/^documento$|^document$/i.test((e.innerText||'').trim()) && e.getBoundingClientRect().width>0); if(!alvo) return null;
@@ -176,10 +176,7 @@ JS_LEGENDA = r"""(function(){var c=[...document.querySelectorAll('[contenteditab
 
 
 def _clicar(a, x, y):
-    a.cmd("Input.dispatchMouseEvent", {"type": "mouseMoved", "x": x, "y": y})
-    time.sleep(0.2)
-    for tipo, bt in (("mousePressed", 1), ("mouseReleased", 0)):
-        a.cmd("Input.dispatchMouseEvent", {"type": tipo, "x": x, "y": y, "button": "left", "buttons": bt, "clickCount": 1})
+    a.clicar(x, y)
 
 
 def preparar_arquivo(caminho):
@@ -187,7 +184,7 @@ def preparar_arquivo(caminho):
     p = Path(os.path.expandvars(os.path.expanduser(str(caminho).strip().strip('"'))))
     if not p.is_file():
         raise WhatsAppErro(f"Arquivo não encontrado: {caminho}")
-    baixo = str(p.resolve()).lower() + "\\"
+    baixo = str(p.resolve()).lower().replace("/", "\\") + "\\"      # a lista usa '\\' (Windows); no macOS normaliza as barras
     if any(b in baixo for b in BLOQUEIO_CAMINHO):
         raise WhatsAppErro("Esse arquivo guarda segredos ou dados protegidos (chaves, cookies, sistema): não envio.")
     if p.stat().st_size > LIMITE_MB * 1048576:
@@ -215,6 +212,49 @@ def _esperar_chooser(a, segundos=8):
     return None
 
 
+def _anexar_cdp(a, arq):
+    """Chromium: intercepta o seletor de arquivo por CDP (nenhuma janela abre) e entrega o arquivo ao <input>."""
+    a.cmd("Page.enable")
+    a.cmd("Page.setInterceptFileChooserDialog", {"enabled": True})
+    try:
+        anexar = a.js(JS_ANEXAR)
+        if not anexar:
+            raise WhatsAppErro("Não achei o botão Anexar do WhatsApp.")
+        anexar = json.loads(anexar)
+        _clicar(a, anexar["x"], anexar["y"])
+        time.sleep(1.2)
+        item = a.js(JS_ITEM_DOCUMENTO)
+        if not item:
+            raise WhatsAppErro("Não achei a opção Documento no menu Anexar.")
+        item = json.loads(item)
+        _clicar(a, item["x"], item["y"])
+        ch = _esperar_chooser(a)
+        if not ch or "backendNodeId" not in ch:
+            raise WhatsAppErro("O WhatsApp não abriu o seletor de arquivo.")
+        a.cmd("DOM.setFileInputFiles", {"files": [str(Path(arq).resolve())], "backendNodeId": ch["backendNodeId"]})
+    finally:
+        try:
+            a.cmd("Page.setInterceptFileChooserDialog", {"enabled": False})
+        except Exception:
+            pass
+
+
+def _anexar_safari(a, arq):
+    """Safari: abre o menu Anexar (para o WhatsApp criar os <input type=file>) e entrega o arquivo ao campo de documento por DataTransfer,
+    sem clicar em 'Documento' (isso abriria o seletor nativo do macOS). NAO verificado com uma conta real: o WhatsApp muda essa tela."""
+    import mimetypes
+    anexar = a.js(JS_ANEXAR)
+    if not anexar:
+        raise WhatsAppErro("Não achei o botão Anexar do WhatsApp.")
+    anexar = json.loads(anexar)
+    _clicar(a, anexar["x"], anexar["y"])
+    time.sleep(1.2)
+    try:
+        a.anexar_arquivo(arq, 'input[type="file"]:not([accept^="image"]):not([accept*="video"])', mimetypes.guess_type(arq)[0] or "application/octet-stream")
+    except navegador.NavegadorErro as e:
+        raise WhatsAppErro(str(e))
+
+
 def enviar_arquivo(nome, caminho, legenda=""):
     """Envia um arquivo como documento. O seletor de arquivo e interceptado pelo navegador (nenhuma janela do Windows abre). Devolve o nome do contato."""
     arq = preparar_arquivo(caminho)
@@ -224,29 +264,10 @@ def enviar_arquivo(nome, caminho, legenda=""):
             _preparar(a)
             lista = json.loads(a.js(JS_LISTA))
             alvo = _achar_conversa(a, nome, resolver(nome, [c["nome"] for c in lista]))
-            a.cmd("Page.enable")
-            a.cmd("Page.setInterceptFileChooserDialog", {"enabled": True})
-            try:
-                anexar = a.js(JS_ANEXAR)
-                if not anexar:
-                    raise WhatsAppErro("Não achei o botão Anexar do WhatsApp.")
-                anexar = json.loads(anexar)
-                _clicar(a, anexar["x"], anexar["y"])
-                time.sleep(1.2)
-                item = a.js(JS_ITEM_DOCUMENTO)
-                if not item:
-                    raise WhatsAppErro("Não achei a opção Documento no menu Anexar.")
-                item = json.loads(item)
-                _clicar(a, item["x"], item["y"])
-                ch = _esperar_chooser(a)
-                if not ch or "backendNodeId" not in ch:
-                    raise WhatsAppErro("O WhatsApp não abriu o seletor de arquivo.")
-                a.cmd("DOM.setFileInputFiles", {"files": [str(Path(arq).resolve())], "backendNodeId": ch["backendNodeId"]})
-            finally:
-                try:
-                    a.cmd("Page.setInterceptFileChooserDialog", {"enabled": False})
-                except Exception:
-                    pass
+            if a.tipo == "cdp":
+                _anexar_cdp(a, arq)
+            else:
+                _anexar_safari(a, arq)
             env = None
             for _ in range(30):
                 r = a.js(JS_ICONE % json.dumps("wds-ic-send-filled"))
@@ -257,7 +278,7 @@ def enviar_arquivo(nome, caminho, legenda=""):
             if not env:
                 raise WhatsAppErro("A pré-visualização do arquivo não abriu. Nada foi enviado.")
             if legenda and a.js(JS_LEGENDA):
-                a.cmd("Input.insertText", {"text": legenda})
+                a.inserir_texto(legenda)
                 time.sleep(0.4)
                 env = json.loads(a.js(JS_ICONE % json.dumps("wds-ic-send-filled")) or json.dumps(env))
             _clicar(a, env["x"], env["y"])
@@ -281,10 +302,16 @@ def enviar(nome, texto):
             if not a.js(JS_CAIXA):
                 raise WhatsAppErro("caixa de mensagem não encontrada")
             achados = [alvo]
-            a.cmd("Input.insertText", {"text": texto})
+            a.inserir_texto(texto)
             time.sleep(0.4)
             a.enter()
             time.sleep(0.8)
+            if a.js(JS_CAIXA_CHEIA):          # o Enter por script (Safari) pode ser ignorado pelo site: clica no botao Enviar
+                env = a.js(JS_BOTAO_ENVIAR)
+                if env:
+                    env = json.loads(env)
+                    a.clicar(env["x"], env["y"])
+                    time.sleep(0.8)
             return achados[0]
         finally:
             a.__exit__()

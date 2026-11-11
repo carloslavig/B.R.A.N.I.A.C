@@ -5,7 +5,7 @@ import html, urllib.parse, json, mimetypes, re, socket, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from . import __version__
 from pathlib import Path
-from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp, escuta, habilidades, projetos, modulos)
+from . import (paths, guarda, email_diario, assistente, transcricao, voz_nuvem, autostart, banco, dependencias, hardware, ias_web, navegador, nomes, onboarding, perfil, permissoes, provedores, remoto, reuniao, cofre, whatsapp, escuta, habilidades, projetos, modulos, plataforma)
 
 UI = Path(__file__).parent / "ui"
 PORTA_PADRAO = 8777
@@ -109,9 +109,12 @@ def acao(caminho, d):
     if caminho == "/api/ollama/instalar":
         def tarefa(prog):
             import os, tempfile
+            if plataforma.MAC:     # no Mac o Ollama e um .app: abre a pagina oficial e a pessoa arrasta para Aplicativos
+                plataforma.abrir_arquivo("https://ollama.com/download/mac")
+                return prog(100, "Página oficial do Ollama aberta: baixe, arraste para Aplicativos, abra uma vez e volte aqui.")
             destino = os.path.join(tempfile.gettempdir(), "OllamaSetup.exe")
             dependencias.baixar_instalador_ollama(destino, lambda p, t: prog(p, t))
-            os.startfile(destino)          # o instalador oficial abre; quem confirma e a propria pessoa
+            plataforma.abrir_arquivo(destino)          # o instalador oficial abre; quem confirma e a propria pessoa
             prog(100, "Instalador do Ollama aberto: conclua a instalação e volte aqui.")
         _rodar("ollama_instalador", tarefa)
         return {}

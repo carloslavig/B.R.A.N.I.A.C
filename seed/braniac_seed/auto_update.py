@@ -5,7 +5,7 @@ A cada ALGUMAS HORAS (e na abertura) consulta a ultima release de carloslavig/B.
 baixa o instalador (so de github.com/carloslavig), confere o SHA-256 que a release publica ('SHA256: <hex>' nas notas) e roda em segundo plano
 (/S: sem janela; instala por usuario e mantem as configuracoes). Sem hash na release, ou hash diferente: NAO instala.
 A pessoa desliga com `atualizacao_automatica: false` no perfil (ou falando 'desligar atualizacao automatica'). Se a instalacao falhar, a versao atual segue instalada."""
-import hashlib, json, os, re, subprocess, tempfile, threading, time, urllib.request
+import hashlib, json, os, re, subprocess, sys, tempfile, threading, time, urllib.request
 from pathlib import Path
 from . import __version__, perfil
 
@@ -72,12 +72,15 @@ def baixar_e_conferir(info, baixar=None):
 
 def instalar(arq):
     """Roda o instalador em segundo plano (o proprio instalador fecha o app antigo e reabre o novo)."""
-    subprocess.Popen([str(arq), "/S", "/UPDATE"], creationflags=0x08000000 | getattr(subprocess, "DETACHED_PROCESS", 0),
+    subprocess.Popen([str(arq), "/S", "/UPDATE"], creationflags=0x08000000 | getattr(subprocess, "DETACHED_PROCESS", 0) if sys.platform == "win32" else 0,
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def checar_e_atualizar(baixar=None, executar=None):
     """Um ciclo completo. Devolve texto curto do que aconteceu."""
+    if sys.platform != "win32" and baixar is None:     # as releases so trazem o instalador do Windows (NSIS); no Mac atualiza-se trocando o app
+        _ESTADO["mensagem"] = "A atualização automática por enquanto só existe no Windows; no Mac, baixe o app novo."
+        return _ESTADO["mensagem"]
     try:
         info = procurar(baixar)
         if not info:

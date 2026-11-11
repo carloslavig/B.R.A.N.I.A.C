@@ -7,7 +7,7 @@ pessoa liberou. Acao perigosa (apagar, escrever, rodar comando, enviar WhatsApp)
 O resultado de uma ferramenta vai para a PESSOA e nunca volta para a IA (nada escondido em arquivo ou mensagem consegue dar ordens).
 Modo jogo: com o assistente SUSPENSO ele nao responde nem age (nem pelo Telegram) ate a pessoa retomar."""
 import base64, json, re, secrets, threading, time
-from . import assinatura, auto_update, habilidades, modulos, llm, memoria_usuario, orquestrador, perfil, permissoes, pc_tools, projetos
+from . import assinatura, auto_update, habilidades, modulos, llm, memoria_usuario, orquestrador, perfil, permissoes, plataforma, pc_tools, projetos
 
 HISTORICO = []                 # ultimas trocas desta sessao: [("eu"|"ia", texto)]
 PENDENTES = {}                 # id -> {"acao", "args", "ate"}
@@ -36,7 +36,7 @@ def sistema():
     p = perfil.carregar()
     nome = _nome()
     cat = pc_tools.catalogo_para_ia()
-    return (f"Você é {nome}, o assistente pessoal de IA de {p.get('nome_pessoa') or 'seu dono'}, conversando por voz e texto no computador dele (Windows). "
+    return (f"Você é {nome}, o assistente pessoal de IA de {p.get('nome_pessoa') or 'seu dono'}, conversando por voz e texto no computador dele (" + plataforma.SO + "). "
             "Fale em português do Brasil, de forma natural, educada e CURTA (1 a 3 frases quando for conversa). Nunca invente fatos, resultados ou o que aconteceu no PC: "
             "se não souber, diga que não sabe. Converta o pedido em UMA ação quando for o caso. Responda SOMENTE um JSON: "
             '{"acao": "<nome da ferramenta ou nenhuma>", "args": {...}, "resposta": "frase curta para a pessoa"}. '

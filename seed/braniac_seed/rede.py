@@ -9,7 +9,7 @@ de acesso granular, nao treinar uma rede neural):
   SEM ferramentas e SEM dados da pessoa; mensagem recebida e so texto de outra IA, nunca ordem (nao executa nada, nao abre arquivo).
 - REDE: o servico escuta SO no IP da Radmin (26.x.x.x) ou em BRANIAC_REDE_IP; sem Radmin, nao abre porta nenhuma. Limite de 20 mensagens por minuto por Braniac.
 Este modulo so usa a biblioteca padrao; recebe do Braniac hospedeiro o nome do assistente, a funcao que responde e a versao."""
-import base64, hashlib, hmac, json, os, re, secrets, socket, subprocess, threading, time, urllib.request
+import base64, hashlib, hmac, json, os, re, secrets, socket, subprocess, sys, threading, time, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -35,8 +35,12 @@ def ip_radmin():
     except OSError:
         pass
     try:
-        saida = subprocess.run(["ipconfig"], capture_output=True, text=True, encoding="cp850", errors="replace", timeout=10, creationflags=0x08000000).stdout
-        achados += _ips_do_ipconfig(saida)
+        if sys.platform == "win32":
+            saida = subprocess.run(["ipconfig"], capture_output=True, text=True, encoding="cp850", errors="replace", timeout=10, creationflags=0x08000000).stdout
+            achados += _ips_do_ipconfig(saida)
+        else:     # a Radmin VPN e so do Windows; no macOS/Linux so entra se houver uma VPN 26.x (ifconfig) ou o IP forcado por BRANIAC_REDE_IP
+            saida = subprocess.run(["ifconfig"], capture_output=True, text=True, errors="replace", timeout=10).stdout
+            achados += [m.group(1) for l in saida.splitlines() if l.strip().startswith("inet ") for m in [re.search(r"\b(26\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", l)] if m]
     except (OSError, subprocess.SubprocessError):
         pass
     return next((ip for ip in achados if ip.startswith("26.") and not ip.endswith(".0.0.1")), None)
