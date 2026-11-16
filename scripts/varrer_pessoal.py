@@ -22,7 +22,7 @@ GENERICOS = {
 # numero de exemplo em teste: 4 digitos iguais seguidos ou a sequencia 5432
 FICTICIO = re.compile(r"(\d)\1{3}|5432")
 # listas locais (fora do git) que guardam justamente os nomes
-LISTAS_LOCAIS = {"termos-pessoais.txt", "dados-padrao.json", "termos-export.txt", "trocas-pessoais.json", "fora-do-publico.txt"}
+LISTAS_LOCAIS = {"termos-pessoais.txt", "extras-publico.txt", "dados-padrao.json", "termos-export.txt", "trocas-pessoais.json", "fora-do-publico.txt"}
 # trechos que podem aparecer em codigo publico sem ser dado de ninguem
 LIBERADO = ("varredura: ok", "noreply@", "@acme.", "@exemplo.", "@empresa.", "@s.whatsapp.net", "Monte Carlo", "rh@", "x@", "maria@", "@x.com", "@b.com", "@loja.", "@braniac.local", "@linkedin.com", "@sebrae.", "git@github.com","github.com/carloslavig", "@types/")
 

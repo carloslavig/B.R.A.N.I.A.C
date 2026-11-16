@@ -30,3 +30,9 @@ scripts/trocas-pessoais.json
 scripts/fora-do-publico.txt
 scripts/termos-export.txt
 scripts/dados-padrao.json
+scripts/extras-publico.txt
+
+# instalador completo: pacote montado pelo build-completo.ps1
+app-completo/pacote/
+app-completo/target/
+app-completo/gen/

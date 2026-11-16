@@ -1,0 +1,8 @@
+# o que o Braniac precisa para ligar e ouvir o "Jarvis" (conferido numa VM limpa em 16/11/2026); o resto e opcional e so e pedido quando usado
+requests
+websocket-client
+numpy
+cryptography
+pillow
+psutil
+sounddevice

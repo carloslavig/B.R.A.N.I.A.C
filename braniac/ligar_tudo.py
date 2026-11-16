@@ -7,7 +7,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 PY = sys.executable.replace("pythonw.exe", "python.exe")
 ABAS = {"web.whatsapp.com": "https://web.whatsapp.com/",
-        "chatgpt.com": "https://chatgpt.com/g/g-p-seu_projeto-reunioes-das-ias/project",
+        "chatgpt.com": "https://chatgpt.com/g/g-p-SEU_PROJETO-reunioes-das-ias/project",
         "gemini.google.com": "https://gemini.google.com/app", "grok.com": "https://grok.com/",
         "chat.deepseek.com": "https://chat.deepseek.com/", "kimi.com": "https://www.kimi.com/", "meta.ai": "https://www.meta.ai/"}
 SEM_JANELA = 0x08000000

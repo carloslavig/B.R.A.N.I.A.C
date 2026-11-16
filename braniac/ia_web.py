@@ -20,7 +20,7 @@ SITES = {
     "chatgpt": {
         "dominio": "chatgpt.com", "nova": "https://chatgpt.com/",
         # as REUNIOES do conselho de IAs ficam todas neste projeto do ChatGPT (Dono, 06/10), para nao misturar com o resto do historico
-        "projeto": "https://chatgpt.com/g/g-p-seu_projeto-reunioes-das-ias/project",
+        "projeto": "https://chatgpt.com/g/g-p-SEU_PROJETO-reunioes-das-ias/project",
         "entrada": "#prompt-textarea, div.ProseMirror[contenteditable=true]", "enviar": '[data-testid="send-button"], button[aria-label*="Enviar"]',
         "resposta": '[data-message-author-role="assistant"], [data-markdown-text-style="assistant-message"]',
         "parar": "!!document.querySelector('[data-testid=\"stop-button\"]')",

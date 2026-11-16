@@ -3,23 +3,32 @@
 Assistente de IA pessoal para Windows: voz, memória local e acesso ao PC **só com a sua permissão**.
 Tudo roda no seu computador — nada seu é enviado para este repositório.
 
-- Arquitetura e decisões: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
-- Backend da instalação (permissões, cofre de chaves, hardware, nome/voz, reunião das IAs, atualizador): [`seed/`](seed/)
-- App desktop (Tauri, uma janela só): [`app/`](app/)
-- **Braniac completo** (o mesmo núcleo do Braniac original: Jarvis, prédio/escritório 3D, B2, aba Vozes, agentes, NexoDev, Fornalha...): [`braniac/`](braniac/).
-  Essa cópia não tem nenhum dado pessoal. Ela é gerada por `scripts/exportar.py` e conferida por `scripts/varrer_pessoal.py`.
-  "Dono", "Parceira", "Mãe" e "Pai" são papéis: troque pelos nomes da sua casa. Por enquanto o instalador ainda usa o `seed/`, e a troca está no plano [docs/SEED-REAL.md](docs/SEED-REAL.md).
+## Instalar (Windows)
 
-### Rodar o Braniac completo (avançado)
+Baixe o `BRANIAC_<versão>_x64-setup.exe` em [Releases](https://github.com/carloslavig/B.R.A.N.I.A.C/releases/latest) e abra. Ele instala no seu usuário, sem pedir administrador, e já traz tudo: o Braniac completo, a janela e o Python. Você não precisa instalar nada antes.
+
+- **É o Braniac completo**, igual ao original: Jarvis, Alma, painel novo, prédio/escritório 3D, aba Vozes, agentes, NexoDev, Fornalha, Quantix...
+- **O prédio começa com um andar** (Térreo, Escritório e Cobertura). Os outros você constrói pelo botão **＋ Construir andar**, conforme for usando.
+- **Cada pessoa usa as próprias contas.** O WhatsApp e as IAs (ChatGPT, Gemini...) abrem no **Chrome do Braniac**, e você entra com a sua conta só uma vez. O Google Chrome precisa estar instalado. As chaves de IA são colocadas em **Configurar**.
+- "Dono", "Parceira", "Mãe" e "Pai" são papéis: troque pelos nomes da sua casa.
+- Nada do Braniac de outra pessoa vem junto. Seus dados ficam só no seu PC (`pacote\braniac\data` dentro da instalação).
+
+## O que tem aqui
+
+- [`braniac/`](braniac/): o Braniac completo, sem nenhum dado pessoal. Ele é gerado por `scripts/exportar.py` e conferido por `scripts/varrer_pessoal.py`.
+- [`local-ia/`](local-ia/) e [`monitor/`](monitor/): a leitura do WhatsApp e o iniciador do Chrome do Braniac.
+- [`app-completo/`](app-completo/): a janela (Tauri 2) do instalador completo.
+- [`seed/`](seed/) e [`app/`](app/): o instalador antigo (versão 1.x), mantido para o macOS. Plano da troca: [docs/SEED-REAL.md](docs/SEED-REAL.md).
+
+### Rodar sem instalador (avançado)
 
 ```
-pip install requests websocket-client numpy cryptography pillow psutil
-python -m braniac.ligar_tudo --sem-interface
+pip install -r braniac/requirements.txt
+python braniac/ligar_tudo.py --sem-interface
 ```
 
 Rode na pasta deste repositório e depois abra http://127.0.0.1:8765/b2. As chaves de IA vão em variáveis de ambiente ou em `braniac/.env`, que nunca vai para o git.
 Os recursos opcionais só pedem as bibliotecas deles quando são usados: transcrição (`faster-whisper`), vozes locais (`kokoro-onnx`, `piper`, `sherpa-onnx`), Gmail (`google-api-python-client`) e conexão direta (`aiortc`).
-A leitura do WhatsApp pelo navegador ainda não está aqui.
 
 ### Habilidades de terceiros
 
@@ -33,10 +42,10 @@ Cada uma segue a licença do próprio autor.
 Requisitos de quem constrói: Python 3.12, Node 20+, Rust (stable, msvc) e Visual Studio Build Tools.
 
 ```
-.\scripts\build.ps1
+.\scripts\build-completo.ps1
 ```
 
-Saída: `app\src-tauri\target\release\bundle\nsis\BRANIAC_<versão>_x64-setup.exe` (instala por usuário, sem administrador).
+Saída: `app-completo\target\release\bundle\nsis\BRANIAC_<versão>_x64-setup.exe`. O instalador antigo (seed) continua em `.\scripts\build.ps1`.
 
 ## Testes
 

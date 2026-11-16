@@ -85,7 +85,16 @@ def main(argv):
     padrao_arq = AQUI / "dados-padrao.json"   # local: {"empresa_mkt/equipe.json": ["clientes"], ...}
     padrao = json.loads(padrao_arq.read_text(encoding="utf-8")) if padrao_arq.exists() else {}
     p = exportar_padrao(argv[0], argv[1], padrao, montar_regra(trocas) if trocas else (lambda t: t))
-    print(f"{n} arquivos exportados para {argv[1]} ({len(trocas)} trocas, {len(fora)} exclusoes, {p} configuracoes iniciais).")
+    # pecas que o Braniac usa e que moram FORA da pasta dele (ex.: local-ia/wpp_local.py, monitor/start-chrome-debug.bat):
+    # vao para o lado da copia, no mesmo lugar relativo, com as mesmas trocas (lista local scripts/extras-publico.txt)
+    extras_arq = AQUI / "extras-publico.txt"
+    extras = [l.strip() for l in extras_arq.read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")] if extras_arq.exists() else []
+    trocar = montar_regra(trocas) if trocas else (lambda t: t)
+    for rel in extras:
+        orig, alvo = pathlib.Path(argv[0]).resolve().parent / rel, pathlib.Path(argv[1]).resolve().parent / rel
+        alvo.parent.mkdir(parents=True, exist_ok=True)
+        alvo.write_text(trocar(orig.read_text(encoding="utf-8", errors="surrogateescape")), encoding="utf-8", errors="surrogateescape")
+    print(f"{n} arquivos exportados para {argv[1]} ({len(trocas)} trocas, {len(fora)} exclusoes, {p} configuracoes iniciais, {len(extras)} extras).")
     return 0
 
 
