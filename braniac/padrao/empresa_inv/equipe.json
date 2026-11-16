@@ -1,0 +1,108 @@
+{
+ "empresa": "Quantix",
+ "origem": "conselho de IAs 01/11/2026 (ChatGPT escolheu Quantix; equipe sintetizada de ChatGPT, Gemini, Grok e DeepSeek)",
+ "aviso": "Simulação. Não é consultoria financeira. Sem garantia de retorno.",
+ "agentes": [
+  {
+   "nome": "Ícaro",
+   "papel": "Macro e regime de mercado",
+   "area": "macro",
+   "sala": "Sala Macro & Risco",
+   "modelo": "local",
+   "instrucao": "Monitora juros, inflação, câmbio e define risk-on/off."
+  },
+  {
+   "nome": "Scopo",
+   "papel": "Scanner de oportunidades",
+   "area": "scanner",
+   "sala": "Mesa de Operações",
+   "modelo": "local",
+   "instrucao": "Rastreia volume, volatilidade e setups."
+  },
+  {
+   "nome": "Lastro",
+   "papel": "Analista fundamentalista (Holding)",
+   "area": "fundamentalista",
+   "sala": "Sala Fundamentalista",
+   "modelo": "local",
+   "instrucao": "Balanços, valuation e dividendos para longo prazo."
+  },
+  {
+   "nome": "Tecto",
+   "papel": "Analista técnico (Swing/Day)",
+   "area": "tecnico",
+   "sala": "Mesa de Operações",
+   "modelo": "local",
+   "instrucao": "Price action, suportes/resistências, entrada e saída."
+  },
+  {
+   "nome": "Vigil",
+   "papel": "Risco e circuit breaker",
+   "area": "risco",
+   "sala": "Sala Macro & Risco",
+   "modelo": "local",
+   "instrucao": "Limites, drawdown e exposição; pode vetar."
+  },
+  {
+   "nome": "Sigma",
+   "papel": "Dimensionamento de posição",
+   "area": "sizing",
+   "sala": "Mesa de Operações",
+   "modelo": "local",
+   "instrucao": "Quantidade e capital por posição, por perfil."
+  },
+  {
+   "nome": "Papel",
+   "papel": "Execução em simulação",
+   "area": "execucao",
+   "sala": "Mesa de Operações",
+   "modelo": "local",
+   "instrucao": "Executa só em paper trading; real exige OK 2."
+  },
+  {
+   "nome": "Cronos",
+   "papel": "Diário e pós-mortem",
+   "area": "diario",
+   "sala": "Sala de Auditoria",
+   "modelo": "local",
+   "instrucao": "Registra cada operação, métricas e lições."
+  },
+  {
+   "nome": "Guarda",
+   "papel": "Compliance, disciplina e relatórios",
+   "area": "compliance",
+   "sala": "Sala Macro & Risco",
+   "modelo": "local",
+   "instrucao": "Gate pré-trade, OKs do dono e aviso legal."
+  }
+ ],
+ "perfis": {
+  "daytrade": {
+   "risco_trade": 0.25,
+   "perda_dia": 1.0,
+   "breaker": 3.0,
+   "breaker_janela": "semana",
+   "exposicao": 10.0,
+   "rr_min": 1.5
+  },
+  "swing": {
+   "risco_trade": 0.5,
+   "perda_dia": 1.0,
+   "breaker": 5.0,
+   "breaker_janela": "mes",
+   "exposicao": 10.0,
+   "rr_min": 1.5
+  },
+  "holding": {
+   "risco_trade": 0.75,
+   "perda_dia": null,
+   "breaker": 10.0,
+   "breaker_janela": "trimestre",
+   "exposicao": 5.0,
+   "rr_min": 0
+  }
+ },
+ "limites": {
+  "paper_dias_min": 30
+ }
+}

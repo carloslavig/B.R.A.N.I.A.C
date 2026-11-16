@@ -1,0 +1,24 @@
+.env
+data/
+__pycache__/
+*.pyc
+graphify-out/
+modelos/
+.pytest_cache/
+*.tmp
+*.log
+wpp_baileys/node_modules/
+data/wpp_baileys_auth/
+
+# Telegram da ex (Carlos, 05/11: nao vai para o GitHub)
+telegram_ex.py
+tests/test_telegram_ex.py
+
+# animacoes (kit instalado por npm --ignore-scripts)
+kit/node_modules/
+kit/vendor/
+kit/models/
+kit/.venv/
+
+# chave privada do BRANIAC LINK (nunca versionar)
+dados-link/

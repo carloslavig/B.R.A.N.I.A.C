@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acesso remoto — B.R.A.N.I.A.C</title>
+<style>
+body{margin:0;background:#050d14;color:#cfeffd;font:16px/1.5 system-ui,Segoe UI,sans-serif;display:grid;place-items:center;min-height:100vh}
+main{width:min(520px,92vw);background:#0a1a26;border:1px solid #0e4a63;border-radius:14px;padding:28px}
+h1{margin:0 0 4px;font-size:22px;color:#2fe3ff}p{color:#8fb7c9;margin:6px 0 18px}
+.codigo{font:700 30px/1.2 ui-monospace,Consolas,monospace;letter-spacing:2px;text-align:center;background:#06121b;border:1px dashed #2fe3ff;border-radius:10px;padding:18px;user-select:all}
+button{background:#2fe3ff;color:#031018;border:0;border-radius:8px;padding:11px 16px;font-weight:700;cursor:pointer;margin:12px 8px 0 0}
+button.sec{background:#12324a;color:#cfeffd}.est{margin-top:16px;font-size:14px}.ok{color:#5dffb0}.no{color:#ff8b8b}
+</style></head><body><main>
+<h1>Acesso remoto (celular)</h1>
+<p>Instale o app B.R.A.N.I.A.C no celular e digite este código nele. A conexão é direta entre o celular e este notebook (P2P).</p>
+<div class="codigo" id="cod">…</div>
+<div><button id="lig">Ligar</button><button class="sec" id="novo">Gerar código novo</button></div>
+<div class="est" id="est"></div>
+<p style="font-size:13px;margin-top:20px">Quem tiver o código controla o Braniac como você. Se perder o celular, desligue aqui ou gere um código novo.</p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+async function api(p,post){const r=await fetch(p,post?{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}:{});return r.json()}
+function pintar(e){$('#cod').textContent=e.codigo;$('#lig').textContent=e.ligado?'Desligar':'Ligar';
+ $('#est').innerHTML=(e.ligado?'<span class="ok">● Ligado</span>':'<span class="no">● Desligado</span>')+' — '+(e.conectado?'<span class="ok">celular conectado</span>':'aguardando o celular')+(e.ultimo?' (última conexão '+e.ultimo+')':'')+(e.erro?'<br><span class="no">'+e.erro+'</span>':'')+((e.tentativas||[]).length?'<br><small>Últimas tentativas:<br>'+e.tentativas.join('<br>')+'</small>':'')}
+$('#lig').onclick=async()=>pintar(await api(window._lig?'/api/remoto/desligar':'/api/remoto/ligar',1));
+$('#novo').onclick=async()=>{if(confirm('O celular pareado antes deixa de conectar. Gerar código novo?'))pintar(await api('/api/remoto/codigo',1))};
+async function tick(){try{const e=await api('/api/remoto');window._lig=e.ligado;pintar(e)}catch(x){}}
+tick();setInterval(tick,3000);
+</script></body></html>

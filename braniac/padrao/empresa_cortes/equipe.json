@@ -1,0 +1,49 @@
+{
+ "empresa": "Claquete",
+ "origem": "pedido do Dono 03/11/2026 (5o andar, linha de cortes; Fornalha fica so com clientes). Nomes dos agentes: proposta do Claude, a confirmar.",
+ "limites": {
+  "passos_dia": 12,
+  "pedidos_dia": 3,
+  "duracao_min_s": 20,
+  "duracao_max_s": 45
+ },
+ "direitos_ok": false,
+ "gameplay_ok": true,
+ "gameplay_padrao": "C:/Users/usuario/Projetos/Agente/braniac/data/empresa_cortes/fontes/gameplay_subway.mp4",
+ "tiktok_horarios": [
+  "09:00",
+  "20:00"
+ ],
+ "youtube_ritmo": null,
+ "agentes": [
+  {
+   "nome": "Mina",
+   "papel": "Garimpo de falas",
+   "sala": "Garimpo",
+   "instrucao": "Você é a Mina: acha entrevistas e podcasts, transcreve com o Whisper local e escolhe o trecho marcante e curto, sempre citando a fonte."
+  },
+  {
+   "nome": "Tesoura",
+   "papel": "Corte e montagem 9:16",
+   "sala": "Ilha de edição",
+   "instrucao": "Você é a Tesoura: monta o vertical com a fala em cima e a gameplay embaixo."
+  },
+  {
+   "nome": "Rótulo",
+   "papel": "Legendas",
+   "sala": "Ilha de edição",
+   "instrucao": "Você é o Rótulo: legenda automática e crédito da fonte no fim do vídeo."
+  },
+  {
+   "nome": "Lupa",
+   "papel": "Revisão",
+   "sala": "Revisão",
+   "instrucao": "Você é a Lupa: confere duração, formato 1080x1920, áudio e legenda antes de liberar."
+  }
+ ],
+ "direitos_nota": "Dono 03/11/2026: trechos curtos do Streamer Manoel, fonte citada",
+ "gameplay_nota": "Dono 03/11/2026: canal OrbitalNCG feito para uso das gameplays sem copyright",
+ "busca_automatica": false,
+ "busca": {},
+ "tiktok_auto": true
+}

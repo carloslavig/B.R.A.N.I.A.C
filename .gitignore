@@ -23,3 +23,10 @@ app/src-tauri/gen/
 
 # CLIs do ArtCraft (~250 MB): o build.ps1 copia da instalacao do desenvolvedor
 app/src-tauri/artcraft/
+
+# lista local de nomes do dono (a propria lista e dado pessoal)
+scripts/termos-pessoais.txt
+scripts/trocas-pessoais.json
+scripts/fora-do-publico.txt
+scripts/termos-export.txt
+scripts/dados-padrao.json

@@ -1,0 +1,16 @@
+[package]
+name = "fcc"
+version = "0.1.0"
+edition = "2021"
+description = "Ponte Anthropic Messages -> provedores gratis (OpenAI chat) do Braniac, para o Claude Code rodar com as chaves do providers.json. Inspirada no free-claude-code (AGPL), reescrita do zero."
+
+[dependencies]
+tiny_http = "0.12"
+ureq = { version = "2", features = ["json"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1

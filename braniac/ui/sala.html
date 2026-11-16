@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sala · Jarvis e A.L.M.A.</title>
+<style>
+  :root{--fundo:#05070d;--painel:#0d1322;--linha:#1d2740;--texto:#eef1f8;--mudo:#8c9ab8;--jarvis:#ffb21a;--alma:#ff8fb1;--ok:#3ddc97}
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{background:radial-gradient(900px 500px at 20% 0%,#16122a 0%,var(--fundo) 60%);color:var(--texto);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--linha);flex-wrap:wrap}
+  header h1{font-size:17px;margin:0;letter-spacing:.04em} header .sub{color:var(--mudo);font-size:12.5px}
+  header .acoes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  button{background:#4cc3ff;color:#04101c;border:0;border-radius:10px;padding:8px 14px;font:600 13px inherit;cursor:pointer}
+  button.sec{background:transparent;color:var(--texto);border:1px solid var(--linha)} button.on{background:#ff6b6b;color:#2a0606;border-color:transparent}
+  #chat{flex:1;overflow:auto;padding:18px 22px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:72%;padding:10px 14px;border-radius:16px;border:1px solid var(--linha);background:var(--painel);white-space:pre-wrap;word-wrap:break-word}
+  .msg b{display:block;font-size:12px;letter-spacing:.06em;margin-bottom:2px}
+  .msg.Jarvis{align-self:flex-start;border-left:3px solid var(--jarvis)} .msg.Jarvis b{color:var(--jarvis)}
+  .msg.ALMA{align-self:flex-start;border-left:3px solid var(--alma);background:#1a1223} .msg.ALMA b{color:var(--alma)}
+  .msg.Dono{align-self:flex-end;background:#12335a;border-color:#1d4f86} .msg.Dono b{color:#9ecbff}
+  .aviso{align-self:center;color:var(--mudo);font-size:12.5px;border:1px dashed var(--linha);border-radius:10px;padding:4px 12px}
+  .meta{color:var(--mudo);font-size:11px;margin-top:4px}
+  footer{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--linha)}
+  textarea{flex:1;background:#0a0f1c;border:1px solid var(--linha);color:var(--texto);border-radius:12px;padding:10px 12px;font:inherit;resize:none}
+  #barra{padding:6px 20px;color:var(--mudo);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .ponto{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mudo);margin-right:6px} .ponto.vivo{background:var(--ok);animation:p 1s infinite} @keyframes p{50%{opacity:.4}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🏠 Sala · <span style="color:var(--jarvis)">Jarvis</span> e <span style="color:var(--alma)">A.L.M.A.</span></h1>
+  <div class="sub">Conversa entre os agentes, 100% no seu PC (modelo local). Você assiste e pode falar a qualquer hora.</div></div>
+  <div class="acoes">
+    <button class="sec" id="bIniciar">💬 Deixar conversarem</button>
+    <button class="sec" id="bPropor">🛠 Propor melhoria</button>
+    <button class="sec" id="bAlma">Silenciar A.L.M.A.</button>
+    <button class="sec" id="bJarvis">Silenciar Jarvis</button>
+    <button class="sec" id="bPausa">⏸ Pausar</button>
+    <button class="sec" id="bLimpar">🧹 Limpar</button>
+    <button class="sec" onclick="location.href='/'">← Interface</button>
+  </div>
+</header>
+<div id="barra"><span><i class="ponto" id="ponto"></i><span id="status">…</span></span><span id="falas"></span><span id="props"></span></div>
+<div id="chat"></div>
+<footer>
+  <textarea id="texto" rows="1" placeholder="Escreva para a A.L.M.A. e o Jarvis (Enter envia)…"></textarea>
+  <button id="enviar">Enviar</button>
+</footer>
+<script>
+const $ = s => document.querySelector(s);
+let ultimo = 0, est = {};
+const nomeClasse = a => a === 'A.L.M.A.' ? 'ALMA' : a;
+async function api(corpo) { const r = await fetch('/api/sala', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }); return r.json(); }
+function bolha(m) {
+  if (m.tipo !== 'fala') { const d = document.createElement('div'); d.className = 'aviso'; d.textContent = m.texto; return d; }
+  const d = document.createElement('div'); d.className = 'msg ' + nomeClasse(m.agente);
+  const b = document.createElement('b'); b.textContent = m.agente; d.append(b, document.createTextNode(m.texto));
+  const t = document.createElement('div'); t.className = 'meta'; t.textContent = m.ts.slice(11, 16); d.append(t); return d;
+}
+async function atualizar() {
+  try {
+    const r = await (await fetch('/api/sala?depois=' + ultimo)).json(); est = r.estado;
+    const chat = $('#chat'), perto = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 120;
+    r.mensagens.forEach(m => { chat.append(bolha(m)); ultimo = Math.max(ultimo, m.id); });
+    if (r.mensagens.length && perto) chat.scrollTop = 1e9;
+    $('#ponto').className = 'ponto' + (est.ocupada ? ' vivo' : ''); $('#status').textContent = est.pausada ? 'pausada' : est.ocupada ? 'conversando…' : 'em silêncio (aguardando)';
+    $('#falas').textContent = `falas hoje: ${est.falas_hoje}/${est.limite_diario}`; $('#props').textContent = est.propostas.length ? `propostas: ${est.propostas.length} (data/propostas)` : '';
+    $('#bPausa').textContent = est.pausada ? '▶ Retomar' : '⏸ Pausar'; $('#bPausa').classList.toggle('on', est.pausada);
+    $('#bAlma').classList.toggle('on', est.silenciados.includes('A.L.M.A.')); $('#bJarvis').classList.toggle('on', est.silenciados.includes('Jarvis'));
+    if (est.erro) $('#status').textContent += ' · ' + est.erro;
+  } catch (e) { $('#status').textContent = 'sem conexão com o Braniac'; }
+}
+$('#enviar').onclick = async () => { const t = $('#texto').value.trim(); if (!t) return; $('#texto').value = ''; await api({ acao: 'enviar', texto: t }); atualizar(); };
+$('#texto').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#enviar').click(); } });
+$('#bIniciar').onclick = async () => { const tema = prompt('Sobre o que eles devem conversar? (vazio = como cuidar de você e da família hoje)') ; if (tema === null) return; await api({ acao: 'iniciar', tema }); atualizar(); };
+$('#bPropor').onclick = async () => { const tema = prompt('Que melhoria os agentes devem propor? (só vira texto em data/propostas; nada é aplicado sem a sua aprovação)'); if (!tema) return; await api({ acao: 'propor', tema }); };
+$('#bPausa').onclick = async () => { await api({ acao: 'pausar', ligado: !est.pausada }); atualizar(); };
+$('#bAlma').onclick = async () => { await api({ acao: 'silenciar', agente: 'A.L.M.A.', ligado: !est.silenciados.includes('A.L.M.A.') }); atualizar(); };
+$('#bJarvis').onclick = async () => { await api({ acao: 'silenciar', agente: 'Jarvis', ligado: !est.silenciados.includes('Jarvis') }); atualizar(); };
+$('#bLimpar').onclick = async () => { if (!confirm('Apagar o histórico da sala? (as propostas ficam)')) return; await api({ acao: 'limpar' }); ultimo = 0; $('#chat').replaceChildren(); atualizar(); };
+atualizar(); setInterval(atualizar, 2000);
+</script>
+</body>
+</html>

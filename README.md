@@ -6,6 +6,27 @@ Tudo roda no seu computador — nada seu é enviado para este repositório.
 - Arquitetura e decisões: [docs/ARQUITETURA.md](docs/ARQUITETURA.md)
 - Backend da instalação (permissões, cofre de chaves, hardware, nome/voz, reunião das IAs, atualizador): [`seed/`](seed/)
 - App desktop (Tauri, uma janela só): [`app/`](app/)
+- **Braniac completo** (o mesmo núcleo do Braniac original: Jarvis, prédio/escritório 3D, B2, aba Vozes, agentes, NexoDev, Fornalha...): [`braniac/`](braniac/).
+  Essa cópia não tem nenhum dado pessoal. Ela é gerada por `scripts/exportar.py` e conferida por `scripts/varrer_pessoal.py`.
+  "Dono", "Parceira", "Mãe" e "Pai" são papéis: troque pelos nomes da sua casa. Por enquanto o instalador ainda usa o `seed/`, e a troca está no plano [docs/SEED-REAL.md](docs/SEED-REAL.md).
+
+### Rodar o Braniac completo (avançado)
+
+```
+pip install requests websocket-client numpy cryptography pillow psutil
+python -m braniac.ligar_tudo --sem-interface
+```
+
+Rode na pasta deste repositório e depois abra http://127.0.0.1:8765/b2. As chaves de IA vão em variáveis de ambiente ou em `braniac/.env`, que nunca vai para o git.
+Os recursos opcionais só pedem as bibliotecas deles quando são usados: transcrição (`faster-whisper`), vozes locais (`kokoro-onnx`, `piper`, `sherpa-onnx`), Gmail (`google-api-python-client`) e conexão direta (`aiortc`).
+A leitura do WhatsApp pelo navegador ainda não está aqui.
+
+### Habilidades de terceiros
+
+As habilidades feitas por outros autores (Instagram, day trade, investimentos, Blender) **não vêm neste repositório**.
+Na primeira vez que o painel abre, ele pergunta se você quer instalar e mostra a lista para marcar e desmarcar. Só as marcadas são baixadas, direto do GitHub de cada autor
+(lista em [`braniac/habilidades_terceiros.json`](braniac/habilidades_terceiros.json)). Depois, para instalar mais, use **Habilidades → Habilidades de terceiros**.
+Cada uma segue a licença do próprio autor.
 
 ## Gerar o instalador
 

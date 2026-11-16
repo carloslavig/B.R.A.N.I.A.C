@@ -96,4 +96,4 @@ def test_tick_so_roda_conectado_na_hora_da_pessoa_e_uma_vez_por_dia(ambiente):
 def test_modulo_nao_contem_nada_do_carlos_nem_ia_online():
     import inspect
     fonte = inspect.getsource(E).lower()
-    assert "carlos" not in fonte.replace("do carlos", "") and "janaina" not in fonte and "groq" not in fonte and "gemini" not in fonte and "openai" not in fonte
+    assert "carlos" not in fonte.replace("do carlos", "") and "janaina" not in fonte and "groq" not in fonte and "gemini" not in fonte and "openai" not in fonte  # varredura: ok (confere que o nome NAO aparece)

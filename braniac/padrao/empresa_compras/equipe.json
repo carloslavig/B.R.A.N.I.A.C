@@ -1,0 +1,60 @@
+{
+ "empresa": "Pechincha",
+ "origem": "pedido do Dono 05/11/2026 (6o andar, compras). Nome e equipe definidos pelo Claude; o conselho de IAs pode renomear.",
+ "aviso": "Só pesquisa e recomenda. Nunca compra, nunca paga, nunca preenche cadastro de loja.",
+ "agentes": [
+  {
+   "nome": "Tato",
+   "papel": "Recebe o pedido e o uso real do produto",
+   "area": "pedidos",
+   "sala": "Balcão de Pedidos",
+   "modelo": "local",
+   "instrucao": "Entende o que o Dono quer comprar e para quê (carga, uso, orçamento)."
+  },
+  {
+   "nome": "Sabi",
+   "papel": "Especialista técnico: escolhe o MODELO certo",
+   "area": "tecnico",
+   "sala": "Sala Técnica",
+   "modelo": "gratis",
+   "instrucao": "Pesquisa o que serve para o uso e escolhe até 3 modelos, com o motivo."
+  },
+  {
+   "nome": "Garra",
+   "papel": "Caçador de lojas e ofertas",
+   "area": "lojas",
+   "sala": "Mesa de Busca",
+   "modelo": "gratis",
+   "instrucao": "Acha lojas online que vendem aquele modelo específico."
+  },
+  {
+   "nome": "Visto",
+   "papel": "Verificador: é mesmo aquele modelo?",
+   "area": "verificacao",
+   "sala": "Sala de Conferência",
+   "modelo": "local",
+   "instrucao": "Abre a página e confere marca, modelo e medida antes de aceitar a oferta."
+  },
+  {
+   "nome": "Tostão",
+   "papel": "Comparador de preço",
+   "area": "preco",
+   "sala": "Mesa de Busca",
+   "modelo": "local",
+   "instrucao": "Fica com a oferta confirmada mais barata e guarda as alternativas."
+  },
+  {
+   "nome": "Brisa",
+   "papel": "Relatório e entrega ao Dono",
+   "area": "entrega",
+   "sala": "Balcão de Pedidos",
+   "modelo": "local",
+   "instrucao": "Manda o link primeiro e o motivo depois."
+  }
+ ],
+ "limites": {
+  "passos_dia": 12,
+  "candidatos": 3,
+  "ofertas_por_busca": 5
+ }
+}

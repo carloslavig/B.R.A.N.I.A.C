@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J.A.R.V.I.S · HUD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--c:#2fe3ff;--c2:color-mix(in srgb,var(--c) 70%,#0b3a4a);--c3:color-mix(in srgb,var(--c) 16%,transparent);--fundo:#06131b;--painel:rgba(8,32,44,.72);--txt:#bfefff;--sub:#5fa9bd}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}
+body{background:radial-gradient(ellipse at center,#0b2a38 0%,#071a24 45%,#040d13 100%);color:var(--txt);font:15px/1.35 Rajdhani,"Segoe UI",sans-serif}
+body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(color-mix(in srgb,var(--c) 8%,transparent) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+.palco{position:absolute;inset:0;display:grid;grid-template-columns:minmax(230px,1fr) minmax(320px,1.35fr) minmax(230px,1fr);gap:0 18px;padding:22px 26px 120px}
+.coluna{display:flex;flex-direction:column;justify-content:space-between;gap:10px;z-index:2}
+.p{display:flex;background:var(--painel);border:1px solid color-mix(in srgb,var(--c) 28%,transparent);min-height:92px;position:relative;box-shadow:0 0 18px color-mix(in srgb,var(--c) 6%,transparent) inset}
+.p::after{content:"";position:absolute;top:-1px;left:-1px;width:14px;height:14px;border-top:2px solid var(--c);border-left:2px solid var(--c)}
+.dir .p{flex-direction:row-reverse}.dir .p::after{left:auto;right:-1px;border-left:0;border-right:2px solid var(--c)}
+.num{width:92px;min-width:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid color-mix(in srgb,var(--c) 25%,transparent);background:color-mix(in srgb,var(--c) 5%,transparent)}
+.dir .num{border-right:0;border-left:1px solid color-mix(in srgb,var(--c) 25%,transparent)}
+.num b{font:900 30px Orbitron,sans-serif;color:var(--c);text-shadow:0 0 12px color-mix(in srgb,var(--c) 65%,transparent)}
+.num span{font:600 10px Orbitron,sans-serif;letter-spacing:.04em;color:var(--sub);text-transform:uppercase;margin-top:2px}
+.cont{flex:1;padding:10px 12px;min-width:0;font-size:14px}
+.cont .v{font:700 20px Orbitron,sans-serif;color:var(--c);text-shadow:0 0 8px color-mix(in srgb,var(--c) 40%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cont .s{color:var(--sub);font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.barra{height:6px;background:color-mix(in srgb,var(--c) 12%,transparent);margin-top:8px;overflow:hidden}
+.barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c2),var(--c));box-shadow:0 0 10px var(--c);transition:width .12s}
+.pontos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pontos em{font-style:normal;font-size:12px;padding:1px 7px;border:1px solid color-mix(in srgb,var(--c) 35%,transparent);color:var(--sub)}
+.pontos em.on{color:#04131a;background:var(--c);border-color:var(--c)}
+.centro{position:relative;display:flex;align-items:center;justify-content:center}
+canvas#nucleo{width:100%;max-width:620px;aspect-ratio:1/1}
+.estado{position:absolute;bottom:2%;left:0;right:0;text-align:center}
+.estado b{display:block;font:900 26px Orbitron,sans-serif;letter-spacing:.18em;color:var(--c);text-shadow:0 0 16px color-mix(in srgb,var(--c) 70%,transparent)}
+.estado span{color:var(--sub);letter-spacing:.06em}
+svg#fios{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.rodape{position:absolute;left:0;right:0;bottom:0;height:112px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 24px 14px;background:linear-gradient(transparent,rgba(4,13,19,.92) 35%)}
+.fala{max-width:900px;width:100%;text-align:center;font-size:17px;color:var(--txt);min-height:44px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fala small{color:var(--sub)}
+.botoes{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.botoes button{font:600 13px Orbitron,sans-serif;letter-spacing:.06em;color:var(--c);background:color-mix(in srgb,var(--c) 6%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);padding:8px 16px;cursor:pointer;text-transform:uppercase}
+.botoes button:hover{background:color-mix(in srgb,var(--c) 16%,transparent);box-shadow:0 0 12px color-mix(in srgb,var(--c) 35%,transparent)}
+.botoes button.on{background:var(--c);color:#04131a}
+.marca{position:absolute;top:8px;left:50%;transform:translateX(-50%);font:700 13px Orbitron,sans-serif;letter-spacing:.35em;color:var(--sub);z-index:3}
+@media (max-width:1100px){.palco{grid-template-columns:1fr;padding-bottom:130px}.coluna{display:none}}
+@media (prefers-reduced-motion:reduce){canvas#nucleo{animation:none}}
+</style>
+</head>
+<body>
+<div class="marca">B.R.A.N.I.A.C 1 · J.A.R.V.I.S</div>
+<svg id="fios"></svg>
+<div class="palco">
+  <div class="coluna esq">
+    <div class="p" data-n="1"><div class="num"><b>01</b><span>Voz</span></div><div class="cont"><div class="v" id="p1">—</div><div class="s" id="p1s">microfone</div><div class="barra"><i id="nivel"></i></div></div></div>
+    <div class="p" data-n="2"><div class="num"><b>02</b><span>IAs</span></div><div class="cont"><div class="v" id="p2">—</div><div class="pontos" id="p2s"></div></div></div>
+    <div class="p" data-n="3"><div class="num"><b>03</b><span>Conselho</span></div><div class="cont"><div class="v" id="p3">—</div><div class="pontos" id="p3s"></div></div></div>
+    <div class="p" data-n="4"><div class="num"><b>04</b><span>Autonomia</span></div><div class="cont"><div class="v" id="p4">—</div><div class="s" id="p4s"></div></div></div>
+    <div class="p" data-n="5"><div class="num"><b>05</b><span>Habilid.</span></div><div class="cont"><div class="v" id="p5">—</div><div class="s" id="p5s"></div></div></div>
+  </div>
+  <div class="centro"><canvas id="nucleo" width="900" height="900"></canvas><div class="estado"><b id="est">DORMINDO</b><span id="estSub">diga “Jarvis, tá acordado?”</span></div></div>
+  <div class="coluna dir">
+    <div class="p" data-n="6"><div class="num"><b>06</b><span>Hora</span></div><div class="cont"><div class="v" id="p6">—</div><div class="s" id="p6s"></div></div></div>
+    <div class="p" data-n="7"><div class="num"><b>07</b><span>Ouvi</span></div><div class="cont"><div class="v" id="p7">—</div><div class="s" id="p7s">última frase ouvida</div></div></div>
+    <div class="p" data-n="8"><div class="num"><b>08</b><span>Resposta</span></div><div class="cont"><div class="s" id="p8" style="-webkit-line-clamp:3;color:var(--txt)">—</div></div></div>
+    <div class="p" data-n="9"><div class="num"><b>09</b><span>Projetos</span></div><div class="cont"><div class="v" id="p9">—</div><div class="s" id="p9s"></div></div></div>
+    <div class="p" data-n="10"><div class="num"><b>10</b><span>Sistema</span></div><div class="cont"><div class="v" id="p10">—</div><div class="s" id="p10s"></div><div class="s" id="p10t" style="color:var(--txt)"></div></div></div>
+  </div>
+</div>
+<div class="rodape">
+  <div class="fala" id="fala"><small>Conversa por voz aparece aqui.</small></div>
+  <div class="botoes"><button id="bAcordar">Acordar</button><button id="bDescansar">Descansar</button><button id="bMudo">Silenciar</button><button id="bMic">Microfone</button></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+let RGB='47,227,255', NOME='Jarvis';
+const pontilhado=n=>n.toUpperCase().split('').filter(c=>c!==' ').join('.');
+fetch('/api/b2/aparencia').then(r=>r.json()).then(a=>{NOME=a.nome;const h=a.cor.replace('#','');RGB=[0,2,4].map(i=>parseInt(h.substr(i,2),16)).join(',');
+ document.documentElement.style.setProperty('--c',a.cor);$('.marca').textContent='B.R.A.N.I.A.C 1 · '+pontilhado(a.nome);ESTADOS.dormindo[1]='diga “'+a.nome+', tá acordado?”';setTimeout(fios,50)}).catch(()=>{});
+const D={estado:'dormindo',atividade:'idle',entrada:0,fala:0,historico:[],ultimo:''};
+const V={ent:0,fala:0,giro:0,brilho:.4};
+const cv=$('#nucleo'),g=cv.getContext('2d');
+const ESTADOS={dormindo:['DORMINDO','diga “Jarvis, tá acordado?”'],acordado:['ONLINE','estou ouvindo'],parada:['MICROFONE OFF','ligue o microfone para falar'],ouvindo:['OUVINDO','pode falar'],pensando:['PROCESSANDO','consultando o banco e as IAs'],falando:['FALANDO','']};
+function arco(r,a0,a1,w,cor,blur){g.beginPath();g.arc(450,450,r,a0,a1);g.lineWidth=w;g.strokeStyle=cor;g.shadowBlur=blur||0;g.shadowColor=`rgb(${RGB})`;g.stroke()}
+function desenhar(t){
+  V.ent+=(D.entrada-V.ent)*.3; V.fala+=(D.fala-V.fala)*(D.fala>V.fala?.5:.12);
+  const ativo=D.estado==='acordado', som=Math.max(D.atividade==='ouvindo'?V.ent*4:0, D.atividade==='falando'?V.fala:0);
+  V.brilho+=((ativo?.75:.35)+som*.5-V.brilho)*.08; V.giro+=(ativo?.006:.002)+som*.03;
+  g.clearRect(0,0,900,900); g.save();
+  const halo=g.createRadialGradient(450,450,40,450,450,430); halo.addColorStop(0,`rgba(${RGB},${.18*V.brilho})`); halo.addColorStop(.6,`rgba(23,184,214,${.08*V.brilho})`); halo.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=halo; g.beginPath(); g.arc(450,450,430,0,7); g.fill();
+  for(let i=0;i<180;i++){const a=i/180*Math.PI*2+V.giro*.3, l=(i%5?8:16)+(D.atividade==='falando'?Math.abs(Math.sin(i*.7+t/90))*som*22:0);
+    g.beginPath(); g.moveTo(450+Math.cos(a)*400,450+Math.sin(a)*400); g.lineTo(450+Math.cos(a)*(400+l),450+Math.sin(a)*(400+l)); g.lineWidth=2; g.strokeStyle=`rgba(${RGB},${.25+.35*V.brilho})`; g.shadowBlur=0; g.stroke()}
+  arco(372,0,7,3,`rgba(${RGB},${.55*V.brilho+.2})`,18);
+  for(let k=0;k<6;k++){const a=V.giro*1.2+k*Math.PI/3; arco(340,a,a+.65,10,`rgba(${RGB},${.25+.4*V.brilho})`,10)}
+  for(let k=0;k<40;k++){const a=-V.giro*2+k/40*Math.PI*2; g.beginPath(); g.arc(450+Math.cos(a)*300,450+Math.sin(a)*300,3,0,7); g.fillStyle=`rgba(${RGB},${.3+.5*V.brilho})`; g.fill()}
+  arco(262,-V.giro*1.6,-V.giro*1.6+4.4,4,`rgba(${RGB},${.6*V.brilho+.2})`,14);
+  arco(236,V.giro*2.2,V.giro*2.2+1.2,14,`rgba(${RGB},.45)`,8);
+  for(let k=0;k<5;k++){const a=V.giro*-1.1+k*Math.PI*2/5; arco(176,a,a+.95,30,`rgba(${RGB},${.45+.45*V.brilho})`,16)}
+  arco(126,0,7,2,`rgba(${RGB},.6)`,10); arco(96+som*18,0,7,3,`rgba(${RGB},${.5+.5*V.brilho})`,22);
+  const nuc=g.createRadialGradient(450,450,4,450,450,70+som*30); nuc.addColorStop(0,'rgba(220,252,255,.95)'); nuc.addColorStop(.35,`rgba(${RGB},${.7*V.brilho+.2})`); nuc.addColorStop(1,`rgba(${RGB},0)`);
+  g.fillStyle=nuc; g.beginPath(); g.arc(450,450,80+som*30,0,7); g.fill(); g.restore(); requestAnimationFrame(desenhar)}
+requestAnimationFrame(desenhar);
+function fios(){const s=$('#fios'),c=cv.getBoundingClientRect(),cx=c.left+c.width/2,cy=c.top+c.height/2,r=c.width*.41;let h='';
+  document.querySelectorAll('.p').forEach(p=>{const b=p.getBoundingClientRect(),esq=b.left<cx,x=esq?b.right:b.left,y=b.top+b.height/2,ang=Math.atan2(y-cy,(esq?-1:1)*Math.max(Math.abs(x-cx),1)),
+   tx=cx+Math.cos(ang)*r*(esq?1:1),ty=cy+Math.sin(ang)*r,mx=(x+tx)/2;
+   h+=`<path d="M${x},${y} C${mx},${y} ${mx},${ty} ${tx},${ty}" fill="none" stroke="rgba(${RGB},.45)" stroke-width="1.4"/><circle cx="${tx}" cy="${ty}" r="5" fill="rgb(${RGB})" style="filter:drop-shadow(0 0 6px rgb(${RGB}))"/>`});
+  s.innerHTML=h}
+addEventListener('resize',fios); setTimeout(fios,300); setTimeout(fios,1500);
+async function j(u,b){const r=await fetch(u,b?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}:{});return r.json()}
+async function voz(){try{const d=await j('/api/escuta-estado');Object.assign(D,d);
+  const k=d.estado==='acordado'&&d.atividade!=='idle'?d.atividade:d.estado,[a,b]=ESTADOS[k]||[k.toUpperCase(),''];$('#est').textContent=a;$('#estSub').textContent=b;
+  $('#p1').textContent=a;$('#p1s').textContent=d.estado==='parada'?'microfone desligado':'microfone ligado';$('#nivel').style.width=Math.min(100,(d.entrada||0)*400)+'%';
+  $('#bMic').textContent=d.estado==='parada'?'Ligar microfone':'Desligar microfone';
+  const m=d.mudo||{};$('#bMudo').textContent=m.mudo?'Voltar a falar':'Silenciar';$('#bMudo').classList.toggle('on',!!m.mudo);
+  $('#p7').textContent=d.ultimo?'“'+d.ultimo.slice(0,40)+'”':'—';
+  const h=d.historico||[],uj=[...h].reverse().find(x=>x[0]==='j'),uu=[...h].reverse().find(x=>x[0]==='u');
+  $('#p8').textContent=uj?uj[1]:'—';
+  $('#fala').innerHTML=uu||uj?((uu?'<small>Você: </small>'+esc(uu[1])+'<br>':'')+(uj?'<small>Jarvis: </small>'+esc(uj[1]):'')):'<small>Conversa por voz aparece aqui.</small>'}
+ catch(e){$('#est').textContent='OFFLINE';$('#estSub').textContent='sem conexão com o Braniac'}}
+const esc=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+async function painel(){try{const s=await j('/api/status'),ps=s.provedores||[],ok=ps.filter(p=>p.ok);
+  $('#p2').textContent=ok.length+' / '+ps.length+' ON';$('#p2s').innerHTML=ps.slice(0,8).map(p=>`<em class="${p.ok?'on':''}">${esc(p.nome)}</em>`).join('');
+  const a=s.autonomia||{};$('#p4').textContent=a.armada?'ARMADA':'DESARMADA';$('#p4s').textContent=a.armada?'restam '+Math.round((a.restante_min||0)/60)+' h':'ações remotas pedem permissão';
+  $('#p10').textContent=s.ligado?'ONLINE':'PAUSADO';$('#p10s').textContent=s.jogo?('modo jogo: '+s.jogo):'Braniac ativo'}catch(e){}
+ try{const c=await j('/api/b2/contas'),cons=['chatgpt','gemini','grok','deepseek'],xs=(c.contas||[]).filter(x=>cons.includes(x.nome)),okc=xs.filter(x=>x.aberta&&!x.precisa_login);
+  $('#p3').textContent=okc.length+' / 4 PRONTOS';$('#p3s').innerHTML=xs.map(x=>`<em class="${x.aberta&&!x.precisa_login?'on':''}">${x.nome}</em>`).join('')}catch(e){}
+ try{const e=await j('/api/b2/estado');$('#p5').textContent=(e.skills||[]).length+' ATIVAS';$('#p5s').textContent=(e.skills||[]).slice(-2).map(s=>s.nome).join(' · ');
+  $('#p9').textContent=(e.projetos||[]).length+' / '+(e.conversas||[]).length;$('#p9s').textContent='projetos / conversas'}catch(e){}}
+async function temp(){try{const t=await j('/api/termico');if(!t.pronto)return;
+  const e=$('#p10t');e.textContent=(t.gpu_c?'GPU '+Math.round(t.gpu_c)+'°C':'GPU —')+(t.cpu_c?' · cpu '+Math.round(t.cpu_c)+'°':' · cpu '+Math.round(t.cpu_pct)+'%')+' · ram '+Math.round(t.ram_pct)+'%';
+  e.style.color=t.quente||t.gpu_c>=80?'#ff5a4a':t.gpu_c>=70?'#f2a541':'var(--txt)'}catch(x){}}
+function relogio(){const d=new Date();$('#p6').textContent=d.toLocaleTimeString('pt-BR');$('#p6s').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}
+$('#bAcordar').onclick=()=>j('/api/escuta-acao',{acao:'acordar'});$('#bDescansar').onclick=()=>j('/api/escuta-acao',{acao:'descansar'});
+$('#bMic').onclick=()=>j('/api/escuta-acao',{acao:D.estado==='parada'?'ligar':'desligar'});
+$('#bMudo').onclick=()=>j('/api/mudo',{acao:(D.mudo||{}).mudo?'desmutar':'mutar'});
+voz();setInterval(voz,150);painel();setInterval(painel,20000);relogio();setInterval(relogio,1000);temp();setInterval(temp,10000);
+</script>
+</body>
+</html>

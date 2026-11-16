@@ -83,9 +83,9 @@ def test_guarda_nao_importa_ia_online_nem_nada_pessoal():
 
 # ---------- whatsapp: arquivo e contato ----------
 def test_melhor_contato_pelas_palavras_ditas_mesmo_com_erro_de_escrita():
-    cands = ["Matheus Heyah", "Matheus Autista Fresco Da Silva"]
-    assert whatsapp.melhor("Matheus Altista fresco da Silva", cands) == cands[1]
-    assert whatsapp.melhor("Matheus Heyah", cands) == cands[0]
+    cands = ["Joao Lucas", "Joao Pedro Ramos Da Silva"]
+    assert whatsapp.melhor("Joao Pedo ramos da Silva", cands) == cands[1]
+    assert whatsapp.melhor("Joao Lucas", cands) == cands[0]
 
 
 def test_arquivo_nunca_sai_de_areas_com_segredo_e_executavel_vira_zip(tmp_path):

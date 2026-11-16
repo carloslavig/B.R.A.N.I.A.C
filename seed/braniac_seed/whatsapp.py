@@ -79,7 +79,7 @@ def _abrir_conversa(a, nome):
 
 
 def melhor(nome, candidatos):
-    """Entre varios contatos parecidos, o que combina com TODAS as palavras ditas ('Matheus Autista' escolhe 'Matheus Autista Silva', nao 'Matheus Heyah')."""
+    """Entre varios contatos parecidos, o que combina com TODAS as palavras ditas ('Joao Pedro' escolhe 'Joao Pedro Silva', nao 'Joao Lucas')."""
     import difflib
     q = [p for p in _norm(nome).split() if len(p) > 1]
 

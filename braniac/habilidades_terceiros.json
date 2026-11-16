@@ -1,0 +1,359 @@
+[
+ {
+  "id": "ig-audit",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-audit",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-caption",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-caption",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-carousel",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-carousel",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-comment",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-comment",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-dm",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-dm",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-human",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-human",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-plan",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-plan",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-profile",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-profile",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-reel",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-reel",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-reply",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-reply",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-repurpose",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-repurpose",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-story",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-story",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "ig-viral",
+  "repo": "Jakeschincariol/instagram-agent-skill",
+  "caminho": "skills/ig-viral",
+  "licenca": "MIT",
+  "grupo": "Instagram (reels, legendas, carrossel, DMs)"
+ },
+ {
+  "id": "trader-alerts",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-alerts",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-analyst",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-analyst",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-broker",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-broker",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-budget",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-budget",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-entry",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-entry",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-exit",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-exit",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-news",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-news",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-pelosi",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-pelosi",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-risk",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-risk",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-scanner",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-scanner",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "trader-timemachine",
+  "repo": "Jakeschincariol/day-trader-skill",
+  "caminho": "trader-timemachine",
+  "licenca": "MIT",
+  "grupo": "Day trade nos EUA (simulação e análise)"
+ },
+ {
+  "id": "backtest-expert",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/backtest-expert",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "drawdown-circuit-breaker",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/drawdown-circuit-breaker",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "macro-regime-detector",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/macro-regime-detector",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "market-environment-analysis",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/market-environment-analysis",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "portfolio-manager",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/portfolio-manager",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "position-sizer",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/position-sizer",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "pre-trade-discipline-gate",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/pre-trade-discipline-gate",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "technical-analyst",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/technical-analyst",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "trade-performance-coach",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/trade-performance-coach",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "trader-memory-core",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/trader-memory-core",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "us-stock-analysis",
+  "repo": "tradermonty/claude-trading-skills",
+  "caminho": "skills/us-stock-analysis",
+  "licenca": "MIT",
+  "grupo": "Investimentos (análise, risco, carteira)"
+ },
+ {
+  "id": "blender-crane-shot",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "crane-shot",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-dolly-rotate",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "dolly-rotate",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-dynamic-full-loop",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "dynamic-full-loop",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-image-to-3d",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "image-to-3d",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-multi-image-to-3d",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "multi-image-to-3d",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-perfect-loop",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "perfect-loop",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-polyhaven-hdri-showcase",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "polyhaven-hdri-showcase",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-polyhaven-material-swap",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "polyhaven-material-swap",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-polyhaven-scene-builder",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "polyhaven-scene-builder",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-polyhaven-studio-setup",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "polyhaven-studio-setup",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-polyhaven-texture-apply",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "polyhaven-texture-apply",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-product-polish",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "product-polish",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-slow-zoom",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "slow-zoom",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-threejs-export",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "threejs-export",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-turntable",
+  "repo": "kevinbadi/blender-skills",
+  "caminho": "turntable",
+  "licenca": "não declarada pelo autor",
+  "grupo": "Blender (vídeos 3D de produto)"
+ },
+ {
+  "id": "blender-toolkit",
+  "repo": "Dev-GOM/claude-code-marketplace",
+  "caminho": "plugins/blender-toolkit/skills",
+  "licenca": "Apache-2.0",
+  "grupo": "Blender (vídeos 3D de produto)"
+ }
+]

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa do Dono</title>
+<style>
+:root{--bg:#0d1411;--card:#17201b;--tx:#eef6f0;--mut:#8fa397;--ca:#4ea3ff;--ok:#f2b84b;--er:#ff6b5e;--cl:#7fd49a;--linha:#2c3a32}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px}
+h1{font-size:22px;margin:0 12px 0 0}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--mut)}.leg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+button{font:600 17px system-ui;border:0;border-radius:12px;padding:10px 16px;background:var(--ca);color:#04121f;cursor:pointer;margin-left:auto}
+button.parar{background:var(--er)}
+#mapa{width:100%;display:block;margin-bottom:80px}
+.no rect{rx:14}.no text{fill:var(--tx);font-size:15px}
+.centro text{font-size:22px;font-weight:700}
+.ramo text{font-weight:700;font-size:16px}
+.folha{cursor:pointer}.folha:hover rect{filter:brightness(1.35)}
+.dica{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:10px 14px;max-width:min(680px,92vw);display:none}
+</style></head><body>
+<header><h1>🧠 Mapa do Dono</h1>
+<div class="leg"><span><i style="background:var(--ca)"></i>falta você</span><span><i style="background:var(--ok)"></i>esperando seu OK</span><span><i style="background:var(--er)"></i>com erro</span><span><i style="background:var(--cl)"></i>andando comigo</span></div>
+<button id="ouvir">🔊 Ouvir o que falta</button></header>
+<svg id="mapa"></svg><div class="dica" id="dica"></div>
+<script>
+const COR={dono:"var(--ca)",ok:"var(--ok)",erro:"var(--er)",claude:"var(--cl)"};
+const NOME={dono:"Falta você",ok:"Seu OK",erro:"Erro",claude:"Comigo"};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const curto=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
+let dados=null;
+function montar(d){
+  // cada área vira um ramo; erros da mesma área viram UMA folha com a contagem (eram 36 soltos)
+  const ramos={};
+  const por=(x,tipo)=>{(ramos[x.agente]??=[]).push({...x,tipo})};
+  (d.so_dono||[]).forEach(x=>por(x,"dono"));(d.aguardando||[]).forEach(x=>por(x,"ok"));(d.comigo||[]).forEach(x=>por(x,"claude"));
+  const er={};(d.erros||[]).forEach(x=>(er[x.agente]??=[]).push(x));
+  for(const[a,l]of Object.entries(er))(ramos[a]??=[]).push({tipo:"erro",titulo:l.length>1?`${l.length} itens com erro`:l[0].titulo,detalhe:l.map(x=>x.titulo).join(" · ")});
+  const ordem={dono:0,ok:1,erro:2,claude:3};
+  const lista=Object.entries(ramos).map(([a,f])=>[a,f.sort((x,y)=>ordem[x.tipo]-ordem[y.tipo])])
+    .sort((x,y)=>ordem[x[1][0].tipo]-ordem[y[1][0].tipo]||y[1].length-x[1].length);
+  // árvore da esquerda para a direita: Dono -> área -> pendência (em roda ficava embolado, 13/11)
+  const svg=document.getElementById("mapa"),W=svg.clientWidth,PASSO=48,GAP=22;
+  const estreito=W<700,wc=estreito?84:120,wa=estreito?110:170,xc=wc/2+8,xa=xc+wc/2+(estreito?24:60)+wa/2;
+  const xf0=xa+wa/2+(estreito?18:50),wf=Math.max(140,W-xf0-12);
+  const total=lista.reduce((s,[,f])=>s+f.length,0),H=total*PASSO+(lista.length-1)*GAP+40;
+  svg.style.height=H+"px";svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const no=(x,y,txt,cor,cls,w,i)=>`<g class="no ${cls}" ${i!=null?`data-i="${i}"`:""} transform="translate(${x},${y})"><rect x="${-w/2}" y="-19" width="${w}" height="38" fill="${cor}" fill-opacity="${cls==="folha"?.2:.9}" stroke="${cor}" stroke-width="2"/><text ${cls==="folha"?`x="${-w/2+14}"`:'text-anchor="middle"'} dy="5">${esc(txt)}</text></g>`;
+  // Dono no topo: com a lista longa o centro ficava fora da tela
+  const folhas=[],cy=Math.min(H/2,220);let o="",nos="",y=20+PASSO/2;
+  for(const[a,f]of lista){
+    const y0=y,ya=y0+(f.length-1)*PASSO/2,cor=COR[f[0].tipo];
+    o+=`<path d="M${xc+wc/2},${cy} C${(xc+xa)/2},${cy} ${(xc+xa)/2},${ya} ${xa-wa/2},${ya}" stroke="${cor}" stroke-width="4" fill="none" opacity=".75"/>`;
+    f.forEach(x=>{o+=`<path d="M${xa+wa/2},${ya} C${(xa+xf0)/2+wa/4},${ya} ${(xa+xf0)/2},${y} ${xf0},${y}" stroke="${COR[x.tipo]}" stroke-width="2" fill="none" opacity=".6"/>`;
+      folhas.push(x);nos+=no(xf0+wf/2,y,curto(x.titulo,Math.floor(wf/8.6)),COR[x.tipo],"folha",wf,folhas.length-1);y+=PASSO;});
+    nos+=no(xa,ya,curto(a,estreito?12:20),cor,"ramo",wa);
+    y+=GAP;
+  }
+  svg.innerHTML=o+nos+no(xc,cy,"Dono","#2a3a31","centro",wc);
+  svg.querySelectorAll(".folha").forEach(g=>g.onclick=()=>{const x=folhas[g.dataset.i];
+    dica.innerHTML=`<b style="color:${COR[x.tipo]}">${NOME[x.tipo]}</b> · ${esc(x.agente||"")}<br>${esc(x.titulo)}${x.detalhe?`<div style="color:var(--mut);font-size:13px;margin-top:4px">${esc(x.detalhe)}</div>`:""}`;dica.style.display="block";falar(x.titulo);});
+}
+async function ler(){try{dados=await (await fetch("/api/pendencias")).json();montar(dados);}catch(_){mapa.innerHTML='<text x="20" y="40" fill="#ff6b5e">Braniac fora do ar</text>';}}
+function falar(t){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="pt-BR";u.rate=.95;
+  const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith("pt"));if(v)u.voice=v;
+  u.onend=()=>{ouvir.textContent="🔊 Ouvir o que falta";ouvir.className=""};speechSynthesis.speak(u);}
+ouvir.onclick=()=>{if(speechSynthesis.speaking){speechSynthesis.cancel();ouvir.textContent="🔊 Ouvir o que falta";ouvir.className="";return;}
+  const c=(dados?.so_dono||[]);const t=c.length?`Dono, faltam ${c.length} coisas que só você pode fazer. `+c.map((x,i)=>`${i+1}: ${x.agente}. ${x.titulo.split("(")[0]}`).join(". "):"Nada esperando você agora.";
+  ouvir.textContent="⏹ Parar";ouvir.className="parar";falar(t);};
+document.body.onclick=e=>{if(!e.target.closest(".folha,button"))dica.style.display="none"};
+addEventListener("resize",()=>dados&&montar(dados));
+ler();setInterval(ler,30000);
+</script></body></html>

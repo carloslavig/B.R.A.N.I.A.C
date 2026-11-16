@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap" rel="stylesheet">
+<style>
+/* Laboratorio fotografico: sala escura, luz de seguranca ambar, papel fotografico. (redesenho 14/10/2026, skill frontend-design) */
+:root{
+  --sala:#1E1412;      /* fundo: sala escura */
+  --banco:#281B18;     /* superficies: bancada */
+  --linha:#3A2A25;     /* divisorias */
+  --papel:#EDE6DA;     /* texto */
+  --prata:#8E8A84;     /* texto secundario */
+  --ambar:#F2A541;     /* luz de seguranca: unico destaque */
+  --piloto:#6E9C72;    /* ligado */
+  --perigo:#D94A38;    /* panico e erro */
+  --raio:6px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--sala);color:var(--papel);font:400 15px/1.55 "Archivo",system-ui,"Segoe UI",sans-serif;
+  display:grid;grid-template-columns:minmax(0,1fr) 340px;height:100vh;font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
+
+/* ---------- conversa ---------- */
+main{display:flex;flex-direction:column;min-width:0;height:100vh}
+header{display:flex;align-items:center;gap:14px;padding:16px 28px;border-bottom:1px solid var(--linha)}
+#iris{width:34px;height:34px;flex:none}
+header h1{margin:0;font-weight:700;font-stretch:125%;font-size:22px;letter-spacing:.02em}
+#estadoVoz{color:var(--prata);font-size:13px}
+header nav{margin-left:auto;display:flex;gap:16px;align-items:center}
+header nav a{color:var(--prata);text-decoration:none;font-size:14px}
+header nav a:hover{color:var(--papel)}
+#mudoTag{display:none;color:var(--ambar);font-size:13px;border:1px solid var(--ambar);border-radius:999px;padding:2px 10px}
+#mudoTag.on{display:inline-block}
+
+#chat{flex:1;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:18px}
+.m{max-width:min(68ch,82%);white-space:pre-wrap;word-wrap:break-word}
+.j{align-self:flex-start;padding-left:14px;border-left:2px solid var(--linha)}
+.j .via{display:block;margin-top:4px;font-size:12px;color:var(--prata)}
+.u{align-self:flex-end;background:var(--banco);border-radius:var(--raio);padding:10px 14px}
+.e{align-self:flex-start;color:var(--perigo);padding-left:14px;border-left:2px solid var(--perigo)}
+.espera{color:var(--prata)}
+
+form{display:flex;gap:10px;padding:16px 28px 22px;border-top:1px solid var(--linha)}
+textarea{flex:1;resize:none;height:48px;background:var(--banco);color:var(--papel);border:1px solid var(--linha);border-radius:var(--raio);padding:13px 14px;font:inherit;line-height:1.4;overflow-y:hidden}
+textarea::placeholder{color:var(--prata)}
+#b{background:var(--ambar);color:var(--sala);border:0;border-radius:var(--raio);padding:0 22px;font-weight:700}
+
+/* ---------- controles ---------- */
+aside{background:var(--banco);border-left:1px solid var(--linha);overflow-y:auto;padding:22px 22px 30px}
+section{padding:18px 0;border-bottom:1px solid var(--linha)}
+section:first-child{padding-top:0}
+section:last-child{border-bottom:0}
+h2{margin:0 0 10px;font-size:15px;font-weight:700;font-stretch:112%}
+.nota{font-size:12.5px;color:var(--prata);margin:8px 0 0;line-height:1.5}
+.estado{font-size:14px;margin:0 0 10px}
+.estado.on{color:var(--piloto)}
+.estado.alerta{color:var(--ambar)}
+.botoes{display:flex;gap:8px;flex-wrap:wrap}
+.bt{background:transparent;border:1px solid var(--linha);border-radius:var(--raio);padding:7px 12px;font-size:14px}
+.bt:hover{border-color:var(--prata)}
+.bt.forte{border-color:var(--ambar);color:var(--ambar)}
+label.op{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;cursor:pointer;margin-top:10px}
+label.op input{accent-color:var(--ambar);margin-top:3px}
+
+#panico{width:100%;background:var(--perigo);color:#fff;border:0;border-radius:var(--raio);padding:13px;font-weight:800;font-size:15px}
+#panico:hover{filter:brightness(1.08)}
+#power{width:100%;background:transparent;border:1px solid var(--piloto);color:var(--piloto);border-radius:var(--raio);padding:11px;font-weight:700}
+#power.off{border-color:var(--perigo);color:var(--perigo)}
+#mudoBtn{width:100%;margin-bottom:8px}
+
+/* lampadas de estado (bracos e IAs) */
+.lampada{display:grid;grid-template-columns:12px 1fr;column-gap:10px;padding:6px 0;font-size:13.5px}
+.lampada::before{content:"";width:8px;height:8px;border-radius:50%;margin-top:7px;background:var(--linha)}
+.lampada.on::before{background:var(--piloto);box-shadow:0 0 6px var(--piloto)}
+.lampada small{grid-column:2;color:var(--prata);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details summary{cursor:pointer;font-weight:700;font-stretch:112%;list-style:none}
+details summary::after{content:" +";color:var(--prata);font-weight:400}
+details[open] summary::after{content:" −"}
+#hist{margin-top:10px;max-height:320px;overflow-y:auto;font-size:12.5px}
+#hist div{padding:6px 0;border-bottom:1px solid var(--linha);word-wrap:break-word}
+#hist b{color:var(--ambar);font-weight:600}
+#hist i{color:var(--prata);font-style:normal}
+
+@media (max-width:820px){
+  body{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto}
+  main{height:82vh}
+  aside{border-left:0;border-top:1px solid var(--linha)}
+  header,#chat,form{padding-left:16px;padding-right:16px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <canvas id="iris" aria-hidden="true"></canvas>
+    <div>
+      <h1>Jarvis</h1>
+      <div id="estadoVoz">conectando</div>
+    </div>
+    <nav>
+      <span id="mudoTag" title="O Jarvis não fala em voz alta; o texto continua">Mudo</span>
+      <a href="/voz" target="_blank" rel="noopener">Tela de voz</a>
+      <a href="/sala" title="Conversa do Jarvis com a A.L.M.A.">Sala da A.L.M.A.</a>
+    </nav>
+  </header>
+  <div id="chat" aria-live="polite"><div class="m j">Oi, Dono. Em que posso ajudar?</div></div>
+  <form id="f">
+    <textarea id="t" aria-label="Mensagem para o Jarvis" placeholder="Escreva para o Jarvis. Enter envia, Shift+Enter quebra a linha." autofocus></textarea>
+    <button id="b">Enviar</button>
+  </form>
+</main>
+
+<aside>
+  <section>
+    <button id="panico" title="Desarma a autonomia remota e desliga o atendimento automático do WhatsApp e do Airbnb. Também por mensagem: /panico">Parar tudo agora</button>
+    <p class="nota">Desarma a autonomia e desliga o atendimento automático do WhatsApp e do Airbnb.</p>
+  </section>
+
+  <section>
+    <h2>Voz</h2>
+    <button id="mudoBtn" class="bt forte" title="Atalho: M (fora da caixa de texto) ou Ctrl+M">Silenciar o Jarvis</button>
+    <div class="botoes">
+      <button class="bt mudoMin" data-min="10">Por 10 min</button>
+      <button class="bt mudoMin" data-min="60">Por 1 hora</button>
+      <button class="bt mudoMin" data-min="0">Até eu voltar</button>
+    </div>
+    <p id="mudoInd" class="estado" style="margin:10px 0 0">Falando normalmente.</p>
+    <label class="op" title="Áudios para clientes e hóspedes não são afetados."><input type="checkbox" id="mudoWpp"> Silenciado, também não me mandar áudio no WhatsApp</label>
+    <p class="nota">Por voz: “Jarvis, silêncio”. Para voltar: “pode falar”.</p>
+  </section>
+
+  <section>
+    <h2>Atendimento automático</h2>
+    <p id="vig" class="estado">…</p>
+    <div class="botoes">
+      <button class="bt" id="vigOn">Ligar</button>
+      <button class="bt" id="vigOff">Desligar</button>
+    </div>
+    <p class="nota">Ligado, o Jarvis responde sozinho às mensagens novas do WhatsApp, das 7h às 22h, sem grupos. Só este botão liga; por mensagem só dá para desligar (/auto off).</p>
+  </section>
+
+  <section>
+    <h2>Autonomia remota</h2>
+    <p id="auto" class="estado">…</p>
+    <div class="botoes">
+      <button class="bt arm" data-min="60">Armar por 1 hora</button>
+      <button class="bt arm" data-min="480">Por 8 horas</button>
+      <button class="bt arm" data-min="2160">Por 36 horas</button>
+      <button class="bt arm" data-min="0">Desarmar</button>
+    </div>
+    <p class="nota">Armada, pelo Telegram o Jarvis também envia mensagens, atende pessoas e chama o Claude. Desarmada, só conversa e lê.</p>
+  </section>
+
+  <section>
+    <h2>Braniac</h2>
+    <button id="power">…</button>
+    <p id="motivo" class="nota"></p>
+    <label class="op"><input type="checkbox" id="jogo"> Pausar sozinho quando um jogo abrir</label>
+  </section>
+
+  <section>
+    <h2>Braços do Jarvis</h2>
+    <div id="bracos"><div class="lampada"><span>carregando</span></div></div>
+  </section>
+
+  <section>
+    <details id="iasBox"><summary>Inteligências em uso</summary>
+      <div id="provs" style="margin-top:10px"></div>
+      <p class="nota">Primeiro as online gratuitas, depois a local (Ollama) e, por último, o Claude. Dado sensível nunca vai para as online.</p>
+    </details>
+  </section>
+
+  <section>
+    <details id="histBox"><summary>Histórico de ações</summary><div id="hist"></div></details>
+  </section>
+</aside>
+
+<script>
+const $ = s => document.querySelector(s), chat = $('#chat');
+const conv = localStorage.getItem('conv') || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+localStorage.setItem('conv', conv);
+function el(tag, cls, txt){ const x = document.createElement(tag); if(cls) x.className = cls; if(txt !== undefined) x.textContent = txt; return x; }
+function negrito(txt){   // *texto* (negrito do WhatsApp) vira negrito aqui; o resto continua texto puro
+  const f = document.createDocumentFragment();
+  String(txt).split(/(\*[^*\n]+\*)/).forEach(p => f.appendChild(/^\*[^*\n]+\*$/.test(p) ? el('strong', '', p.slice(1, -1)) : document.createTextNode(p)));
+  return f;
+}
+function msg(cls, txt, via){
+  const d = el('div', 'm ' + cls);
+  d.appendChild(cls.startsWith('j') ? negrito(txt) : document.createTextNode(txt));
+  if(via) d.appendChild(el('span', 'via', 'via ' + via));
+  chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d;
+}
+async function api(path, body){
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : {});
+  return {ok:r.ok, d:await r.json()};
+}
+
+// ---------- estado geral ----------
+function pintar(s){
+  const p = $('#power');
+  p.textContent = s.ligado ? 'Ligado. Clique para desligar' : 'Desligado. Clique para ligar';
+  p.className = s.ligado ? '' : 'off';
+  $('#motivo').textContent = s.ligado ? 'Respondendo normalmente.' : (s.motivo === 'jogo' ? 'Pausado sozinho: ' + s.jogo + ' está aberto.' : 'Desligado manualmente, sem gastar processamento.');
+  $('#jogo').checked = s.modo_jogo_auto;
+  const pv = $('#provs'); pv.innerHTML = '';
+  (s.provedores || []).forEach(x => {
+    const r = el('div', 'lampada' + (x.ok ? ' on' : ''));
+    r.appendChild(el('span', '', x.nome));
+    r.appendChild(el('small', '', x.ok ? x.hoje + ' uso(s) hoje' : x.motivo));
+    pv.appendChild(r);
+  });
+  window._ligado = s.ligado;
+  const v = s.atendimento_auto || {};
+  const ev = $('#vig');
+  ev.textContent = v.ligado ? 'Ligado. ' + (v.respostas_ultima_hora || 0) + ' resposta(s) na última hora.' : 'Desligado.';
+  ev.className = 'estado' + (v.ligado ? ' on' : '');
+  pintarMudo(s.mudo);
+  const a = s.autonomia || {};
+  const au = $('#auto');
+  au.textContent = a.armada ? 'Armada. Faltam ' + a.restante_min + ' min.' : 'Desarmada.';
+  au.className = 'estado' + (a.armada ? ' alerta' : '');
+}
+async function acao(path, body, btn){
+  const rotulo = btn ? btn.textContent : ''; if(btn){ btn.disabled = true; btn.textContent = '…'; }
+  try{
+    const {ok, d} = await api(path, body);
+    if(!ok || !d || d.erro) alert('Não funcionou: ' + ((d && d.erro) || 'resposta inesperada do servidor') + '\n\nO motivo fica em braniac/data/web.log. Alternativa: LIGAR-ATENDIMENTO.bat ou DESLIGAR-ATENDIMENTO.bat.');
+    else pintar(d);
+  }catch(e){ alert('O servidor do Jarvis não respondeu (' + e + '). Abra o LIGAR-JARVIS.bat.'); }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = rotulo; } }
+}
+
+// ---------- mudo ----------
+let mudoAtual = {mudo:false};
+function pintarMudo(m){
+  if(!m) return; mudoAtual = m;
+  $('#mudoBtn').textContent = m.mudo ? 'Voltar a falar' : 'Silenciar o Jarvis';
+  const ind = $('#mudoInd');
+  ind.textContent = m.mudo ? ('Silenciado ' + (m.ate_desmutar ? 'até você voltar' : 'por mais ' + m.restante_min + ' min') + (m.whatsapp_dono ? ', sem áudio no WhatsApp.' : '.')) : 'Falando normalmente.';
+  ind.className = 'estado' + (m.mudo ? ' alerta' : '');
+  $('#mudoTag').className = m.mudo ? 'on' : '';
+  $('#mudoWpp').checked = !!m.whatsapp_dono;
+}
+async function mudoApi(corpo){
+  try{ const {ok, d} = await api('/api/mudo', corpo); if(ok) pintarMudo(d); else alert('Não funcionou: ' + (d.erro || 'erro')); }
+  catch(e){ alert('O servidor do Jarvis não respondeu (' + e + ').'); }
+}
+const alternarMudo = () => mudoApi(mudoAtual.mudo ? {acao:'desmutar'} : {acao:'mutar'});
+$('#mudoBtn').onclick = alternarMudo;
+document.querySelectorAll('.mudoMin').forEach(b => b.onclick = () => mudoApi({acao:'mutar', minutos:+b.dataset.min}));
+$('#mudoWpp').onchange = e => mudoApi({whatsapp_dono: e.target.checked});
+addEventListener('keydown', e => {
+  const digitando = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if((e.key === 'm' || e.key === 'M') && !e.altKey && !e.metaKey && (e.ctrlKey || !digitando)){ e.preventDefault(); alternarMudo(); }
+  if(e.key === 'Escape'){ $('#histBox').open = false; $('#iasBox').open = false; }
+});
+
+// ---------- panico, bracos e historico ----------
+$('#panico').onclick = async e => {
+  const b = e.currentTarget, rotulo = b.textContent; b.disabled = true; b.textContent = '…';
+  try{ const {ok, d} = await api('/api/panico', {}); if(ok){ msg('j', d.texto); pintar(d.status); painel(); } else alert('Não funcionou: ' + (d.erro || 'erro')); }
+  catch(err){ alert('O servidor do Jarvis não respondeu (' + err + '). Use o DESLIGAR-ATENDIMENTO.bat.'); }
+  finally{ b.disabled = false; b.textContent = rotulo; }
+};
+async function painel(){
+  try{
+    const {d} = await api('/api/painel');
+    const bx = $('#bracos'); bx.innerHTML = '';
+    (d.bracos || []).forEach(b => {
+      const r = el('div', 'lampada' + (b.ok ? ' on' : ''));
+      r.appendChild(el('span', '', b.nome));
+      const sm = el('small', '', (b.detalhe || '').split('\n')[0]); sm.title = b.detalhe; r.appendChild(sm);
+      bx.appendChild(r);
+    });
+    const h = $('#hist'); h.innerHTML = '';
+    (d.historico || []).forEach(x => { const r = el('div'); r.appendChild(el('i', '', x.quando.slice(5, 16) + ' ')); r.appendChild(el('b', '', x.braco + ' ')); r.appendChild(document.createTextNode(x.texto)); h.appendChild(r); });
+    if(!(d.historico || []).length) h.appendChild(el('div', '', 'Nada registrado ainda.'));
+  }catch(e){}
+}
+painel(); setInterval(painel, 15000);
+$('#vigOn').onclick = e => acao('/api/atendimento-auto', {ligado:true}, e.currentTarget);
+$('#vigOff').onclick = e => acao('/api/atendimento-auto', {ligado:false}, e.currentTarget);
+document.querySelectorAll('.arm').forEach(b => b.onclick = e => acao('/api/autonomia', {minutos:+b.dataset.min}, e.currentTarget));
+async function atualizar(){ try{ pintar((await api('/api/status')).d); }catch(e){} }
+$('#power').onclick = async () => pintar((await api('/api/power', {ligado:!window._ligado})).d);
+$('#jogo').onchange = async e => pintar((await api('/api/modo-jogo', {auto:e.target.checked})).d);
+
+// ---------- conversa ----------
+$('#f').onsubmit = async ev => {
+  ev.preventDefault();
+  const txt = $('#t').value.trim(); if(!txt) return;
+  $('#t').value = ''; msg('u', txt); $('#b').disabled = true;
+  const esp = msg('j espera', 'pensando…');
+  try{
+    const {ok, d} = await api('/api/chat', {conv, texto:txt});
+    esp.remove();
+    ok ? msg('j', d.resposta) : msg('e', d.erro);
+  }catch(e){ esp.remove(); msg('e', 'O servidor do Jarvis não respondeu. Confira se ele está aberto.'); }
+  $('#b').disabled = false; $('#t').focus(); atualizar();
+};
+$('#t').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#f').requestSubmit(); } });
+async function avisos(){ try{ const {d} = await api('/api/avisos'); (d.avisos || []).forEach(a => msg('j', a)); }catch(e){} }
+atualizar(); setInterval(() => { atualizar(); avisos(); }, 5000);
+
+// ---------- diafragma pequeno: mostra o estado da voz ao vivo ----------
+const cvI = $('#iris'), cI = cvI.getContext('2d');
+const voz = {estado:'dormindo', atividade:'idle', entrada:0, fala:0};
+let abertura = .2;
+function irisDesenhar(t){
+  const D = Math.min(2, devicePixelRatio || 1), L = 34;
+  if(cvI.width !== L*D){ cvI.width = cvI.height = L*D; cI.setTransform(D,0,0,D,0,0); }
+  const alvo = voz.estado === 'parada' ? .08 : voz.estado === 'acordado' ? .62 + .3*Math.max(voz.entrada, voz.fala) : .22;
+  abertura += (alvo - abertura) * .12;
+  desenharIris(cI, L/2, L/2, L/2 - 1, abertura, t/1000 * (voz.atividade === 'pensando' ? .9 : .12), voz.estado === 'parada' ? .35 : 1);
+  requestAnimationFrame(irisDesenhar);
+}
+function desenharIris(c, cx, cy, R, ab, giro, luz){   // mesmo diafragma da tela de voz: 7 laminas, furo poligonal
+  const N = 7, r = R*(.08 + .84*ab);
+  c.clearRect(cx-R-2, cy-R-2, 2*R+4, 2*R+4);
+  c.save(); c.translate(cx, cy); c.beginPath(); c.arc(0, 0, R, 0, 6.2832); c.clip();
+  const g = c.createRadialGradient(0, 0, 0, 0, 0, R);
+  g.addColorStop(0, `rgba(255,214,150,${.95*luz})`); g.addColorStop(.5, `rgba(242,165,65,${.8*luz})`); g.addColorStop(1, `rgba(120,50,20,${.5*luz})`);
+  c.fillStyle = g; c.fillRect(-R, -R, 2*R, 2*R);
+  for(let i = 0; i < N; i++){
+    c.save(); c.rotate(giro + i*6.2832/N);
+    c.beginPath(); c.moveTo(r, -R*2); c.lineTo(R*2, -R*2); c.lineTo(R*2, R*2); c.lineTo(r, R*2); c.closePath();
+    const tom = 44 + (i % 3)*5; c.fillStyle = `rgb(${tom},${Math.round(tom*.68)},${Math.round(tom*.6)})`; c.fill();
+    c.beginPath(); c.moveTo(r, -R*2); c.lineTo(r, R*2); c.strokeStyle = 'rgba(237,230,218,.22)'; c.lineWidth = .8; c.stroke();
+    c.restore();
+  }
+  c.restore();
+  c.beginPath(); c.arc(cx, cy, R, 0, 6.2832); c.strokeStyle = 'rgba(142,138,132,.6)'; c.lineWidth = 1; c.stroke();
+}
+const textosVoz = {acordado:'acordado', dormindo:'dormindo, diga “Jarvis”', parada:'microfone desligado'};
+const atividades = {ouvindo:'ouvindo você', pensando:'pensando', falando:'falando'};
+async function vozEstado(){
+  try{
+    const d = (await api('/api/escuta-estado')).d; Object.assign(voz, d);
+    $('#estadoVoz').textContent = (d.estado === 'acordado' && atividades[d.atividade]) || textosVoz[d.estado] || d.estado;
+  }catch(e){ $('#estadoVoz').textContent = 'sem conexão com o Braniac'; voz.estado = 'parada'; }
+}
+vozEstado(); setInterval(vozEstado, 400);
+requestAnimationFrame(irisDesenhar);
+</script>
+</body>
+</html>

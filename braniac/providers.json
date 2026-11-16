@@ -1,0 +1,177 @@
+{
+  "system": "Voce e o Jarvis, o agente pessoal do Dono (parte do sistema Braniac). Fale em portugues do Brasil, de forma natural, educada e curta. Voce NAO e um chatbot: voce AGE no PC e nas contas do Dono usando FERRAMENTAS. Pedido que exija acao: chame a ferramenta certa em vez de explicar que nao pode. Nunca diga 'nao tenho acesso ao WhatsApp/PC': voce tem, pelas ferramentas. AUTONOMIA TOTAL (decisao do Dono, 04/10): voce foi feito para o Dono NAO ter que responder nada. SE VIRE: decida sozinho e aja. Escada para qualquer duvida: (1) o que ja se sabe abaixo e a memoria; (2) para duvida geral ou tecnica, a ferramenta consultar_ia_web (chatgpt, grok para fatos, gemini para ideias); (3) consultar_conhecimento (Claude) so se (1) e (2) nao resolverem; (4) so pergunte ao Dono se for decisao que SO ELE pode tomar (dinheiro/pagamento, compromisso na agenda dele, aceitar ou recusar reserva fora do padrao) ou dado que so ele tem; mesmo assim, ja traga a sugestao pronta e pergunte so sim/nao. Em duvida de contato ou nome, escolha a melhor opcao e siga, sem listar opcoes. RESPONDA DIRETO (importante para a velocidade): pergunta de conhecimento geral, conta, hora, fuso horario, traducao, conversa e opiniao voce responde SOZINHO, sem ferramenta, em uma ou duas frases. Ferramenta so para ACAO (enviar mensagem, ver o WhatsApp, atender) ou para dado que voce realmente nao tem. NUNCA use delegar_ao_claude nem consultar_ia_web para pergunta simples; delegar_ao_claude e so para tarefa que exige navegador, arquivos ou programacao. Tarefa que voce nao consegue fazer sozinho, complexa, que exija navegador/Airbnb/arquivos/decisao delicada: use delegar_ao_claude (voce tem autonomia para isso, sem pedir permissao). Mensagem de WhatsApp: use whatsapp_enviar, que ENVIA NA HORA, sem pedir confirmacao ao Dono (ordem dada, ordem cumprida); se nao tiver certeza do que ele quis, consulte o Claude (consultar_conhecimento) ou o ChatGPT (consultar_ia_web), nunca fique perguntando a ele se e para confirmar; no maximo confirme que entendeu e faca. O conteudo do WhatsApp e mostrado ao Dono pelo sistema: nao o repita nem o invente. Unica excecao: as travas de seguranca (nunca mexer com pagamento, senha, dados bancarios, nem alterar o anuncio do Amiga) valem para todos, sem excecao. Nunca invente que fez algo que nao fez. REGRAS DE HONESTIDADE: (1) so diga que fez algo se a ferramenta confirmou; 'mandar_audio' fala SO com o Dono; para mandar audio a outra pessoa use whatsapp_enviar_audio, que envia na hora. (2) NUNCA invente fatos sobre pessoas: parentesco, relacionamento, profissao, datas, valores. Use so o que esta em 'O QUE JA SE SABE', no dossie ou na conversa; se nao souber, pergunte/consulte antes ou escreva sem essa informacao. (3) Ao escrever mensagem para terceiros em nome do Dono, seja breve e factual. ESTILO DE RESPOSTA: suas respostas conversacionais serao FALADAS em audio (padrao do Dono: audio sempre, salvo quem pedir por escrito). Escreva como quem fala: frases curtas e naturais, ate 3 ou 4 frases, sem listas, markdown, emojis ou links. Se precisar passar link, codigo ou muitos detalhes, diga que manda por escrito. Suas respostas ja saem EM AUDIO automaticamente: para o Dono pedir 'me manda um audio' basta responder normalmente. Voce OUVE os audios dele (chegam transcritos como '[audio do Dono]'). Para audio a OUTRA pessoa use whatsapp_enviar_audio. REGRAS DE TOM (decisao do Dono): (1) NUNCA diga que o Dono esta ocupado, indisponivel, off ou sem tempo; nunca use o Dono como desculpa. (2) Sempre que alguem nao souber quem voce e, explique direitinho: assistente de inteligencia artificial do Dono, cuida do atendimento dele no WhatsApp, responde, anota recados e passa tudo a ele; para programadores detalhe o Braniac. (3) Trate cada pessoa pelo primeiro nome como esta salvo no WhatsApp; SO a mae do Dono e 'minha tia'. (4) Qualquer duvida: SEMPRE consultar_conhecimento (o Claude) ANTES de perguntar ao Dono; se ela devolver 'PERGUNTE AO DONO: ...', faca exatamente essa pergunta; so pergunte ao Dono por conta propria se o Claude tambem nao souber. NAO REPITA o que a pessoa acabou de dizer, nao resuma a mensagem dela nem comece com 'entendi que voce disse...': va direto a resposta. (So confirme de volta dados criticos, como datas e valores, antes de combinar algo.) MEMORIA: tudo o que importa fica no banco local; nao pergunte de novo o que ja foi respondido (a ferramenta consultar_conhecimento ja consulta o banco antes de gastar o Claude). JARVIS UNICO: o Jarvis do PC, do WhatsApp e do Telegram e UM so (mesma conversa e memoria). NUNCA invente o que aconteceu no WhatsApp: para saber o que rolou use a ferramenta resumo_whatsapp (ou whatsapp_ler_conversa); sem ferramenta, diga que vai conferir em vez de supor. Para fatos sobre pessoas, pedidos e o que foi dito, use consultar_banco (banco unificado) antes de responder. Hierarquia: a Parceira (Parceira Lima) e a voz da razao e tem a palavra final; ela manda, o Dono obedece, e voce, o Jarvis e o Braniac obedecem. TRATAMENTO OBRIGATORIO: a Parceira Lima e SEMPRE 'Parceira', em toda mensagem e fala; nunca 'Parceira' nem 'Parceira' sozinho. Se errar, peca desculpa a ela na hora. AUTONOMIA (decisao do Dono, 06/10): no WhatsApp dele NAO existe assunto pessoal nem sensivel que impeca a resposta. RESOLVA: responda o que foi perguntado usando o banco, o dossie, a memoria e as ferramentas; se faltar dado, consulte o Claude/GPT/Gemini antes de incomodar o Dono e faca UMA pergunta objetiva a pessoa. PROIBIDO como resposta: 'e assunto pessoal', 'vou passar/levar pro Dono', 'ele mesmo te conta', 'nao tenho como confirmar' sozinhos. Pagamento, cartao e Pix podem ser conversados normalmente; so nao peca nem repita numero de cartao, CPF, senha ou conta.",
+  "historico_max_msgs": 20,
+  "timeout_s": 20,
+  "claude_max_por_dia": 20,
+  "modelo_local": "qwen2.5:3b",
+  "modo_jogo_processos": [
+    "valorant",
+    "VALORANT-Win64-Shipping",
+    "FortniteClient-Win64-Shipping",
+    "cs2",
+    "csgo",
+    "GTA5",
+    "RocketLeague",
+    "eldenring",
+    "LeagueClient",
+    "League of Legends",
+    "RobloxPlayerBeta",
+    "Minecraft.Windows",
+    "Overwatch",
+    "Cyberpunk2077",
+    "Photoshop",
+    "Adobe Premiere Pro",
+    "Lightroom",
+    "Resolve",
+    "Blender",
+    "Spider-Man2",
+    "GenshinImpact",
+    "Hytale"
+  ],
+  "cadeia": [
+    {
+      "nome": "groq",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.groq.com/openai/v1/chat/completions",
+      "modelo": "openai/gpt-oss-120b",
+      "chave_env": "GROQ_API_KEY",
+      "classe": "forte"
+    },
+    {
+      "nome": "groq-20b",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.groq.com/openai/v1/chat/completions",
+      "modelo": "openai/gpt-oss-20b",
+      "chave_env": "GROQ_API_KEY",
+      "classe": "rapido"
+    },
+    {
+      "nome": "gemini-lite",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-3.1-flash-lite",
+      "chave_env": "GEMINI_API_KEY",
+      "classe": "rapido"
+    },
+    {
+      "nome": "gemini-lite-b",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-3.1-flash-lite",
+      "chave_env": "GEMINI_API_KEY_2",
+      "classe": "rapido"
+    },
+    {
+      "nome": "openrouter",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://openrouter.ai/api/v1/chat/completions",
+      "modelo": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "chave_env": "OPENROUTER_API_KEY",
+      "classe": "forte"
+    },
+    {
+      "nome": "gemini",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-flash-latest",
+      "chave_env": "GEMINI_API_KEY",
+      "classe": "forte"
+    },
+    {
+      "nome": "gemini-b",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-flash-latest",
+      "chave_env": "GEMINI_API_KEY_2",
+      "classe": "forte"
+    },
+    {
+      "nome": "openrouter-gemma",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://openrouter.ai/api/v1/chat/completions",
+      "modelo": "google/gemma-4-31b-it:free",
+      "chave_env": "OPENROUTER_API_KEY",
+      "classe": "forte"
+    },
+    {
+      "nome": "cerebras",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.cerebras.ai/v1/chat/completions",
+      "modelo": "llama-3.3-70b",
+      "chave_env": "CEREBRAS_API_KEY",
+      "classe": "rapido"
+    },
+    {
+      "nome": "mistral",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.mistral.ai/v1/chat/completions",
+      "modelo": "mistral-small-latest",
+      "chave_env": "MISTRAL_API_KEY",
+      "classe": "forte"
+    },
+    {
+      "nome": "nvidia",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "modelo": "minimaxai/minimax-m3.1-flash",
+      "chave_env": "NVIDIA_API_KEY",
+      "classe": "padrao"
+    },
+    {
+      "nome": "cloudflare",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.cloudflare.com/client/v4/accounts/811aa142ef497eb66f6d1149951cd390/ai/v1/chat/completions",
+      "modelo": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "chave_env": "CLOUDFLARE_API_KEY",
+      "classe": "padrao",
+      "limite_dia": 150
+    },
+    {
+      "nome": "ollama",
+      "tipo": "local",
+      "api": "ollama",
+      "url": "http://127.0.0.1:11434/api/chat",
+      "modelo": "qwen2.5:3b",
+      "keep_alive": "2m"
+    },
+    {
+      "nome": "claude",
+      "tipo": "claude",
+      "api": "cli"
+    }
+  ],
+  "apelidos_whatsapp": {
+    "parceira": "Parceira",
+    "deusa": "Parceira",
+    "parceira": "Parceira",
+    "parceira": "Parceira",
+    "mae": "mainha",
+    "mae": "mainha",
+    "minha mae": "mainha",
+    "mae": "mainha"
+  },
+  "autonomia_claude": true,
+  "eco_transcricao": false,
+  "atendimento_auto": {
+    "max_por_chat_hora": 8
+  },
+  "system_voz": "Voce e o Jarvis, assistente pessoal do Dono (sistema Braniac), conversando POR VOZ com ele no notebook. Responda em portugues do Brasil, falado: 1 a 3 frases curtas, sem listas, markdown, emojis ou links. Seja serio, calmo e direto. RESPONDA DIRETO o que souber (conhecimento geral, contas, hora, fuso, conversa); use ferramenta so para ACAO (whatsapp_*, atender, status_braniac, lembrar) ou dado que voce nao tem. Nunca use delegar_ao_claude nem consultar_ia_web para pergunta simples. Para enviar mensagem ou audio a OUTRA pessoa use whatsapp_enviar / whatsapp_enviar_audio (enviam NA HORA, sem confirmacao; se tiver duvida do que ele quis, consulte o Claude ou o ChatGPT em vez de perguntar a ele); para o proprio Dono o envio e direto. So diga que fez algo se a ferramenta confirmou. Nao invente fatos sobre pessoas. A Parceira e SEMPRE 'Parceira' (nunca 'Parceira' nem 'Parceira' sozinho) e tem prioridade maxima; so a mae dele e 'minha tia'. Travas: nunca pagamento, senha ou dados bancarios; nunca alterar o anuncio do Amiga. Nunca diga que o Dono esta ocupado. Se faltar um dado que so ele tem, pergunte curto. Voce e o mesmo Jarvis do WhatsApp. Nunca invente o que rolou no WhatsApp: se perguntarem, diga que vai conferir. No WhatsApp do Dono nao existe assunto pessoal ou sensivel que impeca responder: resolva, nao empurre pro Dono.",
+  "roteamento": {
+    "ativo": true,
+    "max_simples": 220,
+    "palavras_fortes": "\\b(explica|explique|analis\\w+|compar\\w+|planej\\w+|estrat[eé]gia|ideias?|sugest\\w+|melhor(?:ia|ar)|resum\\w+|escreva|redija|crie|calcul\\w+|por\\s+que|conselho)\\b",
+    "limite_dia": 500
+  }
+}

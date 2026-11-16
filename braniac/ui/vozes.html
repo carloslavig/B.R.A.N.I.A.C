@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vozes do Jarvis</title>
+<style>
+:root{--fundo:#1E1412;--cartao:#281B18;--linha:#3A2A25;--texto:#EDE6DA;--suave:#8E8A84;--ambar:#F2A541;--ok:#5cb85c;--atencao:#e0a030;--ruim:#D94A38}
+@media (prefers-color-scheme: light){:root{--fundo:#f6f1e9;--cartao:#fff;--linha:#ddd2c2;--texto:#2b211d;--suave:#6f665f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--texto);font:15px/1.5 system-ui,"Segoe UI",sans-serif;padding:20px 16px 60px;max-width:980px;margin-inline:auto}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--suave);margin:0 0 16px;font-size:14px}
+#atual{background:var(--cartao);border:1px solid var(--ambar);border-radius:8px;padding:10px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+details.motor{background:var(--cartao);border:1px solid var(--linha);border-radius:8px;margin-bottom:10px}
+details.motor>summary{cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;list-style:none}
+details.motor>summary::-webkit-details-marker{display:none}
+summary b{font-size:16px}
+.onde{color:var(--suave);font-size:13px}
+.lento{opacity:.55}
+.lista{padding:4px 14px 14px;display:flex;flex-wrap:wrap;gap:8px}
+.grupo{width:100%;color:var(--suave);font-size:12.5px;margin-top:8px;text-transform:uppercase;letter-spacing:.04em}
+button.v{font:inherit;font-size:14px;color:var(--texto);background:transparent;border:1px solid var(--linha);border-radius:6px;padding:7px 12px;cursor:pointer;min-height:40px}
+button.v:hover{border-color:var(--suave)}
+button.v:focus-visible,summary:focus-visible,button.acao:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+button.v.sel{border-color:var(--ambar);box-shadow:inset 0 0 0 1px var(--ambar)}
+button.v[disabled]{opacity:.5;cursor:default}
+.t{font-size:12px;margin-left:6px}
+.t.ok{color:var(--ok)}.t.at{color:var(--atencao)}.t.ruim{color:var(--ruim)}
+button.acao{font:inherit;font-size:13.5px;color:var(--texto);background:transparent;border:1px solid var(--linha);border-radius:6px;padding:7px 12px;cursor:pointer}
+#msg{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--cartao);border:1px solid var(--ambar);border-radius:8px;padding:9px 16px;display:none;max-width:92%}
+</style>
+</head>
+<body>
+<h1>Vozes do Jarvis</h1>
+<p class="sub">Abra um modelo, clique numa voz para ouvir. Clique de novo em <b>Usar esta voz</b> para o Jarvis passar a falar com ela. Nada que passe de 30 segundos fica disponível.</p>
+<div id="atual" role="status"></div>
+<div id="motores"></div>
+<div id="msg" role="status" aria-live="polite"></div>
+<audio id="player"></audio>
+<script>
+const $=s=>document.querySelector(s);
+let CAT=null, pendente=null;
+function aviso(t,ms=3500){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(aviso.t);aviso.t=setTimeout(()=>m.style.display='none',ms)}
+async function carregar(){
+  CAT=await (await fetch('/api/vozes')).json();
+  pintarAtual(); pintar();
+}
+function nomeMotor(id){const m=CAT.motores.find(x=>x.id===id);return m?m.nome:id}
+function pintarAtual(){
+  const e=CAT.escolha||{}, a=$('#atual'); a.innerHTML='';
+  const s=document.createElement('span');
+  s.textContent=e.motor?`Voz escolhida: ${nomeMotor(e.motor)} — ${(e.vozes||{})[e.motor]}`:'Nenhuma voz escolhida: o Jarvis usa a ordem de sempre (Gemini, Edge, Kokoro, Piper).';
+  a.append(s);
+  if(e.motor){const b=document.createElement('button');b.className='acao';b.textContent='Voltar ao padrão';b.onclick=async()=>{await fetch('/api/vozes/limpar',{method:'POST'});aviso('Voltou ao padrão');carregar()};a.append(b)}
+}
+function classeTempo(s){return s<=10?'ok':s<=30?'at':'ruim'}
+function pintar(){
+  const box=$('#motores'); box.innerHTML='';
+  CAT.motores.forEach(m=>{
+    const d=document.createElement('details'); d.className='motor'+(m.lento?' lento':''); d.open=!m.lento&&m.id==='kokoro';
+    const sm=document.createElement('summary');
+    sm.innerHTML=`<b>${m.nome}</b><span class="onde">${m.onde}</span><span class="onde">· ${m.vozes.length} voz${m.vozes.length===1?'':'es'}</span>`;
+    d.append(sm);
+    const l=document.createElement('div'); l.className='lista'; d.append(l);
+    let ultimo=null;
+    m.vozes.forEach(v=>{
+      const g=v.idioma+(m.id==='piper'?'':'');
+      if(g!==ultimo){const h=document.createElement('div');h.className='grupo';h.textContent=g;l.append(h);ultimo=g}
+      const b=document.createElement('button'); b.className='v';
+      const sel=(CAT.escolha&&CAT.escolha.vozes&&CAT.escolha.vozes[m.id]===v.id&&CAT.escolha.motor===m.id);
+      if(sel)b.classList.add('sel');
+      b.textContent=`${v.genero==='F'?'♀':'♂'} ${v.nome}`+(v.instalada?'':' (baixar)');
+      b.disabled=m.lento;
+      b.onclick=()=>tocar(m,v,b);
+      l.append(b);
+    });
+    box.append(d);
+  });
+}
+async function tocar(m,v,b){
+  if(!v.instalada){
+    aviso('Baixando a voz do Piper (uns 60 MB)...',20000);
+    const r=await fetch('/api/vozes/baixar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voz:v.id})});
+    const j=await r.json(); if(j.erro){aviso('Não baixou: '+j.erro);return}
+    aviso('Baixada. Clique de novo para ouvir.'); await carregar(); return;
+  }
+  document.querySelectorAll('button.v .t').forEach(x=>x.remove());
+  const t0=performance.now(); b.disabled=true; const antes=b.textContent; b.textContent=antes+' …';
+  try{
+    const r=await fetch('/api/vozes/amostra',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({motor:m.id,voz:v.id})});
+    if(!r.ok){const j=await r.json();aviso(j.erro||'Falhou');return}
+    const seg=parseFloat(r.headers.get('X-Segundos'))||((performance.now()-t0)/1000);
+    const url=URL.createObjectURL(await r.blob()); const p=$('#player'); p.src=url; p.play();
+    const s=document.createElement('span'); s.className='t '+classeTempo(seg); s.textContent=seg.toFixed(1)+' s'; b.append(s);
+    pendente={m,v}; mostrarUsar(b,m,v);
+  }catch(e){aviso('Erro: '+e)}
+  finally{b.disabled=false; b.firstChild.textContent=antes}
+}
+function mostrarUsar(b,m,v){
+  document.querySelectorAll('.usar').forEach(x=>x.remove());
+  const u=document.createElement('button'); u.className='acao usar'; u.textContent='Usar esta voz';
+  u.onclick=async()=>{const r=await fetch('/api/vozes/escolher',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({motor:m.id,voz:v.id})});const j=await r.json();aviso(j.erro||`Pronto: o Jarvis fala com ${v.nome} (${m.nome})`);carregar()};
+  b.after(u);
+}
+carregar();
+</script>
+</body>
+</html>

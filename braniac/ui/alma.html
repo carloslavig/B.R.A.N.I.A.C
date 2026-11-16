@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O que a Alma sabe</title>
+<style>
+:root{--bg:#14101a;--card:#211a2b;--tx:#f1eaf7;--mut:#a899b8;--ac:#e58fc0;--ok:#6fd49a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;padding:16px;max-width:760px;margin:auto}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+h2{font-size:14px;color:var(--mut);margin:20px 0 8px;text-transform:uppercase;letter-spacing:.06em}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.n{background:var(--card);border-radius:14px;padding:14px;text-align:center}.n b{display:block;font-size:30px;color:var(--ac)}.n small{color:var(--mut)}
+.c{background:var(--card);border-radius:12px;padding:12px;margin-bottom:8px}
+button{background:#2e2540;color:var(--tx);border:1px solid #43365a;border-radius:99px;padding:6px 12px;margin:3px 3px 0 0;font:inherit;font-size:13px;cursor:pointer}
+button:hover{border-color:var(--ac)}button.p{border-color:#a34b4b;color:#ffb3b3}
+label{display:flex;gap:10px;align-items:center;padding:8px 0}
+</style></head><body>
+<h1>O que a Alma sabe</h1><div class="sub" id="sub">carregando…</div>
+<div class="g" id="n"></div>
+<h2>Humor agora</h2><div class="c" id="h"></div>
+<h2>Frases esperando um tema (opcional, uns 2 minutos por semana)</h2><div id="p"></div>
+<h2>Permissões</h2><div class="c" id="perm"></div>
+<h2>Apagar</h2><div class="c" id="ap"></div>
+<script>
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const post=(o)=>fetch("/api/alma/acao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(o)}).then(r=>r.json());
+const TEMAS=["saude","emocional","familia","ti","trabalho","outros"];
+const NOM={temas:"Aprender temas das minhas frases",sinais:"Observar o ritmo das mensagens (só números)",exemplos:"Guardar exemplos de como eu respondo",pausado:"PAUSAR tudo"};
+async function ler(){const d=await (await fetch("/api/alma/sabe")).json();
+ document.getElementById("sub").textContent="Tudo fica só neste PC. Você vê, corrige e apaga aqui.";
+ document.getElementById("n").innerHTML=[[d.diario,"registros no diário"],[d.sem_tema_pct+"%","sem tema"],[d.sinais,"sinais guardados"],[d.exemplos,"exemplos de resposta"]].map(x=>`<div class="n"><b>${x[0]}</b><small>${x[1]}</small></div>`).join("");
+ const h=d.humor;document.getElementById("h").innerHTML=esc(h.estado)+(h.alerta?" — a Alma pediu um tom mais calmo ao Jarvis":"")+`<div class="sub">Não é diagnóstico. Só ajusta o tom.</div>`;
+ document.getElementById("p").innerHTML=d.pendentes.length?d.pendentes.map(x=>`<div class="c">${esc(x.texto)}<div>${TEMAS.map(t=>`<button onclick="rot(${x.id},'${t}')">${t}</button>`).join("")}</div></div>`).join(""):'<div class="c">Nada esperando ✓</div>';
+ document.getElementById("perm").innerHTML=Object.keys(NOM).map(k=>`<label><input type="checkbox" ${d.consentimento[k]?"checked":""} onchange="cons('${k}',this.checked)">${NOM[k]}</label>`).join("");
+ document.getElementById("ap").innerHTML=["sinais","exemplos","rotulos","perfil","diario","tudo"].map(e=>`<button class="p" onclick="apagar('${e}')">${e}</button>`).join("");}
+async function rot(id,t){await post({acao:"rotular",id,tema:t});ler()}
+async function cons(k,v){await post({acao:"consentimento",[k]:v});ler()}
+async function apagar(e){if(confirm("Apagar "+e+"? Não tem como desfazer.")){await post({acao:"apagar",escopo:e});ler()}}
+ler();
+</script></body></html>

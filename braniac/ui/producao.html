@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Produção dos vídeos</title>
+<style>
+  :root { --fundo:#f6f5f2; --cartao:#fff; --texto:#1d1d1f; --fraco:#6b6b70; --linha:#e3e1dc; --ok:#1f7a4d; --ruim:#b3261e; --aviso:#9a6700; }
+  @media (prefers-color-scheme: dark) { :root { --fundo:#121214; --cartao:#1c1c1f; --texto:#ececef; --fraco:#9a9aa2; --linha:#2c2c31; --ok:#5cc28f; --ruim:#f2847b; --aviso:#e0b04b; } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--fundo); color:var(--texto); font:15px/1.45 system-ui, "Segoe UI", sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px } h2 { font-size:16px; margin:28px 0 8px }
+  .sub { color:var(--fraco); margin:0 0 16px }
+  .barra { display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+  button { font:inherit; padding:10px 18px; border-radius:10px; border:1px solid var(--linha); background:var(--cartao); color:var(--texto); cursor:pointer }
+  button.pausado { background:var(--ruim); color:#fff; border-color:var(--ruim) }
+  .cartao { background:var(--cartao); border:1px solid var(--linha); border-radius:12px; overflow:auto }
+  table { border-collapse:collapse; width:100%; font-size:14px }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--linha); vertical-align:top }
+  th { color:var(--fraco); font-weight:600 }
+  td.longo { max-width:420px; white-space:pre-wrap; word-break:break-word; color:var(--fraco) }
+  .ok { color:var(--ok) } .ruim { color:var(--ruim) } .aviso { color:var(--aviso) }
+  .uso span { display:inline-block; margin-right:16px }
+</style>
+</head>
+<body>
+<main>
+  <h1>Produção dos vídeos do Parceiro</h1>
+  <p class="sub">Banco do processo: pedidos, etapas, últimas 80 ações e aprovações. Atualiza a cada 20 s.</p>
+  <div class="barra">
+    <button id="pausa" type="button">…</button>
+    <div class="uso" id="uso"></div>
+  </div>
+
+  <h2>Pedidos</h2>
+  <div class="cartao"><table id="pedidos"></table></div>
+  <h2>Últimas ações</h2>
+  <div class="cartao"><table id="execucoes"></table></div>
+  <h2>Aprovações</h2>
+  <div class="cartao"><table id="aprovacoes"></table></div>
+  <h2>Etapas do processo</h2>
+  <div class="cartao"><table id="etapas"></table></div>
+</main>
+<script>
+const hora = t => t ? new Date(t * 1000).toLocaleString("pt-BR", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}) : "";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cor = s => /entregue|aprovado|enviado|terminou/.test(s) ? "ok" : /erro|reprovado|falhou|nao entregue/.test(s) ? "ruim" : /esperando|pausado/.test(s) ? "aviso" : "";
+function tabela(id, cab, linhas) {
+  document.getElementById(id).innerHTML = "<tr>" + cab.map(c => `<th>${c}</th>`).join("") + "</tr>" +
+    (linhas.length ? linhas.join("") : `<tr><td colspan="${cab.length}">nada ainda</td></tr>`);
+}
+let pausado = false;
+async function carregar() {
+  const d = await (await fetch("/api/producao")).json();
+  pausado = d.pausado;
+  const b = document.getElementById("pausa");
+  b.textContent = pausado ? "▶ Retomar a produção" : "⏸ Pausar a produção";
+  b.className = pausado ? "pausado" : "";
+  document.getElementById("uso").innerHTML = "Hoje: " + (d.uso_hoje.map(u => `<span>${esc(u.quem)}: ${u.n}</span>`).join("") || "nenhuma ação");
+  tabela("pedidos", ["Nº", "Cidade", "Etapa", "Detalhe", "Atualizado"], d.pedidos.map(p =>
+    `<tr><td>${esc(p.numero)}</td><td>${esc(p.cidade)}</td><td class="${cor(p.etapa)}">${esc(p.etapa)}</td><td class="longo">${esc(p.detalhe)}</td><td>${hora(p.atualizado)}</td></tr>`));
+  tabela("execucoes", ["Quando", "Cidade", "Etapa", "Quem", "Status", "Resumo"], d.execucoes.map(e =>
+    `<tr><td>${hora(e.quando)}</td><td>${esc(e.cidade)}</td><td>${esc(e.etapa)}</td><td>${esc(e.quem)}</td><td class="${cor(e.status)}">${esc(e.status)}</td><td class="longo">${esc((e.resumo || e.saida || "").slice(0, 300))}</td></tr>`));
+  tabela("aprovacoes", ["Quando", "Pedido", "Etapa", "Quem", "Resultado", "Motivo"], d.aprovacoes.map(a =>
+    `<tr><td>${hora(a.quando)}</td><td>${esc(a.pedido)}</td><td>${esc(a.etapa)}</td><td>${esc(a.quem)}</td><td class="${a.aprovado ? "ok" : "ruim"}">${a.aprovado ? "aprovado" : "reprovado"}</td><td class="longo">${esc(a.motivo)}</td></tr>`));
+  tabela("etapas", ["#", "Etapa", "Quem faz", "Aceite"], d.etapas.map(e =>
+    `<tr><td>${e.ordem}</td><td>${esc(e.nome)}</td><td>${esc(e.quem)}</td><td>${esc(e.aceite)}</td></tr>`));
+}
+document.getElementById("pausa").onclick = async () => {
+  await fetch("/api/producao/pausa", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ligar: !pausado})});
+  carregar();
+};
+carregar(); setInterval(() => { if (!document.hidden) carregar(); }, 20000);
+</script>
+</body>
+</html>

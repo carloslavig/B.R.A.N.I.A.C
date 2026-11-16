@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Falhas do Jarvis</title>
+<style>
+:root{--bg:#f6f7f5;--fg:#1c2420;--card:#fff;--mut:#66726b;--bar:#2f7d5b;--bd:#dfe4e0}
+@media(prefers-color-scheme:dark){:root{--bg:#121714;--fg:#e6ece8;--card:#1b231f;--mut:#93a39a;--bar:#4fb68a;--bd:#2a352f}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;padding:16px;max-width:760px;margin-inline:auto}
+h1{font-size:20px;margin:0 0 4px}p.s{color:var(--mut);margin:0 0 16px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:12px}
+.c h2{font-size:15px;margin:0 0 2px}.c small{color:var(--mut)}
+.l{display:grid;grid-template-columns:150px 1fr 32px;gap:8px;align-items:center;margin-top:8px}
+.b{height:10px;background:var(--bar);border-radius:5px}.v{text-align:right;font-variant-numeric:tabular-nums}
+</style></head><body>
+<h1>Onde o Jarvis mais falha</h1><p class="s" id="sub">carregando...</p>
+<div id="o"></div>
+<script>
+const T={marcados:["Erros que você marcou","\"errou\" / \"seu cu\""],claudinho:["Respostas ruins achadas a terceiros","auditoria automática (Claudinho)"],travas:["Vezes que uma trava agiu","reescreveu a pergunta, filtrou antes de enviar, refez resposta fora do assunto"]};
+fetch("/api/falhas").then(r=>r.json()).then(d=>{
+  document.getElementById("sub").textContent="Últimos "+d.dias+" dias";
+  const o=document.getElementById("o");
+  for(const k of Object.keys(T)){
+    const e=Object.entries(d[k]||{}).sort((a,b)=>b[1]-a[1]),m=Math.max(1,...e.map(x=>x[1]));
+    const c=document.createElement("div");c.className="c";
+    c.innerHTML="<h2>"+T[k][0]+"</h2><small>"+T[k][1]+"</small>"+(e.length?e.map(x=>'<div class="l"><span>'+x[0].replace(/_/g," ")+'</span><div class="b" style="width:'+(100*x[1]/m)+'%"></div><span class="v">'+x[1]+"</span></div>").join(""):'<div class="l"><span>nada registrado</span></div>');
+    o.appendChild(c);
+  }
+}).catch(()=>{document.getElementById("sub").textContent="não consegui carregar os dados"});
+</script></body></html>

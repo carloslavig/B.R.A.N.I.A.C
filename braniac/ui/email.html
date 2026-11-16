@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jarvis · Conectar o Gmail</title>
+<style>
+  :root{--bg:#05070d;--painel:#0d1322;--linha:#1d2740;--texto:#e9eef9;--mudo:#8c9ab8;--ouro:#f0c75e;--azul:#4cc3ff;--verde:#3ddc97;--verm:#ff6b6b}
+  body{background:var(--bg);color:var(--texto);font:15px/1.55 "Segoe UI",system-ui,sans-serif;max-width:760px;margin:0 auto;padding:30px 20px}
+  h1{margin:0 0 4px} h2{color:var(--ouro);font-size:17px;margin-top:26px} .mudo{color:var(--mudo);font-size:13.5px}
+  .caixa{background:var(--painel);border:1px solid var(--linha);border-radius:14px;padding:16px 18px;margin:14px 0}
+  ol{padding-left:20px} li{margin:6px 0} code{background:#0a0f1c;border:1px solid var(--linha);border-radius:6px;padding:1px 6px}
+  input{width:100%;background:#0a0f1c;border:1px solid var(--linha);color:var(--texto);border-radius:10px;padding:10px 12px;font:inherit;margin:6px 0}
+  button,a.b{display:inline-block;background:var(--azul);color:#04101c;border:0;border-radius:10px;padding:10px 18px;font:600 14px inherit;cursor:pointer;text-decoration:none}
+  .ok{color:var(--verde)} .erro{color:var(--verm)} .aviso{background:#241d08;border:1px solid #5a4a14;color:#f3dc8a;border-radius:12px;padding:12px 14px;font-size:13.5px}
+</style>
+</head>
+<body>
+<h1>Conectar o Gmail ao Jarvis</h1>
+<p class="mudo">Só <b>leitura</b>: o Jarvis vê não lidas, busca e abre e-mails. Ele <b>não envia, não responde e não apaga</b> nada. O conteúdo dos e-mails nunca vai para IA online: só volta para você.</p>
+<div class="caixa" id="estado">Carregando…</div>
+
+<h2>1 · Criar a conexão no Google (uma vez, ~5 min)</h2>
+<div class="caixa">
+<ol>
+  <li>Abra <a href="https://console.cloud.google.com/projectcreate" target="_blank" style="color:var(--azul)">console.cloud.google.com/projectcreate</a>, entre com o seu Gmail e crie um projeto chamado <code>Braniac</code>.</li>
+  <li>Com o projeto selecionado, abra <a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank" style="color:var(--azul)">a página da Gmail API</a> e clique em <b>Ativar</b>.</li>
+  <li>Vá em <b>APIs e serviços › Tela de consentimento OAuth</b> (ou “Google Auth Platform”). Tipo de público: <b>Externo</b>. Nome do app: <code>Braniac</code>, e-mail de suporte e de contato: o seu.</li>
+  <li>Em <b>Acesso a dados</b> (Escopos) adicione <code>https://www.googleapis.com/auth/gmail.readonly</code>. Em <b>Público</b>, adicione o seu Gmail como <b>usuário de teste</b>.</li>
+  <li>Ainda em <b>Público</b>, clique em <b>Publicar app</b> (colocar em produção). Sem isso o Google derruba o login a cada 7 dias. Vai dizer “app não verificado”: para uso pessoal tudo bem.</li>
+  <li>Vá em <b>Clientes › Criar cliente</b>. Tipo de aplicativo: <b>App para computador</b> (Desktop). Nome: <code>Braniac</code>. Copie o <b>ID do cliente</b> e a <b>chave secreta</b>.</li>
+</ol>
+<p class="mudo">Os nomes dos menus mudam um pouco com o tempo; o caminho é sempre este.</p>
+</div>
+
+<h2>2 · Colar aqui</h2>
+<div class="caixa">
+  <input id="cid" placeholder="ID do cliente (termina com .apps.googleusercontent.com)">
+  <input id="sec" type="password" placeholder="Chave secreta do cliente">
+  <button onclick="salvar()">Salvar</button> <span id="msg" class="mudo"></span>
+</div>
+
+<h2>3 · Aprovar o acesso</h2>
+<div class="caixa">
+  <a class="b" href="/email/login">Conectar com o Google</a>
+  <p class="mudo">O Google vai avisar “app não verificado”: clique em <b>Avançado › Ir para Braniac</b> e marque a permissão de ver e-mails.</p>
+</div>
+<div class="aviso">As credenciais ficam só neste PC (<code>braniac/data/gmail.json</code>). Para revogar a qualquer momento: <a href="https://myaccount.google.com/permissions" target="_blank" style="color:var(--azul)">myaccount.google.com/permissions</a>.</div>
+
+<script>
+async function estado(){
+  const r = await (await fetch('/api/email', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})).json();
+  document.getElementById('estado').innerHTML = r.logado ? '<span class="ok">✔ Conectado' + (r.conta ? ' como ' + r.conta : '') + '.</span> Pergunte ao Jarvis: “tenho e-mail novo?”' :
+    (r.cliente ? '⏳ Credenciais salvas. Falta o passo 3 (aprovar o acesso).' : 'Ainda não conectado.');
+}
+async function salvar(){
+  const m = document.getElementById('msg'); m.className='mudo'; m.textContent='Salvando…';
+  const r = await (await fetch('/api/email', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({client_id: cid.value, client_secret: sec.value})})).json();
+  if (r.erro) { m.className='erro'; m.textContent = r.erro; } else { m.className='ok'; m.textContent='Salvo. Agora o passo 3.'; sec.value=''; }
+  estado();
+}
+estado();
+</script>
+</body>
+</html>

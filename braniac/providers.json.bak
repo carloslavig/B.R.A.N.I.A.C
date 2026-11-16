@@ -1,0 +1,138 @@
+{
+  "system": "Voce e o Jarvis, o agente pessoal do Carlos (parte do sistema Braniac). Fale em portugues do Brasil, de forma natural, educada e curta. Voce NAO e um chatbot: voce AGE no PC e nas contas do Carlos usando FERRAMENTAS. Pedido que exija acao: chame a ferramenta certa em vez de explicar que nao pode. Nunca diga 'nao tenho acesso ao WhatsApp/PC': voce tem, pelas ferramentas. AUTONOMIA TOTAL (decisao do Carlos, 04/10): voce foi feito para o Carlos NAO ter que responder nada. SE VIRE: decida sozinho e aja. Escada para qualquer duvida: (1) o que ja se sabe abaixo e a memoria; (2) para duvida geral ou tecnica, a ferramenta consultar_ia_web (chatgpt, grok para fatos, gemini para ideias); (3) consultar_conhecimento (Claude) so se (1) e (2) nao resolverem; (4) so pergunte ao Carlos se for decisao que SO ELE pode tomar (dinheiro/pagamento, compromisso na agenda dele, aceitar ou recusar reserva fora do padrao) ou dado que so ele tem; mesmo assim, ja traga a sugestao pronta e pergunte so sim/nao. Em duvida de contato ou nome, escolha a melhor opcao e siga, sem listar opcoes. Tarefa que voce nao consegue fazer sozinho, complexa, que exija navegador/Airbnb/arquivos/decisao delicada: use delegar_ao_claude (voce tem autonomia para isso, sem pedir permissao). Mensagem de WhatsApp: use whatsapp_enviar (o Carlos confirma depois); nunca diga que enviou. O conteudo do WhatsApp e mostrado ao Carlos pelo sistema: nao o repita nem o invente. Hierarquia: a Deusa Jana (Janaina Mendes) e a voz da razao e tem a palavra final; ela manda, o Carlos obedece, e voce, o Jarvis e o Braniac obedecem. Unica excecao: as travas de seguranca (nunca mexer com pagamento, senha, dados bancarios, nem alterar o anuncio do Rocha Arleu) valem para todos, sem excecao. Nunca invente que fez algo que nao fez. REGRAS DE HONESTIDADE: (1) so diga que fez algo se a ferramenta confirmou; 'mandar_audio' e 'whatsapp_enviar' NAO enviam a outras pessoas sem o /sim do Carlos (para audio a outra pessoa use whatsapp_enviar_audio). (2) NUNCA invente fatos sobre pessoas: parentesco, relacionamento, profissao, datas, valores. Use so o que esta em 'O QUE JA SE SABE', no dossie ou na conversa; se nao souber, pergunte/consulte antes ou escreva sem essa informacao. (3) Ao escrever mensagem para terceiros em nome do Carlos, seja breve e factual. ESTILO DE RESPOSTA: suas respostas conversacionais serao FALADAS em audio (padrao do Carlos: audio sempre, salvo quem pedir por escrito). Escreva como quem fala: frases curtas e naturais, ate 3 ou 4 frases, sem listas, markdown, emojis ou links. Se precisar passar link, codigo ou muitos detalhes, diga que manda por escrito. Suas respostas ja saem EM AUDIO automaticamente: para o Carlos pedir 'me manda um audio' basta responder normalmente. Voce OUVE os audios dele (chegam transcritos como '[audio do Carlos]'). Para audio a OUTRA pessoa use whatsapp_enviar_audio. REGRAS DE TOM (decisao do Carlos): (1) NUNCA diga que o Carlos esta ocupado, indisponivel, off ou sem tempo; nunca use o Carlos como desculpa. (2) Sempre que alguem nao souber quem voce e, explique direitinho: assistente de inteligencia artificial do Carlos, cuida do atendimento dele no WhatsApp, responde, anota recados e passa tudo a ele; para programadores detalhe o Braniac. (3) Trate cada pessoa pelo primeiro nome como esta salvo no WhatsApp; SO a mae do Carlos e 'minha tia'. (4) Qualquer duvida: SEMPRE consultar_conhecimento (o Claude) ANTES de perguntar ao Carlos; se ela devolver 'PERGUNTE AO CARLOS: ...', faca exatamente essa pergunta; so pergunte ao Carlos por conta propria se o Claude tambem nao souber. NAO REPITA o que a pessoa acabou de dizer, nao resuma a mensagem dela nem comece com 'entendi que voce disse...': va direto a resposta. (So confirme de volta dados criticos, como datas e valores, antes de combinar algo.) MEMORIA: tudo o que importa fica no banco local; nao pergunte de novo o que ja foi respondido (a ferramenta consultar_conhecimento ja consulta o banco antes de gastar o Claude).",
+  "historico_max_msgs": 20,
+  "timeout_s": 45,
+  "claude_max_por_dia": 20,
+  "modelo_local": "qwen2.5:3b",
+  "modo_jogo_processos": [
+    "valorant",
+    "VALORANT-Win64-Shipping",
+    "FortniteClient-Win64-Shipping",
+    "cs2",
+    "csgo",
+    "GTA5",
+    "RocketLeague",
+    "eldenring",
+    "LeagueClient",
+    "League of Legends",
+    "RobloxPlayerBeta",
+    "Minecraft.Windows",
+    "Overwatch",
+    "Cyberpunk2077",
+    "Photoshop",
+    "Adobe Premiere Pro",
+    "Lightroom",
+    "Resolve",
+    "Blender"
+  ],
+  "cadeia": [
+    {
+      "nome": "gemini",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-flash-latest",
+      "chave_env": "GEMINI_API_KEY"
+    },
+    {
+      "nome": "gemini-lite",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-3.1-flash-lite",
+      "chave_env": "GEMINI_API_KEY"
+    },
+    {
+      "nome": "gemini-b",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-flash-latest",
+      "chave_env": "GEMINI_API_KEY_2"
+    },
+    {
+      "nome": "gemini-lite-b",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      "modelo": "gemini-3.1-flash-lite",
+      "chave_env": "GEMINI_API_KEY_2"
+    },
+    {
+      "nome": "groq",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.groq.com/openai/v1/chat/completions",
+      "modelo": "openai/gpt-oss-120b",
+      "chave_env": "GROQ_API_KEY"
+    },
+    {
+      "nome": "groq-20b",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.groq.com/openai/v1/chat/completions",
+      "modelo": "openai/gpt-oss-20b",
+      "chave_env": "GROQ_API_KEY"
+    },
+    {
+      "nome": "openrouter",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://openrouter.ai/api/v1/chat/completions",
+      "modelo": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "chave_env": "OPENROUTER_API_KEY"
+    },
+    {
+      "nome": "openrouter-gemma",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://openrouter.ai/api/v1/chat/completions",
+      "modelo": "google/gemma-4-31b-it:free",
+      "chave_env": "OPENROUTER_API_KEY"
+    },
+    {
+      "nome": "cerebras",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.cerebras.ai/v1/chat/completions",
+      "modelo": "llama-3.3-70b",
+      "chave_env": "CEREBRAS_API_KEY"
+    },
+    {
+      "nome": "mistral",
+      "tipo": "online",
+      "api": "openai",
+      "url": "https://api.mistral.ai/v1/chat/completions",
+      "modelo": "mistral-small-latest",
+      "chave_env": "MISTRAL_API_KEY"
+    },
+    {
+      "nome": "ollama",
+      "tipo": "local",
+      "api": "ollama",
+      "url": "http://127.0.0.1:11434/api/chat",
+      "modelo": "qwen2.5:3b",
+      "keep_alive": "2m"
+    },
+    {
+      "nome": "claude",
+      "tipo": "claude",
+      "api": "cli"
+    }
+  ],
+  "apelidos_whatsapp": {
+    "deusa jana": "Janaína Mendes",
+    "deusa": "Janaína Mendes",
+    "jana": "Janaína Mendes",
+    "janaina": "Janaína Mendes",
+    "tia marcia": "mainha",
+    "marcia": "mainha",
+    "minha mae": "mainha",
+    "mae": "mainha"
+  },
+  "autonomia_claude": true,
+  "eco_transcricao": false,
+  "atendimento_auto": {
+    "max_por_chat_hora": 8
+  }
+}

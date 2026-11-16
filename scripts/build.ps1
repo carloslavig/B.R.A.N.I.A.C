@@ -4,6 +4,9 @@
 $ErrorActionPreference = "Continue"   # PowerShell 5.1 trata aviso no stderr de programa externo como erro; checamos o codigo de saida
 $raiz = Split-Path -Parent $PSScriptRoot
 Set-Location "$raiz\seed"
+# trava: nada pessoal (caminhos, telefones, chaves, nomes de scripts\termos-pessoais.txt) entra no instalador
+python "$raiz\scripts\varrer_pessoal.py" "$raiz\seed" "$raiz\app\ui-loader" "$raiz\app\src-tauri\src" "$raiz\docs" "$raiz\README.md"
+if ($LASTEXITCODE) { throw "Dado pessoal encontrado: corrija antes de gerar o instalador" }
 python -m pip install --quiet --disable-pip-version-check pyinstaller websocket-client
 $ui = (Resolve-Path "braniac_seed\ui").Path
 $hab = (Resolve-Path "braniac_seed\habilidades").Path   # v0.7: habilidades que vem junto

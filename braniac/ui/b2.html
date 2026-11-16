@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B.R.A.N.I.A.C 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--cor:#2fe3ff;--bg:#07121a;--painel:#0a1924;--card:#0e2230;--txt:#d6f4ff;--sub:#6f98aa;
+--linha:color-mix(in srgb,var(--cor) 22%,#0a1924);--acento:var(--cor);--acento2:color-mix(in srgb,var(--cor) 70%,#ffffff);
+--usuario:color-mix(in srgb,var(--cor) 13%,#0e2230);--ok:#4ade80;--alerta:#f87171}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:radial-gradient(ellipse at 60% 40%,color-mix(in srgb,var(--cor) 9%,#07121a),#050d13 70%);color:var(--txt);font:15px/1.55 "Segoe UI",system-ui,sans-serif;display:flex}
+button{font:inherit;color:inherit;cursor:pointer}
+aside{width:280px;min-width:280px;background:var(--painel);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%}
+.marca{padding:16px 16px 8px;font:800 15px Orbitron,sans-serif;letter-spacing:.12em;color:var(--acento);text-shadow:0 0 10px color-mix(in srgb,var(--cor) 60%,transparent)}
+.marca small{display:block;font:400 12px "Segoe UI",sans-serif;letter-spacing:0;color:var(--sub);text-shadow:none;margin-top:2px}
+.nova{margin:8px 12px;padding:10px 12px;border:1px solid var(--linha);background:var(--card);border-radius:10px;text-align:left}
+.nova:hover{border-color:var(--acento)}
+.abas{display:flex;gap:4px;padding:4px 12px}
+.abas button{flex:1;border:0;background:none;padding:6px;border-radius:8px;color:var(--sub);font-size:13px}
+.abas button.ativa{background:var(--card);color:var(--txt)}
+.lista{flex:1;overflow:auto;padding:4px 8px 16px}
+.proj{margin-top:10px}
+.proj h4{margin:6px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);display:flex;justify-content:space-between;align-items:center}
+.proj h4 button{border:0;background:none;color:var(--sub);font-size:12px;padding:2px 6px;border-radius:6px}
+.proj h4 button:hover{background:var(--card)}
+.conv{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 10px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.conv:hover{background:var(--card)}.conv.ativa{background:var(--card);font-weight:600}
+.item{background:var(--card);border:1px solid var(--linha);border-radius:10px;padding:10px 12px;margin:8px 4px;font-size:13px}
+.item b{display:block;font-size:14px}
+.item .linha{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.etq{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--linha);color:var(--sub)}
+.etq.ok{color:var(--ok);border-color:var(--ok)}.etq.mal{color:var(--alerta);border-color:var(--alerta)}
+main{flex:1;display:flex;flex-direction:column;height:100%;min-width:0}
+header{padding:12px 24px;border-bottom:1px solid var(--linha);display:flex;justify-content:space-between;align-items:center;gap:12px}
+header h2{margin:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header .status{font-size:12px;color:var(--sub)}
+#msgs{flex:1;overflow:auto;padding:24px 0}
+.msg{max-width:760px;margin:0 auto 18px;padding:0 24px}
+.msg .bolha{padding:12px 16px;border-radius:14px}
+.msg.user .bolha{background:var(--usuario);margin-left:80px}
+.msg.assistant .bolha{background:transparent;padding-left:0}
+.msg .quem{font-size:12px;color:var(--sub);margin-bottom:4px}
+.msg pre{background:var(--painel);border:1px solid var(--linha);border-radius:8px;padding:10px;overflow:auto;font:13px/1.45 Consolas,monospace}
+.msg code{font:13px Consolas,monospace;background:var(--painel);padding:1px 4px;border-radius:4px}
+.msg a{color:var(--acento2)}
+.vazio{max-width:640px;margin:12vh auto 0;text-align:center;color:var(--sub);padding:0 24px}
+.vazio h1{color:var(--txt);font-weight:600;font-size:26px;margin-bottom:6px}
+.compositor{padding:12px 24px 20px}
+.caixa{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--linha);border-radius:16px;padding:10px 12px;display:flex;gap:8px;align-items:flex-end;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.caixa:focus-within{border-color:var(--acento);box-shadow:0 0 18px color-mix(in srgb,var(--cor) 25%,transparent)}
+textarea{flex:1;border:0;background:none;color:var(--txt);font:inherit;resize:none;max-height:220px;min-height:24px;outline:none;padding:4px}
+.enviar{border:0;background:var(--acento);color:#04131a;box-shadow:0 0 14px color-mix(in srgb,var(--cor) 45%,transparent);border-radius:10px;padding:8px 14px;font-weight:600}
+.enviar:disabled{opacity:.45;cursor:default}
+.dica{max-width:760px;margin:6px auto 0;font-size:12px;color:var(--sub);text-align:center}
+dialog{border:1px solid var(--linha);border-radius:14px;background:var(--card);color:var(--txt);width:min(560px,92vw);padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+dialog input,dialog textarea{width:100%;border:1px solid var(--linha);border-radius:8px;padding:8px;background:var(--bg);color:var(--txt);font:inherit}
+dialog textarea{min-height:120px;resize:vertical}
+.acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.btn{border:1px solid var(--linha);background:var(--card);border-radius:8px;padding:7px 14px}
+.btn.prim{background:var(--acento);border-color:var(--acento);color:#04131a}
+.cores{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}.cores button{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer}.cores button.sel{border-color:#fff;box-shadow:0 0 12px currentColor}
+.prev{margin-top:14px;text-align:center;font:800 26px Orbitron,sans-serif;letter-spacing:.12em}
+.rodLat{padding:8px 12px 14px;border-top:1px solid var(--linha)}
+.toast{position:fixed;right:20px;bottom:20px;max-width:420px;background:var(--card);border:1px solid var(--linha);border-left:4px solid var(--acento);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.15);font-size:14px;white-space:pre-wrap}
+.pensando{color:var(--sub);font-style:italic}
+.topo{display:flex;gap:6px;align-items:center}
+.topo button{border:1px solid var(--linha);background:var(--card);border-radius:99px;padding:5px 14px;font-size:13px}
+.topo button.ativa{background:var(--acento);border-color:var(--acento);color:#04131a}
+#vozFrame,#escFrame{flex:1;border:0;width:100%;display:none;background:#000}
+.jarvisBtn{margin:0 12px 8px;padding:9px 12px;border:1px solid var(--acento);color:var(--acento2);background:transparent;border-radius:10px;text-align:left}
+.jarvisBtn:hover{background:var(--card)}
+@media (max-width:760px){aside{display:flex;position:fixed;z-index:50;left:-100%;top:0;bottom:0;width:84%;max-width:320px;transition:left .22s;box-shadow:0 0 30px #000a}
+ aside.aberta{left:0}.menuBtn{display:inline-block!important}.status{display:none}
+ #msgs{padding-left:10px;padding-right:10px}header h2{font-size:15px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topo button{padding:6px 8px;font-size:12px}}
+.menuBtn{display:none;background:none;border:1px solid var(--linha);color:var(--cor);border-radius:8px;font-size:18px;padding:4px 10px;margin-right:8px}
+#celVoz{display:none;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--linha);font-size:13px;background:var(--painel)}
+#celVoz button{background:var(--card);color:var(--cor);border:1px solid var(--cor);border-radius:20px;padding:6px 14px;font-weight:700}
+#celVoz.on button{background:var(--cor);color:#031018}#celTxt{flex:1;color:#8fb7c9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vel{display:none;position:fixed;inset:0;z-index:40;background:#0009}.vel.on{display:block}.fechaMenu{display:none}
+@media (max-width:760px){.fechaMenu{display:block;position:absolute;right:10px;top:10px;background:none;border:1px solid var(--linha);color:var(--cor);border-radius:8px;padding:4px 10px;font-size:16px;z-index:2}}
+.anexo,.mic{background:var(--card);border:1px solid var(--linha);color:var(--cor);border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;flex:none}
+.mic.gravando{background:#e5484d;color:#fff;border-color:#e5484d;animation:pisca 1s infinite}@keyframes pisca{50%{opacity:.6}}
+#chipAnexo{display:none;margin:0 0 6px;font-size:12px;color:var(--sub)}#chipAnexo b{color:var(--cor)}
+#autoBox{margin:8px 4px;padding:10px 12px;border:1px solid var(--linha);border-radius:10px;background:var(--card);font-size:12px}
+#autoBox .linha{display:flex;justify-content:space-between;align-items:center;gap:8px}#autoBox b{font-size:13px}
+#autoBox .on{color:#5dffb0}#autoBox .off{color:var(--sub)}#autoBtns{display:none;flex-wrap:wrap;gap:6px;margin-top:8px}
+#autoBtns button,#autoBox .abrir{background:var(--painel);border:1px solid var(--linha);color:var(--cor);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
+#autoBtns .desarmar{border-color:#e5484d;color:#ff8b8b}
+</style>
+</head>
+<body>
+<aside>
+  <div class="marca">B.R.A.N.I.A.C 1<small><span class="nomeIA">Jarvis</span> · tudo salvo no seu PC</small></div>
+  <button class="nova" id="btnNova">＋ Nova conversa</button>
+  <button class="jarvisBtn" onclick="abrirAba('jarvis')">🎙 Interface do <span class="nomeIA">Jarvis</span> (voz)</button>
+  <div class="abas"><button class="ativa" data-aba="conversas">Conversas</button><button data-aba="skills">Habilidades</button><button data-aba="contas">Contas</button><button data-aba="chaves">Chaves</button></div>
+  <div class="lista" id="lista"></div>
+  <div class="rodLat"><div id="autoBox"><div class="linha"><span>🔓 <b>Autonomia remota</b></span><button class="abrir" id="autoAbrir">Armar…</button></div>
+  <div id="autoSt" class="off" style="margin-top:4px">desarmada: por WhatsApp/Telegram só converso e leio</div>
+  <div id="autoBtns"><button data-min="60">1 h</button><button data-min="120">2 h</button><button data-min="240">4 h</button><button data-min="480">8 h</button><button data-min="1440">24 h</button><button data-min="2160">36 h</button><button data-min="4320">72 h</button><button data-min="-1">Indefinida</button><button class="desarmar" data-min="0">Desarmar</button></div></div>
+  <div style="text-align:center;font-size:11px;color:var(--cor);opacity:.75;margin-bottom:8px">✦ Mestres supremos: Dono (Dono) &amp; Claudinho<br>Parceira ✦</div><button class="nova" style="margin:0;width:100%" onclick="abrirAparencia(false)">🎨 Aparência (nome e cor)</button></div>
+</aside>
+<main>
+  <header><button class="menuBtn" onclick="document.querySelector('aside').classList.toggle('aberta')">☰</button><h2 id="titulo">Nova conversa</h2><div class="topo"><button id="abaChat" class="ativa" onclick="abrirAba('chat')">Conversas</button><a href="/painel" style="text-decoration:none"><button type="button" id="abaPainel">🧩 Painel novo</button></a><button id="abaEscr" onclick="abrirAba('escritorio')">🏢 Escritório</button><button id="abaJarvis" onclick="abrirAba('jarvis')"><span class="nomeIA">Jarvis</span> (voz)</button><span class="status" id="status">conectando…</span></div></header>
+  <div id="msgs"></div>
+  <iframe id="escFrame" title="Escritório virtual SAURAKI" style="display:none"></iframe>
+  <iframe id="vozFrame" title="Interface de voz do Jarvis" allow="microphone; autoplay"></iframe>
+  <div id="celVoz"><button id="celBtn">🎙 Ouvir meu nome</button><span id="celTxt"></span></div>
+  <div class="compositor">
+    <div class="caixa"><textarea id="entrada" rows="1" placeholder="Escreva sua mensagem…"></textarea><button class="enviar" id="btnEnviar">Enviar</button></div>
+    <div class="dica">Enter envia · Shift+Enter quebra linha · cada conversa tem memória própria; o projeto dá as instruções</div>
+  </div>
+</main>
+
+<dialog id="dlgProjeto"><h3 id="dlgProjetoTit">Projeto</h3>
+  <label>Nome</label><input id="pNome" maxlength="80">
+  <label>Instruções do projeto (o Jarvis segue em toda conversa deste projeto)</label><textarea id="pInstr" maxlength="4000"></textarea>
+  <div class="acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn prim" id="pSalvar">Salvar</button></div>
+</dialog>
+<dialog id="dlgAparencia"><h3 id="apTit">Bem-vindo ao B.R.A.N.I.A.C 1</h3>
+  <div style="color:var(--sub);font-size:14px">Escolha como a sua IA se chama e a cor da interface. Isso muda o chat, a tela de voz e a abertura. Dá para trocar depois em “Aparência”.</div>
+  <label>Nome da IA</label><input id="apNome" maxlength="24" value="Jarvis">
+  <label>Cor da interface</label><div class="cores" id="apCores"></div>
+  <label style="margin-top:12px">Ou escolha qualquer cor</label><input id="apCor" type="color" value="#2fe3ff" style="height:40px;padding:2px">
+  <div class="prev" id="apPrev">J.A.R.V.I.S</div>
+  <div class="acoes"><button class="btn" data-fechar id="apCancelar">Cancelar</button><button class="btn prim" id="apSalvar">Salvar</button></div>
+</dialog>
+<dialog id="dlgSkill"><h3>Nova habilidade</h3>
+  <label>Nome</label><input id="sNome" maxlength="40" placeholder="ex.: responder-hospede">
+  <label>Quando usar</label><input id="sDesc" maxlength="300" placeholder="ex.: quando um hóspede perguntar sobre o check-in">
+  <label>Passo a passo</label><textarea id="sPassos" placeholder="1. ...&#10;2. ..."></textarea>
+  <label>Ferramentas que ela usa (opcional, separadas por espaço)</label><input id="sFerr" placeholder="ex.: agenda pc">
+  <div class="acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn prim" id="sSalvar">Criar</button></div>
+</dialog>
+
+<script>
+const $=s=>document.querySelector(s);
+let NOME='Jarvis';
+const pontilhado=n=>n.toUpperCase().split('').filter(c=>c!==' ').join('.');
+function aplicarAparencia(a){NOME=a.nome;document.documentElement.style.setProperty('--cor',a.cor);document.querySelectorAll('.nomeIA').forEach(e=>e.textContent=a.nome);document.title='B.R.A.N.I.A.C 1 · '+a.nome}
+async function abrirAparencia(primeira){const a=await api('/api/b2/aparencia');$('#apTit').textContent=primeira?'Bem-vindo ao B.R.A.N.I.A.C 1':'Aparência';$('#apCancelar').style.display=primeira?'none':'';
+ $('#apNome').value=a.nome;$('#apCor').value=a.cor;const C=$('#apCores');C.innerHTML='';
+ for(const [n,c] of Object.entries(a.cores)){const b=document.createElement('button');b.title=n;b.style.background=c;b.style.color=c;b.onclick=()=>{$('#apCor').value=c;prev()};C.appendChild(b)}
+ const prev=()=>{const c=$('#apCor').value;$('#apPrev').textContent=pontilhado($('#apNome').value||'Jarvis');$('#apPrev').style.color=c;$('#apPrev').style.textShadow='0 0 14px '+c;C.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b.title&&a.cores[b.title]===c));document.documentElement.style.setProperty('--cor',c)};
+ $('#apNome').oninput=prev;$('#apCor').oninput=prev;prev();$('#dlgAparencia').showModal()}
+
+let E={projetos:[],conversas:[],skills:[]}, atual=null, aba='conversas', projEditando=null, enviando=false;
+async function api(url,corpo){const r=await fetch(url,corpo?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)}:{});const j=await r.json();if(!r.ok)throw new Error(j.erro||r.status);return j}
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function md(t){let h=esc(t);h=h.replace(/```(\w*)\n?([\s\S]*?)```/g,(m,l,c)=>'<pre>'+c+'</pre>');h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');h=h.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');h=h.replace(/(https?:\/\/[^\s<)]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');return h.replace(/\n/g,'<br>')}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),9000)}
+async function carregar(){E=await api('/api/b2/estado');const s=E.status||{};const ok=(s.provedores||[]).filter(p=>p.ok).length;$('#status').textContent=(s.ligado?'ligado':'desligado')+' · '+ok+' IAs disponíveis';const c=E.conversas.find(c=>c.id===atual);const naVoz=$('#vozFrame').style.display==='block';if(c&&!naVoz)$('#titulo').textContent=c.titulo;desenhar()}
+function desenhar(){const L=$('#lista');L.innerHTML='';
+ if(aba==='conversas'){for(const p of E.projetos){const d=document.createElement('div');d.className='proj';
+   d.innerHTML=`<h4><span>${esc(p.nome)}</span><span><button data-nova="${p.id}" title="Nova conversa neste projeto">＋</button><button data-ed="${p.id}" title="Editar projeto">✎</button></span></h4>`;
+   for(const c of E.conversas.filter(c=>c.projeto===p.id)){const b=document.createElement('button');b.className='conv'+(atual===c.id?' ativa':'');b.textContent=c.titulo;b.onclick=()=>abrir(c.id);b.oncontextmenu=e=>{e.preventDefault();menuConversa(c)};d.appendChild(b)}
+   L.appendChild(d)}
+  const np=document.createElement('button');np.className='nova';np.textContent='＋ Novo projeto';np.onclick=()=>editarProjeto(null);L.appendChild(np);
+  L.querySelectorAll('[data-nova]').forEach(b=>b.onclick=()=>novaConversa(+b.dataset.nova));L.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editarProjeto(+b.dataset.ed))}
+ else if(aba==='skills'){const nb=document.createElement('button');nb.className='nova';nb.textContent='＋ Nova habilidade';nb.onclick=()=>$('#dlgSkill').showModal();L.appendChild(nb);
+  for(const s of E.skills){const d=document.createElement('div');d.className='item';d.innerHTML=`<b>${esc(s.nome)}</b>${esc(s.descricao).slice(0,180)}`;L.appendChild(d)}}
+ else if(aba==='chaves'){L.innerHTML='<div class="item">Carregando…</div>';api('/api/b2/chaves').then(c=>{L.innerHTML='<div class="item" style="color:var(--sub)">Chaves de IAs gratuitas. Cole a chave e salve: ela fica criptografada neste PC e a IA entra em uso na hora. A chave nunca volta para a tela.</div>';
+  for(const x of c.chaves){const d=document.createElement('div');d.className='item';const est=x.ativa?'<span class="etq ok">ativa</span>':'<span class="etq">sem chave</span>';
+   d.innerHTML=`<div class="linha"><b>${esc(x.nome)}</b>${est}</div><div class="linha" style="margin-top:6px"><input type="password" placeholder="${x.ativa?'trocar a chave…':'cole a chave aqui'}" autocomplete="off" style="flex:1;min-width:0;background:var(--card);border:1px solid var(--linha);color:inherit;border-radius:8px;padding:6px 8px"><button class="btn" data-env="${x.env}">Salvar</button></div><div style="margin-top:4px;font-size:11px"><a href="${x.onde}" target="_blank" rel="noopener" style="color:var(--cor)">criar chave grátis</a></div>`;L.appendChild(d)}
+  L.querySelectorAll('[data-env]').forEach(b=>b.onclick=async()=>{const inp=b.parentElement.querySelector('input');try{const r=await api('/api/b2/chave',{env:b.dataset.env,valor:inp.value});inp.value='';toast('Chave salva e ativa'+(r.novos_modelos&&r.novos_modelos.length?' · '+r.novos_modelos.length+' modelo(s) novo(s) na cadeia':''));carregar().then(desenhar)}catch(e){toast('Não salvei: '+e.message)}})}).catch(e=>L.innerHTML='<div class="item">Erro: '+esc(e.message)+'</div>')}
+ else{L.innerHTML='<div class="item">Carregando contas…</div>';api('/api/b2/contas').then(c=>{L.innerHTML=c.navegador?'':'<div class="item">O navegador do Braniac está fechado. Use o atalho “Ligar tudo”.</div>';
+  for(const x of c.contas){const d=document.createElement('div');d.className='item';const est=!x.aberta?'<span class="etq">sem aba</span>':x.precisa_login?'<span class="etq mal">precisa entrar</span>':'<span class="etq ok">conectada</span>';
+   d.innerHTML=`<div class="linha"><b>${esc(x.nome)}</b>${est}</div><div class="linha" style="margin-top:6px"><span style="color:var(--sub)">login fica no navegador do Braniac</span><button class="btn" data-conta="${x.nome}">Abrir</button></div>`;L.appendChild(d)}
+  L.querySelectorAll('[data-conta]').forEach(b=>b.onclick=async()=>{try{await api('/api/b2/acao',{acao:'abrir_conta',nome:b.dataset.conta});toast('A aba de '+b.dataset.conta+' foi para a frente no navegador do Braniac. Faça o login lá; a senha é só sua.')}catch(e){toast('Não consegui: '+e.message)}})}).catch(e=>L.innerHTML='<div class="item">Erro: '+esc(e.message)+'</div>')}}
+async function abrir(id){atual=id;if($('#vozFrame').style.display==='block')abrirAba('chat');const c=E.conversas.find(c=>c.id===id);$('#titulo').textContent=c?c.titulo:'Conversa';desenhar();const j=await api('/api/b2/conversa?id='+id);mostrar(j.mensagens)}
+function mostrar(ms){const M=$('#msgs');M.innerHTML='';if(!ms.length){M.innerHTML='<div class="vazio"><h1>Como posso ajudar?</h1>Esta conversa tem memória própria. O Jarvis responde com base no banco local e avisa quando não sabe.</div>';return}
+ for(const m of ms)bolha(m.role,m.content,m.provedor);M.scrollTop=M.scrollHeight}
+function bolha(role,t,prov){const M=$('#msgs');M.querySelector('.vazio')?.remove();const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'assistant');d.innerHTML=`<div class="quem">${role==='user'?'Você':NOME+(prov?' · '+esc(prov):'')}</div><div class="bolha">${md(t)}</div>`;M.appendChild(d);M.scrollTop=M.scrollHeight;return d}
+async function novaConversa(projeto){const j=await api('/api/b2/acao',{acao:'criar_conversa',projeto:projeto||1});E={...E,...j};await abrir(j.novo);$('#entrada').focus()}
+async function enviar(){const t=$('#entrada').value.trim();if(!t||enviando)return;if(!atual)await novaConversa(1);enviando=true;$('#btnEnviar').disabled=true;$('#entrada').value='';ajustar();
+ bolha('user',t);const p=bolha('assistant','');p.querySelector('.bolha').innerHTML='<span class="pensando">pensando…</span>';
+ try{const j=await api('/api/b2/chat',{conversa:atual,texto:t});p.querySelector('.bolha').innerHTML=md(j.resposta);p.querySelector('.quem').textContent=NOME+' · '+j.provedor}catch(e){p.querySelector('.bolha').innerHTML='<span style="color:var(--alerta)">Erro: '+esc(e.message)+'</span>'}
+ enviando=false;$('#btnEnviar').disabled=false;carregar()}
+function editarProjeto(id){projEditando=id;const p=E.projetos.find(p=>p.id===id);$('#dlgProjetoTit').textContent=p?'Editar projeto':'Novo projeto';$('#pNome').value=p?p.nome:'';$('#pInstr').value=p?p.instrucoes:'';$('#dlgProjeto').showModal()}
+async function menuConversa(c){const op=prompt('Conversa "'+c.titulo+'"\n1 = renomear\n2 = mover para outro projeto\n3 = arquivar (some da lista; nada é apagado)');
+ try{if(op==='1'){const t=prompt('Novo título',c.titulo);if(t)E={...E,...await api('/api/b2/acao',{acao:'renomear',id:c.id,titulo:t})}}
+  else if(op==='2'){const lista=E.projetos.map(p=>p.id+' = '+p.nome).join('\n');const pid=prompt('Para qual projeto?\n'+lista);if(pid)E={...E,...await api('/api/b2/acao',{acao:'mover',id:c.id,projeto:+pid})}}
+  else if(op==='3'){E={...E,...await api('/api/b2/acao',{acao:'arquivar',id:c.id})};if(atual===c.id){atual=null;mostrar([])}}desenhar()}catch(e){toast('Erro: '+e.message)}}
+function abrirAba(n){const e=n==='escritorio',ef=$('#escFrame');if(e&&!ef.src&&!ef.srcdoc){if(window.CELULAR){ef.srcdoc='<body style="background:#0b0f17;color:#8fb7c9;font:16px sans-serif;padding:24px">Abrindo o escritório…</body>';window.escCelular(ef).catch(x=>{ef.srcdoc='<body style="background:#0b0f17;color:#ff8b8b;font:16px sans-serif;padding:24px">Não consegui abrir o escritório: '+x.message+'</body>'})}else ef.src='/sauraki'}ef.style.display=e?'block':'none';$('#abaEscr').classList.toggle('ativa',e);if(e){$('#vozFrame').style.display='none';$('#msgs').style.display='none';document.querySelector('.compositor').style.display='none';$('#abaJarvis').classList.remove('ativa');$('#abaChat').classList.remove('ativa');$('#titulo').textContent='Escritório';return}const j=n==='jarvis',f=$('#vozFrame');if(j&&!f.src&&!f.srcdoc){if(window.CELULAR){f.srcdoc='<body style="background:#050d14;color:#8fb7c9;font:16px sans-serif;padding:24px">Abrindo a interface de voz…</body>';window.hudCelular(f).catch(e=>{f.srcdoc='<body style="background:#050d14;color:#ff8b8b;font:16px sans-serif;padding:24px">Não consegui abrir a interface de voz: '+e.message+'</body>'})}else f.src='/hud'}f.style.display=j?'block':'none';$('#msgs').style.display=j?'none':'';document.querySelector('.compositor').style.display=j?'none':'';$('#abaJarvis').classList.toggle('ativa',j);$('#abaChat').classList.toggle('ativa',!j);$('#titulo').textContent=j?NOME:((E.conversas.find(c=>c.id===atual)||{}).titulo||'Nova conversa')}
+window.abrirAba=abrirAba;
+// 'me mostra' por voz (15/11): a tela pedida abre na aba do escritorio, dentro do programa (nunca navegador novo)
+window.abrirTela=function(url){if(window.CELULAR)return;$('#escFrame').src=url;abrirAba('escritorio');$('#titulo').textContent=url.startsWith('/parceiro')?'Esteira do Parceiro':'Escritório'};
+function ajustar(){const t=$('#entrada');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,220)+'px'}
+$('#entrada').addEventListener('input',ajustar);$('#entrada').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar()}});
+$('#btnEnviar').onclick=enviar;$('#btnNova').onclick=()=>novaConversa(1);
+document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{aba=b.dataset.aba;document.querySelectorAll('[data-aba]').forEach(x=>x.classList.toggle('ativa',x===b));desenhar()});
+document.querySelectorAll('[data-fechar]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+$('#pSalvar').onclick=async()=>{try{const corpo={acao:projEditando?'editar_projeto':'criar_projeto',id:projEditando,nome:$('#pNome').value,instrucoes:$('#pInstr').value};E={...E,...await api('/api/b2/acao',corpo)};$('#dlgProjeto').close();desenhar()}catch(e){toast('Erro: '+e.message)}};
+$('#apSalvar').onclick=async()=>{try{const j=await api('/api/b2/acao',{acao:'aparencia',nome:$('#apNome').value,cor:$('#apCor').value});aplicarAparencia(j.aparencia);$('#dlgAparencia').close();const f=$('#vozFrame');if(f.src)f.src=f.src}catch(e){toast('Erro: '+e.message)}};
+$('#dlgAparencia').addEventListener('cancel',e=>{if($('#apCancelar').style.display==='none')e.preventDefault()});
+$('#apCancelar').addEventListener('click',()=>api('/api/b2/aparencia').then(aplicarAparencia));
+$('#sSalvar').onclick=async()=>{try{const j=await api('/api/b2/acao',{acao:'criar_skill',nome:$('#sNome').value,descricao:$('#sDesc').value,passos:$('#sPassos').value,ferramentas:$('#sFerr').value});$('#dlgSkill').close();toast('Habilidade criada: '+j.skill);carregar()}catch(e){toast('Erro: '+e.message)}};
+setInterval(async()=>{try{const a=await api('/api/avisos');for(const t of a.avisos||[])toast(t)}catch(e){}},5000);
+api('/api/b2/aparencia').then(a=>{aplicarAparencia(a);if(!a.configurado)abrirAparencia(true)}).catch(()=>{});
+carregar().then(()=>{if(E.conversas.length)abrir(E.conversas[0].id);else mostrar([]);if(location.hash==='#jarvis')abrirAba('jarvis');if(location.hash==='#escritorio')abrirAba('escritorio')}).catch(e=>$('#status').textContent='Braniac fora do ar: '+e.message);
+
+// ---- celular: chamar o assistente pelo nome (so existe quando o app do celular abre esta tela pelo tunel P2P) ----
+if(window.CELULAR){(function(){
+ const bar=$('#celVoz');bar.style.display='flex';const btn=$('#celBtn'),txt=$('#celTxt');let ctx,st,proc,ouvindo=false,tocando=false,buf=[],falando=false,silencio=0,inicio=0,acordado=false,nivel=0,ultimo='',hist=[];
+ window.celEstado=()=>({estado:ouvindo?(acordado?'acordado':'dormindo'):'parada',atividade:'idle',entrada:nivel,ultimo:ultimo,historico:hist.slice(-12),mudo:{}});
+ window.celAcao=a=>{if(a==='ligar'&&!ouvindo)ligar();else if(a==='desligar'&&ouvindo)parar()};
+ const fecharMenu=()=>$('aside').classList.remove('aberta');$('#lista').addEventListener('click',e=>{if(e.target.closest('.conv'))fecharMenu()});
+ function wav16(blocos,taxa){let n=0;blocos.forEach(b=>n+=b.length);const f=new Float32Array(n);let o=0;blocos.forEach(b=>{f.set(b,o);o+=b.length});
+  const r=taxa/16000,m=Math.floor(n/r),pcm=new Int16Array(m);for(let i=0;i<m;i++){const s=Math.max(-1,Math.min(1,f[Math.floor(i*r)]));pcm[i]=s<0?s*0x8000:s*0x7FFF}
+  const h=new DataView(new ArrayBuffer(44));const w=(i,s)=>{for(let k=0;k<s.length;k++)h.setUint8(i+k,s.charCodeAt(k))};
+  w(0,'RIFF');h.setUint32(4,36+m*2,true);w(8,'WAVEfmt ');h.setUint32(16,16,true);h.setUint16(20,1,true);h.setUint16(22,1,true);h.setUint32(24,16000,true);h.setUint32(28,32000,true);h.setUint16(32,2,true);h.setUint16(34,16,true);w(36,'data');h.setUint32(40,m*2,true);
+  const u=new Uint8Array(44+m*2);u.set(new Uint8Array(h.buffer));u.set(new Uint8Array(pcm.buffer),44);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+ async function enviar(blocos){try{const r=await fetch('/api/celular/fala',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audio:wav16(blocos,ctx.sampleRate)})});const j=await r.json();
+   acordado=j.estado==='acordado';if(j.texto){ultimo=j.texto;hist.push(['u',j.texto])}if(j.resposta)hist.push(['j',j.resposta]);bar.classList.toggle('on',ouvindo);txt.textContent=j.texto?('“'+j.texto+'”'+(j.resposta?' → '+j.resposta.slice(0,80):'')):(acordado?'ouvindo…':'dormindo: diga “'+NOME+', tá acordado?”');
+   if(j.resposta&&j.estado==='acordado'&&!j.acordou&&typeof mostrarVoz==='function')mostrarVoz(j.texto,j.resposta);
+   if(j.audio){tocando=true;const a=new Audio('data:audio/wav;base64,'+j.audio);a.onended=a.onerror=()=>{tocando=false};a.play().catch(()=>{tocando=false})}}catch(e){txt.textContent='sem conexão: '+e.message}}
+ async function ligar(){try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}catch(e){txt.textContent='sem permissão do microfone';return}
+  ctx=new (window.AudioContext||window.webkitAudioContext)();const src=ctx.createMediaStreamSource(st);proc=ctx.createScriptProcessor(4096,1,1);
+  proc.onaudioprocess=e=>{if(!ouvindo||tocando)return;const d=new Float32Array(e.inputBuffer.getChannelData(0));let s=0;for(let i=0;i<d.length;i++)s+=d[i]*d[i];const rms=Math.sqrt(s/d.length),t=performance.now();nivel=rms;
+   if(rms>0.02){if(!falando){falando=true;inicio=t;buf=[]}silencio=t;buf.push(d)}else if(falando){buf.push(d);if(t-silencio>800){falando=false;const dur=(t-inicio)/1000;const b=buf;buf=[];if(dur>0.5&&dur<20)enviar(b)}}
+   if(falando&&t-inicio>20000){falando=false;buf=[]}};
+  src.connect(proc);proc.connect(ctx.destination);ouvindo=true;btn.textContent='🎙 Ouvindo — toque para parar';bar.classList.add('on');txt.textContent='dormindo: diga “'+NOME+', tá acordado?”'}
+ function parar(){ouvindo=false;try{st.getTracks().forEach(t=>t.stop());proc.disconnect();ctx.close()}catch(_){}btn.textContent='🎙 Ouvir meu nome';bar.classList.remove('on');txt.textContent=''}
+ btn.onclick=()=>ouvindo?parar():ligar();
+})()}
+
+
+// ---- anexar foto e falar por audio no chat (25/10) ----
+(function(){const cx=document.querySelector('.caixa'),ta=$('#entrada'),bt=$('#btnEnviar');
+ const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.style.display='none';document.body.appendChild(fi);
+ const b1=document.createElement('button');b1.className='anexo';b1.title='Anexar foto';b1.textContent='📎';
+ const b2=document.createElement('button');b2.className='mic';b2.title='Falar (áudio)';b2.textContent='🎤';
+ cx.insertBefore(b2,ta);cx.insertBefore(b1,b2);
+ const chip=document.createElement('div');chip.id='chipAnexo';cx.parentElement.insertBefore(chip,cx);
+ window.ANEXO=null;
+ const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)};
+ async function enviarEmPartes(url,u8){const t=b64(u8),n=Math.ceil(t.length/30000),id=Math.random().toString(36).slice(2);let r;
+  for(let i=0;i<n;i++)r=await api(url,{id:id,i:i,n:n,parte:t.slice(i*30000,(i+1)*30000)});return r}
+ function mostrarChip(t){chip.style.display=t?'block':'none';chip.innerHTML=t||''}
+ b1.onclick=()=>fi.click();
+ fi.onchange=async()=>{const f=fi.files[0];fi.value='';if(!f)return;mostrarChip('🖼 <b>'+f.name+'</b> · lendo a imagem (pode levar até 1 minuto)…');b1.disabled=true;
+  try{const bm=await createImageBitmap(f),k=Math.min(1,1280/Math.max(bm.width,bm.height)),c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
+   const blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.82));const r=await enviarEmPartes('/api/b2/anexo',new Uint8Array(await blob.arrayBuffer()));
+   window.ANEXO=r;mostrarChip('🖼 <b>'+f.name+'</b> anexada e lida · escreva o que quer fazer e envie <a href="#" id="tiraAnexo" style="color:var(--cor)">(remover)</a>');
+   $('#tiraAnexo').onclick=e=>{e.preventDefault();window.ANEXO=null;mostrarChip('')}}catch(e){window.ANEXO=null;mostrarChip('Não consegui anexar: '+e.message)}b1.disabled=false};
+ // antes de enviar, junta o que o Ollama leu da imagem ao texto
+ const enviarOrig=window.enviar||enviar;
+ window.enviar=enviar=async function(){if(window.ANEXO){const a=window.ANEXO;window.ANEXO=null;mostrarChip('');const t=ta.value.trim()||'Olhe esta imagem.';ta.value='[Imagem anexada em '+a.caminho+'. O que o Ollama leu nela: '+a.descricao+']\n'+t}return enviarOrig()};
+ bt.onclick=()=>enviar();
+ ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();enviar()}},true);
+ // microfone: grava, manda para o Whisper do PC e envia o texto
+ let ctx,st,proc,blocos=[],gravando=false;
+ function wav16(bl,taxa){let n=0;bl.forEach(b=>n+=b.length);const f=new Float32Array(n);let o=0;bl.forEach(b=>{f.set(b,o);o+=b.length});const r=taxa/16000,m=Math.floor(n/r),pcm=new Int16Array(m);
+  for(let i=0;i<m;i++){const s=Math.max(-1,Math.min(1,f[Math.floor(i*r)]));pcm[i]=s<0?s*0x8000:s*0x7FFF}
+  const h=new DataView(new ArrayBuffer(44)),w=(i,s)=>{for(let k=0;k<s.length;k++)h.setUint8(i+k,s.charCodeAt(k))};
+  w(0,'RIFF');h.setUint32(4,36+m*2,true);w(8,'WAVEfmt ');h.setUint32(16,16,true);h.setUint16(20,1,true);h.setUint16(22,1,true);h.setUint32(24,16000,true);h.setUint32(28,32000,true);h.setUint16(32,2,true);h.setUint16(34,16,true);w(36,'data');h.setUint32(40,m*2,true);
+  const u=new Uint8Array(44+m*2);u.set(new Uint8Array(h.buffer));u.set(new Uint8Array(pcm.buffer),44);return u}
+ b2.onclick=async()=>{if(!gravando){try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}catch(e){toast('Sem permissão do microfone');return}
+   ctx=new (window.AudioContext||window.webkitAudioContext)();const src=ctx.createMediaStreamSource(st);proc=ctx.createScriptProcessor(4096,1,1);blocos=[];proc.onaudioprocess=e=>blocos.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+   src.connect(proc);proc.connect(ctx.destination);gravando=true;b2.classList.add('gravando');b2.textContent='⏹';ta.placeholder='Gravando… toque no ⏹ para enviar'}
+  else{gravando=false;b2.classList.remove('gravando');b2.textContent='🎤';ta.placeholder='Escreva sua mensagem…';const taxa=ctx.sampleRate,bl=blocos;try{st.getTracks().forEach(t=>t.stop());proc.disconnect();ctx.close()}catch(_){}
+   if(!bl.length)return;ta.placeholder='Entendendo o áudio…';try{const r=await enviarEmPartes('/api/b2/audio',wav16(bl,taxa));ta.placeholder='Escreva sua mensagem…';
+    if(r.texto){ta.value=(ta.value?ta.value+' ':'')+r.texto;ajustar();enviar()}else toast('Não entendi o áudio. Tente de novo, falando mais perto.')}catch(e){ta.placeholder='Escreva sua mensagem…';toast('Erro no áudio: '+e.message)}}}})();
+
+// ---- autonomia remota: armar por quanto tempo (so no PC; o tunel do celular nao alcanca /api/autonomia) ----
+(function(){const st=$('#autoSt'),bt=$('#autoBtns');if(!st)return;
+ function pintar(a){a=a||{};if(a.armada&&a.indefinida){st.className='on';st.textContent='ARMADA SEM PRAZO: o Jarvis pode agir por WhatsApp/Telegram até você desarmar'}else if(a.armada){const m=a.restante_min||0,h=Math.floor(m/60),r=m%60;st.className='on';st.textContent='ARMADA · restam '+(h?h+' h ':'')+r+' min: o Jarvis pode agir por WhatsApp/Telegram'}
+  else{st.className='off';st.textContent='desarmada: por WhatsApp/Telegram só converso e leio'}}
+ async function ler(){try{const s=await api('/api/status');pintar(s.autonomia)}catch(e){}}
+ $('#autoAbrir').onclick=()=>{bt.style.display=bt.style.display==='flex'?'none':'flex'};
+ bt.querySelectorAll('button').forEach(b=>b.onclick=async()=>{try{const s=await api('/api/autonomia',{minutos:+b.dataset.min});pintar(s.autonomia);bt.style.display='none';toast(+b.dataset.min<0?'Autonomia armada SEM PRAZO (desarme quando quiser)':+b.dataset.min?'Autonomia armada por '+(+b.dataset.min>=60?(+b.dataset.min/60)+' h':b.dataset.min+' min'):'Autonomia desarmada')}catch(e){toast('Não consegui: '+(window.CELULAR?'isso só pode ser feito no PC':e.message))}});
+ ler();setInterval(ler,30000)})();
+// ---- gaveta de conversas no celular: fecha tocando fora, arrastando para a esquerda ou no X; abre arrastando da borda esquerda ----
+(function(){const A=document.querySelector('aside'),V=document.createElement('div');V.className='vel';document.body.appendChild(V);
+ const x=document.createElement('button');x.className='fechaMenu';x.textContent='✕';x.onclick=()=>A.classList.remove('aberta');A.appendChild(x);
+ const fechar=()=>A.classList.remove('aberta');V.onclick=fechar;
+ new MutationObserver(()=>V.classList.toggle('on',A.classList.contains('aberta'))).observe(A,{attributes:true,attributeFilter:['class']});
+ let x0=null,y0=null;document.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY},{passive:true});
+ document.addEventListener('touchend',e=>{if(x0===null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=Math.abs(t.clientY-y0);
+  if(innerWidth<=760&&dy<70){if(A.classList.contains('aberta')&&dx<-50)fechar();else if(!A.classList.contains('aberta')&&x0<28&&dx>60)A.classList.add('aberta')}x0=null},{passive:true});
+ document.querySelectorAll('#btnVoz,.rodLat button,[onclick*=abrirAba]').forEach(b=>b.addEventListener('click',()=>setTimeout(fechar,50)))})();
+// ---- celular: a interface de voz (HUD) vem pelo tunel e usa o estado da voz do celular ----
+window.escCelular=async function(f){   // escritorio (SAURAKI) pelo tunel: a pagina vem pelo fetch do pai e as chamadas /api/sauraki voltam ao pai
+ const h=await (await fetch('/sauraki')).text();
+ f.srcdoc='<script>(function(){const F=parent.fetch.bind(parent);window.fetch=function(u,o){return F(String(u),o)}})()<'+'/script>'+h};
+window.hudCelular=async function(f){
+ const r=await fetch('/hud');const h=await r.text();
+ const ponte='<script>(function(){const F=parent.fetch.bind(parent);window.fetch=function(u,o){u=String(u);'
+  +'if(u.indexOf("/api/escuta-estado")===0)return Promise.resolve(new Response(JSON.stringify(parent.celEstado()),{headers:{"content-type":"application/json"}}));'
+  +'if(u.indexOf("/api/escuta-acao")===0){try{parent.celAcao(JSON.parse(o.body).acao)}catch(e){}return Promise.resolve(new Response("{}"))}'
+  +'return F(u,o)}})()<'+'/script>';
+ f.srcdoc=ponte+h};
+</script>
+</body>
+</html>
